@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
 
 const UserLogin = () => {
   const [email, setEmail] = useState("");
@@ -19,9 +18,9 @@ const UserLogin = () => {
         password,
       });
       toast.success(response.data.message);
-      const token = response.data.token
+      const token = response.data.token;
 
-      localStorage.setItem("access_token", token); 
+      localStorage.setItem("access_token", token);
 
       // Redirect based on user role with a delay
       setTimeout(() => {
@@ -97,9 +96,12 @@ const UserLogin = () => {
               />
               Remember Me
             </label>
-            <a href="#" className="text-orange-500 hover:underline">
+            <Link
+              to="/forgotpassword"
+              className="text-orange-500 hover:underline"
+            >
               Forgot password
-            </a>
+            </Link>
           </div>
           <button
             type="submit"

@@ -1,25 +1,39 @@
-import React, { useRef, useState } from "react";
+import axios from "axios";
+import React, { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const KYCPage = () => {
   const navigate = useNavigate();
 
+  // File inputs and state
   const fileInputRefs = {
     profile: useRef(null),
-    citizenship: useRef(null),
+    citizenshipFront: useRef(null),
+    citizenshipBack: useRef(null),
     pan: useRef(null),
     map: useRef(null),
     signature: useRef(null),
   };
 
-  const [imageUrls, setImageUrls] = useState({
-    profile: "https://via.placeholder.com/150/DDD/888?text=Profile",
-    citizenship: "https://via.placeholder.com/150/DDD/888?text=Citizenship",
-    pan: "https://via.placeholder.com/150/DDD/888?text=PAN+Card",
-    map: "https://via.placeholder.com/150/DDD/888?text=Map",
-    signature: "https://via.placeholder.com/150/DDD/888?text=Signature",
+  const [imageFiles, setImageFiles] = useState({
+    profile: null,
+    citizenshipFront: null,
+    citizenshipBack: null,
+    pan: null,
+    map: null,
+    signature: null,
   });
 
+  const [imageUrls, setImageUrls] = useState({
+    profile: "",
+    citizenshipFront: "",
+    citizenshipBack: "",
+    pan: "",
+    map: "",
+    signature: "",
+  });
+
+  // Form data for text inputs
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -27,11 +41,30 @@ const KYCPage = () => {
     gender: "",
   });
 
+  // Cleanup URLs on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(imageUrls).forEach((url) => {
+        if (url) URL.revokeObjectURL(url);
+      });
+    };
+  }, [imageUrls]);
+
+  // Handle file uploads
   const handleFileUpload = (key, e) => {
     const file = e.target.files[0];
+    const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+
+    if (file && (!allowedTypes.includes(file.type) || file.size > maxSize)) {
+      alert("Invalid file. Only JPG, PNG, and PDF files under 5MB are allowed.");
+      return;
+    }
+
     if (file) {
       const imageUrl = URL.createObjectURL(file);
       setImageUrls((prevUrls) => ({ ...prevUrls, [key]: imageUrl }));
+      setImageFiles((prevFiles) => ({ ...prevFiles, [key]: file }));
     }
   };
 
@@ -44,166 +77,136 @@ const KYCPage = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const navigateToLandingPage = () => {
-    navigate("/"); // Adjust this route to your landing page path
+  // Submit form
+  const handleSubmit = async () => {
+    // Validate required fields
+    const { name, phone, dob, gender } = formData;
+    if (!name || !phone || !dob || !gender) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+
+    // Validate required files
+    if (!imageFiles.profile || !imageFiles.citizenshipFront) {
+      alert("Please upload all required documents.");
+      return;
+    }
+
+    // Prepare FormData for submission
+    const formDataToSend = new FormData();
+    formDataToSend.append("name", name);
+    formDataToSend.append("phone", phone);
+    formDataToSend.append("dob", dob);
+    formDataToSend.append("gender", gender);
+
+    // Append files
+    Object.keys(imageFiles).forEach((key) => {
+      if (imageFiles[key]) {
+        formDataToSend.append(key, imageFiles[key]);
+      }
+    });
+
+    try {
+      const response = await axios.put("http://localhost:8000/api/kyc", formDataToSend, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      if (response.status === 200) {
+        alert("KYC updated successfully!");
+        navigate("/"); // Redirect to home or another page
+      }
+    } catch (error) {
+      console.error("Error updating KYC:", error);
+      alert(`Error updating KYC: ${error.response?.data?.message || error.message}`);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
-      {/* Sticky Header */}
-      <div className="w-full flex justify-between items-center px-8 bg-white py-4 shadow-lg sticky top-0 z-50">
+      <div className="w-full flex justify-between items-center px-8 bg-white py-4 shadow-md sticky top-0">
         <h1 className="text-2xl font-bold text-orange-600">EasyEvent</h1>
         <button
-          onClick={navigateToLandingPage}
-          className="text-sm font-semibold text-orange-600 border border-orange-600 px-4 py-2 rounded-lg hover:bg-orange-600 hover:text-white transition-colors duration-300"
+          onClick={() => navigate("/")}
+          className="text-sm font-semibold text-orange-600 border border-orange-600 px-4 py-2 rounded-lg hover:bg-orange-600 hover:text-white transition-colors"
         >
-          Back to Landing Page
+          Back to Home
         </button>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-grow bg-gray-50">
-        <div className="bg-white rounded-lg shadow-lg p-9 mt-1 w-full max-w-4xl mx-auto">
-          {/* Personal Information */}
-          <h1 className="text-xl font-bold mb-6">KYC Verification</h1>
-          <h6 className="text-xl font-semibold text-orange-500 mb-6">
-            Personal Information
-          </h6>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12 border border-gray-300 rounded-lg p-6 bg-gray-50 shadow-sm">
-            <div>
-              <label className="block text-gray-600 font-medium mb-2">
-                Full Name:
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border rounded-lg border-zinc-400"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-600 font-medium mb-2">
-                Phone Number:
-              </label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border rounded-lg border-zinc-400"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-600 font-medium mb-2">
-                Date of Birth:
-              </label>
-              <input
-                type="date"
-                name="dob"
-                value={formData.dob}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border rounded-lg border-zinc-400"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-600 font-medium mb-2">
-                Gender:
-              </label>
-              <div className="flex items-center space-x-6">
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="gender"
-                    value="male"
-                    onChange={handleInputChange}
-                    className="mr-2"
-                  />{" "}
-                  Male
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="gender"
-                    value="female"
-                    onChange={handleInputChange}
-                    className="mr-2"
-                  />{" "}
-                  Female
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="gender"
-                    value="other"
-                    onChange={handleInputChange}
-                    className="mr-2"
-                  />{" "}
-                  Other
-                </label>
-              </div>
-            </div>
-          </div>
+      <div className="flex-grow bg-gray-50 py-10">
+        <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-3xl mx-auto">
+          <h2 className="text-2xl font-semibold mb-8 text-center text-orange-600">
+            KYC Verification
+          </h2>
 
-          {/* Identity Details */}
-          <h6 className="text-xl font-semibold text-orange-500 mb-6">
-            Identity Details
-          </h6>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 mb-20">
-            {[
-              { label: "Profile Photo", key: "profile" },
-              { label: "Citizenship Document", key: "citizenship" },
-              { label: "PAN Card", key: "pan" },
-              { label: "Location Map", key: "map" },
-              { label: "Signature", key: "signature" },
-            ].map(({ label, key }) => (
-              <div
-                key={key}
-                className="border rounded-lg border-zinc-400 bg-zinc-400 shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
-              >
-                <div className="flex flex-col items-center p-6">
-                  <img
-                    src={imageUrls[key]}
-                    alt={label}
-                    className="w-full max-h-40 object-cover rounded-lg"
-                  />
-                </div>
-                <div className="flex justify-around items-center p-4">
-                  <button
-                    className="px-4 py-1 text-sm text-white bg-orange-500 rounded-lg hover:bg-red-500"
-                    onClick={() => handleFileClick(key)}
-                  >
-                    Upload
-                  </button>
-                  <input
-                    type="file"
-                    ref={fileInputRefs[key]}
-                    className="hidden"
-                    onChange={(e) => handleFileUpload(key, e)}
-                  />
-                  <button
-                    className="px-4 py-1 text-sm text-white border border-white-500 rounded-lg hover:bg-orange-500 hover:text-white"
-                    onClick={() => handleFileClick(key)}
-                  >
-                    Edit
-                  </button>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            {["name", "phone", "dob", "gender"].map((key) => (
+              <div key={key}>
+                <label className="block text-gray-700 font-medium mb-2 capitalize">
+                  {key === "dob" ? "Date of Birth" : key}:
+                </label>
+                <input
+                  type={key === "dob" ? "date" : "text"}
+                  name={key}
+                  value={formData[key]}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border rounded-lg border-gray-300"
+                  required
+                />
               </div>
             ))}
           </div>
 
-          {/* Confirmation */}
-          <div className="flex items-center space-x-2 mb-8">
-            <input type="checkbox" className="h-4 w-4 border rounded-md" />
-            <label className="text-sm text-gray-600">
-              All provided information is accurate and genuine.
-            </label>
+          <h3 className="text-lg font-semibold text-orange-600 text-center mb-8">
+            Upload Your Documents
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {Object.keys(fileInputRefs).map((key) => (
+              <div
+                key={key}
+                className="text-center p-4 bg-white rounded-lg shadow-md"
+              >
+                <h6 className="text-gray-700 font-medium text-sm mb-2 capitalize">
+                  {key.replace(/([A-Z])/g, " $1")}
+                </h6>
+
+                <div className="mb-4 w-36 h-36 mx-auto border border-gray-300 rounded-md flex items-center justify-center bg-gray-100">
+                  {imageUrls[key] && (
+                    <img
+                      className="w-full h-full object-cover rounded-md"
+                      src={imageUrls[key]}
+                      alt={key}
+                    />
+                  )}
+                </div>
+
+                <button
+                  onClick={() => handleFileClick(key)}
+                  className="bg-orange-500 text-white py-2 px-4 rounded-md hover:bg-orange-600 transition"
+                >
+                  Upload
+                </button>
+
+                <input
+                  type="file"
+                  ref={fileInputRefs[key]}
+                  onChange={(e) => handleFileUpload(key, e)}
+                  className="hidden"
+                  accept="image/*,application/pdf"
+                />
+              </div>
+            ))}
           </div>
 
-          {/* Submit */}
-          <button className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition-colors duration-300">
-            Submit
-          </button>
+          <div className="mt-16 flex justify-center">
+            <button
+              onClick={handleSubmit}
+              className="bg-orange-600 text-white py-3 px-8 rounded-md font-semibold text-lg hover:bg-orange-700 transition"
+            >
+              Submit KYC
+            </button>
+          </div>
         </div>
       </div>
     </div>

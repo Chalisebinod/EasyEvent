@@ -16,7 +16,7 @@ import VenueOwnerDashboard from "./components/venueowner/VenueOwnerDashboard";
 import UserSignup from "./components/user/UserSignup";
 import KYCPage from "./components/venueowner/KYCPage";
 import DashboardBefore from "./components/user/DashboardBefore";
-import UserLogin from "./components/user/Userlogin";
+
 import Profile from "./components/user/Profile";
 import { reactLocalStorage } from "reactjs-localstorage";
 import ChangePassword from "./components/user/ChangePassword";
@@ -27,6 +27,10 @@ import VenueOwnerPage from "./components/admin/VenueOwnerPage";
 import AdminPage from "./components/admin/AdminPage";
 import VenueOwnerUserProfile from "./components/admin/VenueOwnerUserProfile";
 import VenueOwnerProfile from "./components/venueowner/VenueOwnerProfile";
+import EmailVerification from "./components/user/EmailVerification";
+import PasswordChange from "./components/user/PasswordChange";
+import ForgetPassword from "./components/user/ForgotPassword";
+import UserLogin from "./components/user/UserLogin";
 
 function App() {
   // useEffect(() => {
@@ -34,7 +38,7 @@ function App() {
   //   console.log("Token from localStorage:", token);
   //   if (!token) {
   //     console.log("No access token");
-  //     localStorage.removeItem("token removed", token);
+  //     localStorage en removed", token);
   //   }
   //   if (token) {
   //     axios
@@ -79,6 +83,12 @@ function App() {
         <Route path="/user-signup" element={<UserSignup />} />
         <Route path="/venue-owner-signup" element={<VenueOwnerSignup />} />
 
+        {/* change password and email verification */}
+        <Route path="/email-verification" element={<EmailVerification />} />
+        <Route path="/forgotpassword" element={<ForgetPassword />} />
+
+        <Route path="/password-change" element={<PasswordChange />} />
+
         {/* Dashboard Pages */}
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/all-user" element={<UserPage />} />
@@ -94,7 +104,7 @@ function App() {
           path="/venue-owner-dashboard"
           element={<VenueOwnerDashboard />}
         />
-                <Route
+        <Route
           path="/venue-owner-self-profile"
           element={<VenueOwnerProfile />}
         />

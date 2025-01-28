@@ -9,6 +9,8 @@ const userSchema = new mongoose.Schema({
   location: { type: String, default: null },
   role: { type: String, default: "user" },
   is_blocked: { type: Boolean, default: false },
+  resetPasswordOTP: { type: String },
+  resetPasswordExpires: { type: Date },
   favorites: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -33,6 +35,16 @@ const userSchema = new mongoose.Schema({
   status: { type: String, default: "Active" },
   date_created: { type: Date, default: Date.now },
   last_login: { type: Date, default: null },
+
+  // ✅ New KYC Images Section
+  kyc: {
+    profile: { type: String, default: null },
+    citizenship: { type: String, default: null },
+    citizenshipBack: { type: String, default: null }, // Added citizenship back image
+    pan: { type: String, default: null },
+    map: { type: String, default: null },
+    signature: { type: String, default: null },
+  },
 });
 
 module.exports = mongoose.model("User", userSchema);
