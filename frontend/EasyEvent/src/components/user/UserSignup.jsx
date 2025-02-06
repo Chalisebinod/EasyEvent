@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 
 const UserSignup = () => {
   const [formData, setFormData] = useState({
@@ -10,6 +11,7 @@ const UserSignup = () => {
     email: "",
     password: "",
   });
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
@@ -25,24 +27,24 @@ const UserSignup = () => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     if (!formData.name || !formData.email || !formData.password) {
       toast.error("Please fill in all fields");
       return;
     }
-  
+
     setIsSubmitting(true);
-  
+
     try {
       const response = await axios.post(
         "http://localhost:8000/api/signup",
         formData
       );
-  
+
       if (response.status === 201) {
         toast.success("Signup successful! Please log in.");
         setFormData({ name: "", email: "", password: "" });
-  
+
         // Add a delay before navigation
         setTimeout(() => {
           navigate("/login");
@@ -58,11 +60,10 @@ const UserSignup = () => {
       setIsSubmitting(false);
     }
   };
-  
 
   return (
     <div className="flex h-screen">
-      <ToastContainer/>
+      <ToastContainer />
       {/* Left Section */}
       <div className="w-1/2 bg-orange-500 flex flex-col justify-center items-center p-10">
         <h1 className="text-5xl font-bold text-white">
@@ -76,7 +77,7 @@ const UserSignup = () => {
       {/* Right Section */}
       <div className="w-1/2 bg-white flex flex-col justify-center items-center p-10">
         <h2 className="text-3xl font-bold text-orange-500 mb-4">
-          Get Started Now!!
+          Users Signup !!
         </h2>
 
         <form className="w-3/4" onSubmit={handleSubmit}>
@@ -106,28 +107,33 @@ const UserSignup = () => {
               className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
-          <div className="mb-4">
+          <div className="mb-4 relative">
             <label htmlFor="password" className="block text-gray-700 mb-2">
               Password
             </label>
-            <input
-              type="password"
-              id="password"
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
-            />
+            <div className="relative">
+              <input
+                type={passwordVisible ? "text" : "password"}
+                id="password"
+                placeholder="Password"
+                value={formData.password}
+                onChange={handleChange}
+                className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-orange-500 pr-10"
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                onClick={() => setPasswordVisible(!passwordVisible)}
+              >
+                {passwordVisible ? (
+                  <EyeIcon className="w-6 h-6 text-gray-500" />
+                ) : (
+                  <EyeSlashIcon className="w-6 h-6 text-gray-500" />
+                )}
+              </button>
+            </div>
           </div>
-          <div className="flex items-start mb-6">
-            <input type="checkbox" id="terms" className="mr-2" />
-            <label htmlFor="terms" className="text-gray-700">
-              I agree to{" "}
-              <a href="#" className="text-orange-500 underline">
-                terms & policy
-              </a>
-            </label>
-          </div>
+
           <button
             type="submit"
             disabled={isSubmitting}
@@ -140,6 +146,20 @@ const UserSignup = () => {
             {isSubmitting ? "Signing up..." : "Signup"}
           </button>
         </form>
+
+        {/* Login Link */}
+        <div className="mt-3 text-center">
+          <p className="mt-6 text-gray-600 text-sm">
+            Already have an account?{" "}
+            <Link
+              to="/login"
+              className="text-orange-600 font-medium hover:underline"
+            >
+              {" "}
+              Login
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

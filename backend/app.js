@@ -9,6 +9,8 @@ const userSelfRoute = require("./route/userSelfRoute");
 const adminRoute = require("./route/adminRoute");
 const venueOwnerRoute = require("./route/venueOwnerRoutes");
 const kycRoute = require("./route/kycRoute");
+const venueRoutes = require("./route/venueRoutes");
+const bookingRoutes = require("./route/userBookingRoute")
 
 dotenv.config();
 
@@ -25,14 +27,14 @@ app.use("/api", authRoutes);
 app.use("/api", userSelfRoute);
 app.use("/api", adminRoute);
 app.use("/api", venueOwnerRoute);
-app.use("/api/kyc", kycRoute); // KYC-specific routes
+app.use("/api/kyc", kycRoute);
+app.use("/api", venueRoutes);
+app.use("/api/book", bookingRoutes);
+
 
 // Connect to MongoDB
 mongoose
-  .connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/EasyEvent", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/EasyEvent", {})
   .then(() => console.log("Connected to MongoDB!"))
   .catch((err) => console.error("Failed to connect to MongoDB:", err));
 
