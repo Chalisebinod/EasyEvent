@@ -1,0 +1,6 @@
+Backend : 
+- request for venue owner  - verify kyc
+- user side : venue request
+- venue side : user request 
+
+

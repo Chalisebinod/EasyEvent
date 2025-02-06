@@ -1,21 +1,31 @@
 const express = require("express");
-const { updateKYC, upload } = require("../controllers/kycController");
+const {
+  updateKYC,
+  upload,
+  verifyKYC,
+  getAllKYC,
+  getProfileKyc,
+  getVenueOwnerProfile,
+} = require("../controller/kycController");
+const {
+  checkAuthentication,
+  checkIsVenueOwner,
+  checkIsAdmin,
+} = require("../middleware/middleware");
 
 const router = express.Router();
 
 // API Route to update KYC data
-router.put(
-  "/kyc",
-  upload.fields([
-    { name: "profile", maxCount: 1 },
-    { name: "citizenshipFront", maxCount: 1 },
-    { name: "citizenshipBack", maxCount: 1 },
-    { name: "pan", maxCount: 1 },
-    { name: "map", maxCount: 1 },
-    { name: "signature", maxCount: 1 },
-  ]),
-  updateKYC
-);
+router.post("/post", checkAuthentication, checkIsVenueOwner, updateKYC);
+router.put("/verify", checkAuthentication, checkIsAdmin, verifyKYC);
+router.get("/all", checkAuthentication, checkIsAdmin, getAllKYC);
+router.get("/profile-kyc", checkAuthentication, checkIsVenueOwner, getVenueOwnerProfile);
 
+router.get(
+  "/profile/:kycId",
+  checkAuthentication,
+  checkIsAdmin,
+  getProfileKyc
+);
 
 module.exports = router;

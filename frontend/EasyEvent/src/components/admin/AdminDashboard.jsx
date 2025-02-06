@@ -1,7 +1,6 @@
 import React from "react";
 import Sidebar from "./Sidebar";
 
-
 const Dashboard = () => {
   const upcomingTasks = [
     {
@@ -46,7 +45,7 @@ const Dashboard = () => {
             >
               <h3 className="text-lg font-bold">{title}</h3>
               <p className="text-3xl font-semibold mt-2">
-                {[11, 131, 831, 131][index]}
+                {[11, 131, 0, 0][index]}
               </p>
             </div>
           ))}

@@ -6,7 +6,6 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   contact_number: { type: String, default: null },
   profile_image: { type: String, default: null },
-  location: { type: String, default: null },
   role: { type: String, default: "user" },
   is_blocked: { type: Boolean, default: false },
   resetPasswordOTP: { type: String },

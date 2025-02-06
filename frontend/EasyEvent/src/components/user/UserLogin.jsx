@@ -3,11 +3,12 @@ import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 
 const UserLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -22,7 +23,6 @@ const UserLogin = () => {
 
       localStorage.setItem("access_token", token);
 
-      // Redirect based on user role with a delay
       setTimeout(() => {
         if (response.data.role === "admin") {
           navigate("/admin-dashboard");
@@ -44,7 +44,7 @@ const UserLogin = () => {
         <h1 className="text-5xl font-bold text-white">
           Welcome, <span className="text-yellow-300">Back!</span>
         </h1>
-        <p className="mt-4 text-lg text-white">
+        <p className="mt-4 text-lg text-white text-center px-6">
           Seamless Event Planning Starts Here – Find, Book, and Celebrate with
           Confidence!
         </p>
@@ -72,65 +72,68 @@ const UserLogin = () => {
               required
             />
           </div>
-          <div className="mb-4">
+          <div className="mb-4 relative">
             <label htmlFor="password" className="block text-gray-700 mb-2">
               Password
             </label>
-            <input
-              type="password"
-              id="password"
-              placeholder="password"
-              className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <div className="relative">
+              <input
+                type={passwordVisible ? "text" : "password"}
+                id="password"
+                placeholder="password"
+                className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-orange-500 pr-10"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                onClick={() => setPasswordVisible(!passwordVisible)}
+              >
+                {passwordVisible ? (
+                  <EyeIcon className="w-6 h-6 text-gray-500" />
+                ) : (
+                  <EyeSlashIcon className="w-6 h-6 text-gray-500" />
+                )}
+              </button>
+            </div>
           </div>
           <div className="flex justify-between items-center mb-6">
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                className="mr-2"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-              />
-              Remember Me
-            </label>
             <Link
               to="/forgotpassword"
-              className="text-orange-500 hover:underline"
+              className="text-blue-500 hover:underline ml-auto"
             >
-              Forgot password
+              Forgot password?
             </Link>
           </div>
           <button
             type="submit"
-            className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600"
+            className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition duration-200"
           >
             Login
           </button>
         </form>
 
-        <div className="my-4 flex items-center justify-center">
-          <span className="text-gray-400 text-sm">or</span>
-        </div>
-
-        <button className="w-3/4 flex items-center justify-center border border-gray-300 rounded-lg py-2 hover:bg-gray-100">
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/512px-Google_%22G%22_Logo.svg.png"
-            alt="Google"
-            className="w-5 h-5 mr-2"
-          />
-          Continue with Google
-        </button>
-
-        <div className="mt-4">
-          <button
-            className="w-3/4 border border-orange-500 text-orange-500 py-2 rounded-lg hover:bg-orange-100"
-            onClick={() => navigate("/user-signup")}
-          >
-            Signup
-          </button>
+        {/* Signup Options */}
+        <div className="mt-6 text-center">
+          <p className="text-gray-600 text-lg font-medium">
+            Don't have an account?
+          </p>
+          <div className="flex justify-center gap-6 mt-4">
+            <Link
+              to="/user-signup"
+              className="border border-orange-500 text-black py-2 px-6 rounded-lg transition duration-200 hover:bg-black hover:text-white"
+            >
+              Signup as User
+            </Link>
+            <Link
+              to="/venue-owner-signup"
+              className="border border-orange-500 text-black py-2 px-6 rounded-lg transition duration-200 hover:bg-black hover:text-white"
+            >
+              Signup as Venue Owner
+            </Link>
+          </div>
         </div>
       </div>
 

@@ -31,6 +31,11 @@ import EmailVerification from "./components/user/EmailVerification";
 import PasswordChange from "./components/user/PasswordChange";
 import ForgetPassword from "./components/user/ForgotPassword";
 import UserLogin from "./components/user/UserLogin";
+import CreateVenue from "./components/venueowner/CreateVenue";
+import VenueProfile from "./components/venueowner/VenueProfile";
+import EventBookingForm from "./components/user/EventBookingForm";
+import KycRequest from "./components/admin/KycRequest";
+import KycProfile from "./components/admin/KycProfile";
 
 function App() {
   // useEffect(() => {
@@ -72,6 +77,10 @@ function App() {
     <>
       <ToastContainer />
       <Routes>
+        <Route path="/Venue-profile" element={<VenueProfile />} />
+        <Route path="/venueOwnerKyc" element={<KYCPage />} />
+
+
         {/* Landing Page */}
         <Route path="/" element={<LandingPage />} />
 
@@ -94,12 +103,19 @@ function App() {
         <Route path="/all-user" element={<UserPage />} />
         <Route path="/all-venueUser" element={<VenueOwnerPage />} />
         <Route path="/all-admin" element={<AdminPage />} />
+        <Route path="/kyc-request" element={<KycRequest />} />
+        <Route path="/kyc-profile/:kycId" element={<KycProfile />} />
+
+
         <Route
           path="/venueOwner-profile/:id"
           element={<VenueOwnerUserProfile />}
         />
+        <Route path="/Create-venue" element={<CreateVenue />} />
 
         <Route path="/user-dashboard" element={<UserDashboard />} />
+        <Route path="/event-booking-form" element={<EventBookingForm />} />
+
         <Route
           path="/venue-owner-dashboard"
           element={<VenueOwnerDashboard />}

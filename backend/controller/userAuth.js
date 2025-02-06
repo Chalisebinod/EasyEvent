@@ -86,7 +86,6 @@ const signupVenueOwner = async (req, res) => {
     email,
     password,
     contact_number,
-    location,
     profileImage, // profileImage received from the request body
     role = "venueOwner", // Default role is venueOwner
   } = req.body;
@@ -135,7 +134,6 @@ const signupVenueOwner = async (req, res) => {
       email,
       password: hashedPassword,
       contact_number,
-      location,
       role,
       profile_image: finalProfileImage, // Set profileImage to null if not provided
     });

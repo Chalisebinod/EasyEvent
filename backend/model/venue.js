@@ -1,42 +1,65 @@
 const mongoose = require('mongoose');
 
+// Define the schema
 const venueSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  owner: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'VenueOwner', 
-    required: true 
-  }, // Links to VenueOwner schema
+  owner: { type: mongoose.Schema.Types.ObjectId, ref: 'VenueOwner', required: true },
   location: {
     address: { type: String, required: true },
     city: { type: String, required: true },
     state: { type: String, required: true },
     zip_code: { type: String, required: true },
   },
-  images: [{ type: String }], // Array of image URLs
-  capacity: { type: Number, required: true }, // Number of people it can accommodate
-  price: { type: Number, required: true }, // Price per booking
-  amenities: [{ type: String }], // List of amenities (e.g., WiFi, Parking, Catering)
+  profile_image: { type: String },
+  images: [{ type: String }],
+  description: { type: String, required: true },
+  event_pricing: [
+    {
+      event_type: { type: String, required: true },
+      pricePerPlate: { type: Number, required: true },
+      description: { type: String },
+      services_included: [{ type: String }],
+      hall: { type: mongoose.Schema.Types.ObjectId, ref: 'Hall' }
+    }
+  ],
+  additional_services: [
+    {
+      name: { type: String, required: true },
+      description: { type: String, default: "" },
+    }
+  ],
+  contact_details: {
+    phone: { type: String, required: true },
+    email: { type: String, required: true },
+    whatsapp: { type: String },
+    social_media: {
+      facebook: { type: String },
+      instagram: { type: String },
+      website: { type: String },
+    }
+  },
+  payment_policy: {
+    advance_percentage: { type: Number, default: 50 },
+    security_deposit: { type: Number, default: 0 },
+    refund_policy: { type: String, default: "No Refund" },
+    cancellation_penalty: { type: String, default: "10% deduction if canceled within a week" },
+  },
+  verification_status: { type: String, default: 'Unverified' },
+  reported_count: { type: Number, default: 0 },
+  status: { type: String, default: 'Active' },
+  date_created: { type: Date, default: Date.now },
+  last_updated: { type: Date, default: Date.now },
   reviews: [
     {
       user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
       comment: { type: String, required: true },
       rating: { type: Number, required: true },
       date: { type: Date, default: Date.now },
-    },
-  ],
-  bookings: [
-    {
-      user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-      date: { type: Date, required: true },
-      status: { type: String, default: 'Pending' }, // Pending, Confirmed, Cancelled
-    },
-  ],
-  verification_status: { type: String, default: 'Unverified' }, // Verified, Unverified
-  reported_count: { type: Number, default: 0 }, // Tracks reports against the venue
-  status: { type: String, default: 'Active' }, // Active, Suspended
-  date_created: { type: Date, default: Date.now },
-  last_updated: { type: Date, default: Date.now },
+    }
+  ]
 });
 
-module.exports = mongoose.model('Venue', venueSchema);
+// Define the model only if it hasn't been defined yet
+const Venue = mongoose.models.Venue || mongoose.model("Venue", venueSchema);
+
+module.exports = Venue;

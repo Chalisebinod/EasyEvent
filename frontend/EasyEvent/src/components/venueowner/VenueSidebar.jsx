@@ -73,7 +73,7 @@ const VenueSidebar = () => {
             </ListItemIcon>
             <ListItemText primary="Agreement" />
           </ListItem>
-          <ListItem button component={Link} to="/event">
+          <ListItem button component={Link} to="/Create-venue">
             <ListItemIcon>
               <EventIcon />
             </ListItemIcon>
@@ -83,7 +83,13 @@ const VenueSidebar = () => {
             <ListItemIcon>
               <StoreIcon />
             </ListItemIcon>
-            <ListItemText primary="Venue Profile" />
+            <ListItemText primary="Venue profile" />
+          </ListItem>
+          <ListItem button component={Link} to="/venueOwnerKyc">
+            <ListItemIcon>
+              <ProfileIcon />
+            </ListItemIcon>
+            <ListItemText primary="Kyc" />
           </ListItem>
           <ListItem button component={Link} to="/venue-owner-self-profile">
             <ListItemIcon>

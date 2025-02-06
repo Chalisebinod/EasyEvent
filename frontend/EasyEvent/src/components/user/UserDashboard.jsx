@@ -1,21 +1,25 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaBell } from "react-icons/fa"; // Notification icon
 import Navbar from "./Navbar";
 import BottomNavbar from "./BottomNavbar";
 
-
 const UserDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const venues = Array(12)
-    .fill(0)
-    .map((_, i) => ({
-      id: i + 1,
-      name: `Venue ${i + 1}`,
-      location: `Location ${i + 1}`,
-      image: "https://allthevenues.com/images/main/1486309967_emirates-palace-abu-dhabi-ballroom-weddings.jpg",
-      rating: Math.floor(Math.random() * 5) + 1,
-      description: "A beautifully designed space for your special events.",
-    }));
+  const [venues, setVenues] = useState([]);
+
+  // Fetch data from API
+  useEffect(() => {
+    const fetchVenues = async () => {
+      try {
+        const response = await fetch("http://localhost:8000/api/venues");
+        const data = await response.json();
+        setVenues(data.venues); // Assuming 'venues' is the key in the API response
+      } catch (error) {
+        console.error("Error fetching venues:", error);
+      }
+    };
+    fetchVenues();
+  }, []);
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -57,11 +61,11 @@ const UserDashboard = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {filteredVenues.map((venue) => (
             <div
-              key={venue.id}
+              key={venue.name}
               className="bg-white shadow-lg rounded-lg overflow-hidden transition transform hover:scale-105"
             >
               <img
-                src={venue.image}
+                src={venue.image || "https://via.placeholder.com/300"} // Placeholder image if no image is provided
                 alt={venue.name}
                 className="w-full h-48 object-cover"
               />
@@ -69,9 +73,12 @@ const UserDashboard = () => {
                 <h3 className="text-xl font-bold text-gray-800 mb-2">
                   {venue.name}
                 </h3>
-                <p className="text-gray-600 mb-4">{venue.location}</p>
+                <p className="text-gray-600 mb-4">
+                  {venue.location.address}, {venue.location.city},{" "}
+                  {venue.location.state} {venue.location.zip_code}
+                </p>
                 <p className="text-gray-500 text-sm mb-4">
-                  {venue.description}
+                  A beautifully designed space for your special events.
                 </p>
                 <div className="flex items-center">
                   {[...Array(venue.rating)].map((_, index) => (
@@ -90,8 +97,7 @@ const UserDashboard = () => {
       </main>
 
       {/* Footer */}
-
-      <BottomNavbar/>
+      <BottomNavbar />
     </div>
   );
 };

@@ -7,7 +7,6 @@ const venueOwnerSchema = new mongoose.Schema(
     password: { type: String, required: true },
     contact_number: { type: String, required: true },
     profile_image: { type: String, default: null },
-    location: { type: String, required: true },
     role: { type: String, default: "venueOwner" },
     verified: { type: Boolean, default: false },
     status: {
