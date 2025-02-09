@@ -3,6 +3,7 @@ const Kyc = require("../model/KYC");
 const VenueOwner = require("../model/venueOwner");
 const Venue = require("../model/venue");
 const upload = require("../controller/fileController");
+const Notification = require("../model/notifications");
 
 // Controller for handling KYC updates
 
@@ -108,7 +109,6 @@ const updateKYC = async (req, res) => {
 
 
 
-// Controller for Admin to verify KYC
 const verifyKYC = async (req, res) => {
   try {
     const { kycId, status, message } = req.body;
@@ -147,6 +147,22 @@ const verifyKYC = async (req, res) => {
 
     await kycRecord.save();
 
+    // Create a notification for the VenueOwner
+    const notificationMessage =
+      status === "approved"
+        ? "Your KYC verification has been approved."
+        : status === "rejected"
+        ? `Your KYC verification was rejected. Reason: ${message || "No reason provided."}`
+        : "Your KYC verification is pending.";
+
+    const notification = new Notification({
+      userId: kycRecord.owner, // Assuming `ownerId` is the VenueOwner's ID
+      message: notificationMessage,
+      role: "VenueOwner",
+    });
+
+    await notification.save();
+
     res.json({
       message: `KYC status updated successfully to ${status}.`,
       data: kycRecord,
@@ -156,7 +172,6 @@ const verifyKYC = async (req, res) => {
     res.status(500).json({ error: "Server error. Please try again later." });
   }
 };
-
 
 // Controller for Admin to get all KYC requests
 const getAllKYC = async (req, res) => {

@@ -28,6 +28,27 @@ const getVenueOwnerNotifications = async (req, res) => {
   }
 };
 
+const getUnreadCount = async (req, res) => {
+  try {
+    const userId = req.user.id; // Get user from auth middleware
+    const count = await Notification.countDocuments({ userId, read: false });
+    res.json({ count });
+  } catch (error) {
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+const markRead = async (req, res) => {
+  try {
+    await Notification.findByIdAndUpdate(req.params.id, { read: true });
+    res.json({ success: true, message: "Notification marked as read" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
 module.exports = {
   getVenueOwnerNotifications,
+  getUnreadCount,
+  markRead,
 };

@@ -83,13 +83,13 @@ const KYCPage = () => {
   // Handle form submission to send the KYC data
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     const { venueName, address, city, state, zip_code } = formValues;
     if (!venueName || !address || !city || !state || !zip_code) {
       alert("Please fill in all required venue details.");
       return;
     }
-  
+
     // Check that required documents are uploaded
     if (
       !docFiles.profile ||
@@ -102,50 +102,50 @@ const KYCPage = () => {
       alert("Please upload all required documents.");
       return;
     }
-  
+
     // Validate that the user has selected exactly 2 or 3 venue images.
     if (venueImages.length < 2 || venueImages.length > 3) {
       alert("Please upload exactly 2 or 3 venue images.");
       return;
     }
-  
+
     setLoading(true);
     const formDataToSend = new FormData();
-  
+
     // Append venue details
     formDataToSend.append("venueName", venueName);
     const venueAddress = { address, city, state, zip_code };
     formDataToSend.append("venueAddress", JSON.stringify(venueAddress));
-  
+
     // Append required document files
     fileFields.forEach((field) => {
       if (docFiles[field]) {
         formDataToSend.append(field, docFiles[field]);
       }
     });
-  
+
     // Append venue images (exactly 2 or 3)
     venueImages.forEach((file) => {
       formDataToSend.append("venueImages", file);
     });
-  
+
     // Log the formData before sending
     console.log("Form Data to Send:", formDataToSend);
-  
+
     try {
       const token = localStorage.getItem("access_token"); // Get access token from localStorage (or sessionStorage, or state)
-  
+
       const response = await axios.post(
         "http://localhost:8000/api/kyc/post",
         formDataToSend,
         {
           headers: {
             "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`,  // Send access token as Bearer token
+            Authorization: `Bearer ${token}`, // Send access token as Bearer token
           },
         }
       );
-  
+
       if (response.status === 200) {
         alert("KYC updated successfully!");
         navigate("/venue-owner-dashboard");
@@ -158,7 +158,6 @@ const KYCPage = () => {
       setLoading(false);
     }
   };
-  
 
   return (
     <div className="min-h-screen flex">
