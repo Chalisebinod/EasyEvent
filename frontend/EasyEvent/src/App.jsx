@@ -36,6 +36,7 @@ import VenueProfile from "./components/venueowner/VenueProfile";
 import EventBookingForm from "./components/user/EventBookingForm";
 import KycRequest from "./components/admin/KycRequest";
 import KycProfile from "./components/admin/KycProfile";
+import Notification from "./components/venueowner/Notification";
 
 function App() {
   // useEffect(() => {
@@ -79,6 +80,8 @@ function App() {
       <Routes>
         <Route path="/Venue-profile" element={<VenueProfile />} />
         <Route path="/venueOwnerKyc" element={<KYCPage />} />
+        <Route path="/notification" element={<Notification />} />
+
 
 
         {/* Landing Page */}

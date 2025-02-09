@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   List,
@@ -6,6 +6,7 @@ import {
   ListItemIcon,
   ListItemText,
   Drawer,
+  Badge,
 } from "@mui/material";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import RequestQuoteIcon from "@mui/icons-material/RequestQuote";
@@ -15,16 +16,40 @@ import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import ProfileIcon from "@mui/icons-material/AccountCircle";
 import StoreIcon from "@mui/icons-material/Store";
 import LogoutIcon from "@mui/icons-material/Logout";
+import NotificationsIcon from "@mui/icons-material/Notifications";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const VenueSidebar = () => {
   const navigate = useNavigate();
+  const [notificationCount, setNotificationCount] = useState(0);
+
+  useEffect(() => {
+    // Fetch unread notifications count from API
+    const fetchNotificationCount = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        const response = await axios.get("http://localhost:8000/api/notification/getUnreads", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setNotificationCount(response.data.count || 0);
+      } catch (error) {
+        console.error("Error fetching notification count:", error);
+      }
+    };
+
+    fetchNotificationCount();
+
+    // Optional: Polling to refresh count every 30 seconds
+    const interval = setInterval(fetchNotificationCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogout = () => {
     const confirmLogout = window.confirm("Do you want to logout?");
     if (confirmLogout) {
-      localStorage.removeItem("access_token"); // Clear token
-      navigate("/login"); // Redirect to login page
+      localStorage.removeItem("access_token");
+      navigate("/login");
     }
   };
 
@@ -60,6 +85,14 @@ const VenueSidebar = () => {
               <StoreIcon />
             </ListItemIcon>
             <ListItemText primary="Halls" />
+          </ListItem>
+          <ListItem button component={Link} to="/notification">
+            <ListItemIcon>
+              <Badge badgeContent={notificationCount} color="error">
+                <NotificationsIcon />
+              </Badge>
+            </ListItemIcon>
+            <ListItemText primary="Notifications" />
           </ListItem>
           <ListItem button component={Link} to="/payments">
             <ListItemIcon>
