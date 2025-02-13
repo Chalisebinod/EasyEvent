@@ -24,15 +24,19 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="flex">
+    <div className="flex bg-gray-100 min-h-screen">
       <Sidebar />
-      <div className="ml-64 w-full p-8">
-        <h2 className="text-3xl font-semibold text-gray-700 mb-6">
-          Admin Dashboard
-        </h2>
+      <div className="ml-64 w-full p-6">
+        {/* Page Heading */}
+        <header className="mb-6 border-b pb-4">
+          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-gray-600">
+            Manage venues, users, and bookings efficiently
+          </p>
+        </header>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           {[
             "Total Venues",
             "Total Users",
@@ -41,10 +45,12 @@ const Dashboard = () => {
           ].map((title, index) => (
             <div
               key={index}
-              className="bg-orange-500 text-white text-center p-6 rounded-lg shadow-lg hover:bg-orange-600 transition-all duration-300"
+              className="bg-white p-5 rounded-lg shadow-md border border-gray-200 text-center"
             >
-              <h3 className="text-lg font-bold">{title}</h3>
-              <p className="text-3xl font-semibold mt-2">
+              <h3 className="text-sm text-gray-600 uppercase font-medium">
+                {title}
+              </h3>
+              <p className="text-3xl font-bold text-gray-900 mt-2">
                 {[11, 131, 0, 0][index]}
               </p>
             </div>
@@ -52,33 +58,33 @@ const Dashboard = () => {
         </div>
 
         {/* Upcoming Tasks */}
-        <section className="mt-12">
-          <h3 className="text-2xl font-semibold text-gray-700 mb-4">
+        <section className="mt-8">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
             Upcoming Tasks
           </h3>
-          <div className="bg-white shadow-md rounded-lg overflow-hidden">
-            <table className="table-auto w-full text-left text-sm">
+          <div className="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
+            <table className="w-full text-left text-sm">
               <thead>
-                <tr className="bg-orange-500 text-white">
-                  <th className="px-6 py-4">Task</th>
-                  <th className="px-6 py-4">Date</th>
-                  <th className="px-6 py-4">Status</th>
+                <tr className="bg-gray-200 text-gray-700">
+                  <th className="px-6 py-3">Task</th>
+                  <th className="px-6 py-3">Date</th>
+                  <th className="px-6 py-3">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {upcomingTasks.map((task) => (
+                {upcomingTasks.map((task, index) => (
                   <tr
                     key={task.id}
-                    className="hover:bg-gray-50 transition-all duration-300"
+                    className={`${index % 2 === 0 ? "bg-gray-50" : "bg-white"}`}
                   >
-                    <td className="px-6 py-4">{task.task}</td>
-                    <td className="px-6 py-4">{task.date}</td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-3">{task.task}</td>
+                    <td className="px-6 py-3">{task.date}</td>
+                    <td className="px-6 py-3">
                       <span
-                        className={`px-3 py-1 rounded-full text-white ${
+                        className={`px-3 py-1 text-xs font-medium rounded-full ${
                           task.status === "Pending"
-                            ? "bg-yellow-500"
-                            : "bg-green-500"
+                            ? "bg-yellow-500 text-white"
+                            : "bg-green-500 text-white"
                         }`}
                       >
                         {task.status}

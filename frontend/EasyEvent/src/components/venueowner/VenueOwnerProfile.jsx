@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
-import VenueSidebar from "./VenueSideBar";
+import VenueSidebar from "./VenueSidebar";
+
 
 const VenueOwnerProfile = () => {
   const [profile, setProfile] = useState(null);
@@ -12,6 +13,11 @@ const VenueOwnerProfile = () => {
     email: "",
     contact_number: "",
     profile_image: null,
+    short_description: "",
+    history: "",
+    capacity: "",
+    amenities: "",
+    venue_images: [],
   });
   const accessToken = localStorage.getItem("access_token");
   const navigate = useNavigate();
@@ -35,10 +41,9 @@ const VenueOwnerProfile = () => {
         );
         setProfile(response.data);
         setUpdatedProfile({
-          name: response.data.name,
-          email: response.data.email,
-          contact_number: response.data.contact_number,
+          ...response.data,
           profile_image: null,
+          venue_images: [],
         });
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -73,17 +78,24 @@ const VenueOwnerProfile = () => {
     }));
   };
 
+  const handleVenueImagesChange = (e) => {
+    setUpdatedProfile((prevState) => ({
+      ...prevState,
+      venue_images: Array.from(e.target.files),
+    }));
+  };
+
   const handleSaveChanges = async (e) => {
     e.preventDefault();
 
     const formData = new FormData();
-    formData.append("name", updatedProfile.name);
-    formData.append("email", updatedProfile.email);
-    formData.append("contact_number", updatedProfile.contact_number);
-
-    if (updatedProfile.profile_image) {
-      formData.append("profile_image", updatedProfile.profile_image);
-    }
+    Object.entries(updatedProfile).forEach(([key, value]) => {
+      if (key === "venue_images") {
+        value.forEach((file) => formData.append("venue_images", file));
+      } else if (value) {
+        formData.append(key, value);
+      }
+    });
 
     try {
       await axios.put("http://localhost:8000/api/profile", formData, {
@@ -105,55 +117,56 @@ const VenueOwnerProfile = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100">
-      <div className="flex flex-1">
-        {/* Sidebar */}
-        <VenueSidebar />
-
-        {/* Profile Content */}
-        <div className="flex flex-col w-full md:w-3/4 p-6 bg-white shadow-lg rounded-lg mx-auto">
-          {profile ? (
-            isEditing ? (
-              <form onSubmit={handleSaveChanges} className="space-y-4">
-                <div>
-                  <label className="block text-gray-700">Name</label>
+    <div className="min-h-screen flex bg-gray-100">
+      <VenueSidebar />
+      <div className="w-full md:w-3/4 p-6 bg-white shadow-lg rounded-lg mx-auto">
+        {profile ? (
+          isEditing ? (
+            <form onSubmit={handleSaveChanges} className="space-y-4">
+              {[
+                { label: "Name", name: "name", type: "text" },
+                { label: "Email", name: "email", type: "email" },
+                { label: "Phone Number", name: "contact_number", type: "text" },
+                {
+                  label: "Short Description",
+                  name: "short_description",
+                  type: "text",
+                },
+                { label: "History", name: "history", type: "text" },
+                { label: "Capacity", name: "capacity", type: "number" },
+                { label: "Amenities", name: "amenities", type: "text" },
+              ].map(({ label, name, type }) => (
+                <div key={name}>
+                  <label className="block text-gray-700">{label}</label>
                   <input
-                    type="text"
-                    name="name"
-                    value={updatedProfile.name}
+                    type={type}
+                    name={name}
+                    value={updatedProfile[name]}
                     onChange={handleInputChange}
                     className="w-full border p-2 rounded"
                   />
                 </div>
-                <div>
-                  <label className="block text-gray-700">Email</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={updatedProfile.email}
-                    onChange={handleInputChange}
-                    className="w-full border p-2 rounded"
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700">Phone Number</label>
-                  <input
-                    type="text"
-                    name="contact_number"
-                    value={updatedProfile.contact_number}
-                    onChange={handleInputChange}
-                    className="w-full border p-2 rounded"
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700">Profile Image</label>
-                  <input
-                    type="file"
-                    name="profile_image"
-                    onChange={handleImageChange}
-                    className="w-full p-2 rounded"
-                  />
-                </div>
+              ))}
+              <div>
+                <label className="block text-gray-700">Profile Image</label>
+                <input
+                  type="file"
+                  name="profile_image"
+                  onChange={handleImageChange}
+                  className="w-full p-2 rounded"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-700">Venue Images</label>
+                <input
+                  type="file"
+                  multiple
+                  name="venue_images"
+                  onChange={handleVenueImagesChange}
+                  className="w-full p-2 rounded"
+                />
+              </div>
+              <div className="flex space-x-4">
                 <button
                   type="submit"
                   className="px-6 py-2 bg-orange-500 text-white rounded-lg shadow-md hover:bg-orange-600 transition"
@@ -167,36 +180,62 @@ const VenueOwnerProfile = () => {
                 >
                   Cancel
                 </button>
-              </form>
-            ) : (
-              <div>
-                <div className="flex flex-col md:flex-row items-center">
-                  <img
-                    src={
-                      profile.profile_image || "https://via.placeholder.com/150"
-                    }
-                    alt="Profile"
-                    className="w-32 h-32 rounded-full border-4 border-orange-500"
-                  />
-                  <div className="ml-6 mt-4 md:mt-0">
-                    <h2 className="text-2xl font-semibold text-gray-800">
-                      {profile.name}
-                    </h2>
-                    <p className="text-gray-500">{profile.email}</p>
-                  </div>
-                </div>
-                <div className="mt-6">
-                  <p className="text-gray-700">
-                    <strong>Phone:</strong>{" "}
-                    {profile.contact_number || "Not provided"}
-                  </p>
+              </div>
+            </form>
+          ) : (
+            <div>
+              <div className="flex flex-col md:flex-row items-center">
+                <img
+                  src={
+                    profile.profile_image || "https://via.placeholder.com/150"
+                  }
+                  alt="Profile"
+                  className="w-32 h-32 rounded-full border-4 border-orange-500"
+                />
+                <div className="ml-6 mt-4 md:mt-0">
+                  <h2 className="text-2xl font-semibold text-gray-800">
+                    {profile.name}
+                  </h2>
+                  <p className="text-gray-500">{profile.email}</p>
+                  <p className="text-gray-700">{profile.short_description}</p>
                 </div>
               </div>
-            )
-          ) : (
-            <p>Loading profile...</p>
-          )}
-        </div>
+              <div className="mt-6 space-y-2">
+                <p>
+                  <strong>Phone:</strong>{" "}
+                  {profile.contact_number || "Not provided"}
+                </p>
+                <p>
+                  <strong>History:</strong> {profile.history}
+                </p>
+                <p>
+                  <strong>Capacity:</strong> {profile.capacity}
+                </p>
+                <p>
+                  <strong>Amenities:</strong> {profile.amenities}
+                </p>
+              </div>
+              <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4">
+                {profile.venue_images?.map((img, index) => (
+                  <img
+                    key={index}
+                    src={img}
+                    alt={`Venue ${index + 1}`}
+                    className="w-full h-40 object-cover rounded-lg shadow-md"
+                  />
+                ))}
+              </div>
+              <button
+                onClick={handleEditProfile}
+                className="mt-4 px-6 py-2 bg-orange-500 text-white rounded-lg shadow-md hover:bg-orange-600 transition"
+              >
+                Edit Profile
+              </button>
+            </div>
+          )
+        ) : (
+          <p>Loading profile...</p>
+        )}
       </div>
     </div>
   );

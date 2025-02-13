@@ -7,16 +7,20 @@ import {
   ListItemText,
   Drawer,
   Badge,
+  Divider,
+  Typography,
 } from "@mui/material";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import RequestQuoteIcon from "@mui/icons-material/RequestQuote";
-import EventIcon from "@mui/icons-material/Event";
-import PaymentsIcon from "@mui/icons-material/Payments";
-import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
-import ProfileIcon from "@mui/icons-material/AccountCircle";
-import StoreIcon from "@mui/icons-material/Store";
-import LogoutIcon from "@mui/icons-material/Logout";
-import NotificationsIcon from "@mui/icons-material/Notifications";
+import {
+  Dashboard as DashboardIcon,
+  RequestQuote as RequestQuoteIcon,
+  Event as EventIcon,
+  Payments as PaymentsIcon,
+  AccountBalance as AccountBalanceIcon,
+  AccountCircle as ProfileIcon,
+  Store as StoreIcon,
+  Logout as LogoutIcon,
+  Notifications as NotificationsIcon,
+} from "@mui/icons-material";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -25,13 +29,15 @@ const VenueSidebar = () => {
   const [notificationCount, setNotificationCount] = useState(0);
 
   useEffect(() => {
-    // Fetch unread notifications count from API
     const fetchNotificationCount = async () => {
       try {
         const token = localStorage.getItem("access_token");
-        const response = await axios.get("http://localhost:8000/api/notification/getUnreads", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await axios.get(
+          "http://localhost:8000/api/notification/getUnreads",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         setNotificationCount(response.data.count || 0);
       } catch (error) {
         console.error("Error fetching notification count:", error);
@@ -39,8 +45,6 @@ const VenueSidebar = () => {
     };
 
     fetchNotificationCount();
-
-    // Optional: Polling to refresh count every 30 seconds
     const interval = setInterval(fetchNotificationCount, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -57,83 +61,90 @@ const VenueSidebar = () => {
     <Box sx={{ display: "flex" }}>
       <Drawer
         sx={{
-          width: 240,
+          width: 250,
           flexShrink: 0,
           "& .MuiDrawer-paper": {
-            width: 240,
+            width: 250,
             boxSizing: "border-box",
+            backgroundColor: "#2C3E50", // Dark background
+            color: "#ECF0F1", // Light text color
           },
         }}
         variant="permanent"
         anchor="left"
       >
+        {/* Sidebar Header */}
+        <Box className="text-center p-4 bg-gay font-extrabold rounded-lg mb-4">
+          <Typography variant="h6">EasyEvent</Typography>
+        </Box>
+
+        {/* Navigation Links */}
         <List>
           <ListItem button component={Link} to="/venue-owner-dashboard">
             <ListItemIcon>
-              <DashboardIcon />
+              <DashboardIcon sx={{ color: "#ECF0F1" }} />
             </ListItemIcon>
             <ListItemText primary="Dashboard" />
           </ListItem>
           <ListItem button component={Link} to="/request">
             <ListItemIcon>
-              <RequestQuoteIcon />
+              <RequestQuoteIcon sx={{ color: "#ECF0F1" }} />
             </ListItemIcon>
             <ListItemText primary="Request" />
           </ListItem>
           <ListItem button component={Link} to="/halls">
             <ListItemIcon>
-              <StoreIcon />
+              <StoreIcon sx={{ color: "#ECF0F1" }} />
             </ListItemIcon>
             <ListItemText primary="Halls" />
           </ListItem>
           <ListItem button component={Link} to="/notification">
             <ListItemIcon>
               <Badge badgeContent={notificationCount} color="error">
-                <NotificationsIcon />
+                <NotificationsIcon sx={{ color: "#ECF0F1" }} />
               </Badge>
             </ListItemIcon>
             <ListItemText primary="Notifications" />
           </ListItem>
           <ListItem button component={Link} to="/payments">
             <ListItemIcon>
-              <PaymentsIcon />
+              <PaymentsIcon sx={{ color: "#ECF0F1" }} />
             </ListItemIcon>
             <ListItemText primary="Payments" />
           </ListItem>
           <ListItem button component={Link} to="/agreement">
             <ListItemIcon>
-              <AccountBalanceIcon />
+              <AccountBalanceIcon sx={{ color: "#ECF0F1" }} />
             </ListItemIcon>
             <ListItemText primary="Agreement" />
           </ListItem>
           <ListItem button component={Link} to="/Create-venue">
             <ListItemIcon>
-              <EventIcon />
+              <EventIcon sx={{ color: "#ECF0F1" }} />
             </ListItemIcon>
             <ListItemText primary="Event" />
           </ListItem>
-          <ListItem button component={Link} to="/venue-profile">
+          <ListItem button component={Link} to="/Venue-profile">
             <ListItemIcon>
-              <StoreIcon />
+              <StoreIcon sx={{ color: "#ECF0F1" }} />
             </ListItemIcon>
-            <ListItemText primary="Venue profile" />
+            <ListItemText primary="Venue Profile" />
           </ListItem>
           <ListItem button component={Link} to="/venueOwnerKyc">
             <ListItemIcon>
-              <ProfileIcon />
+              <ProfileIcon sx={{ color: "#ECF0F1" }} />
             </ListItemIcon>
-            <ListItemText primary="Kyc" />
+            <ListItemText primary="KYC" />
           </ListItem>
-          <ListItem button component={Link} to="/venue-owner-self-profile">
-            <ListItemIcon>
-              <ProfileIcon />
-            </ListItemIcon>
-            <ListItemText primary="My Profile" />
-          </ListItem>
-          {/* Logout button with confirmation */}
+        </List>
+
+        <Divider sx={{ borderColor: "#7F8C8D" }} />
+
+        {/* Logout Button */}
+        <List>
           <ListItem button onClick={handleLogout}>
             <ListItemIcon>
-              <LogoutIcon />
+              <LogoutIcon sx={{ color: "#ECF0F1" }} />
             </ListItemIcon>
             <ListItemText primary="Logout" />
           </ListItem>

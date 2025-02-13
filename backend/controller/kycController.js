@@ -1,4 +1,3 @@
-// kycController.js
 const Kyc = require("../model/KYC");
 const VenueOwner = require("../model/venueOwner");
 const Venue = require("../model/venue");
@@ -6,9 +5,9 @@ const upload = require("../controller/fileController");
 const Notification = require("../model/notifications");
 
 // Controller for handling KYC updates
-
 const updateKYC = async (req, res) => {
   try {
+    // Use the file upload middleware for the expected fields
     upload.fields([
       { name: "profile", maxCount: 1 },
       { name: "citizenshipFront", maxCount: 1 },
@@ -36,6 +35,7 @@ const updateKYC = async (req, res) => {
         }
       }
 
+      // Validate required fields
       if (
         !venueName ||
         !parsedVenueAddress ||
@@ -50,7 +50,7 @@ const updateKYC = async (req, res) => {
         });
       }
 
-      // Get the venue owner details from the middleware
+      // Get the venue owner details from the middleware (assumes req.user populated via auth middleware)
       const userId = req.user.id;
       const existingOwner = await VenueOwner.findById(userId);
       if (!existingOwner) {
@@ -76,18 +76,34 @@ const updateKYC = async (req, res) => {
         venueName,
         venueAddress: parsedVenueAddress,
         venueImages: venueImages.map((file) => file.path),
-        // You might want to update other fields as necessary
+        // Additional fields can be added as needed
       };
 
-      // Instead of creating a new document, check if one exists for this phone
-      const existingKyc = await Kyc.findOne({ phone: existingOwner.contact_number });
+      // Instead of creating a new document, check if one already exists for this owner
+      const existingKyc = await Kyc.findOne({ owner: existingOwner._id });
+
       if (existingKyc) {
-        // Update the existing record
+        // If the KYC record already exists and its status is not "Rejected",
+        // do not allow a new submission.
+        if (existingKyc.verificationStatus !== "Rejected") {
+          return res.status(400).json({
+            error:
+              "You have already submitted a KYC. Please check your current status.",
+            data: existingKyc,
+          });
+        }
+        // If the previous KYC was rejected, allow reapplication by updating the record.
         Object.assign(existingKyc, updateData);
+        existingKyc.verificationStatus = "Pending"; // Reset status for reapplication
+        existingKyc.rejectMsg = null; // Clear any previous rejection message
         await existingKyc.save();
-        return res.json({ message: "KYC updated successfully!", data: existingKyc });
+
+        return res.json({
+          message: "KYC reapplication submitted successfully!",
+          data: existingKyc,
+        });
       } else {
-        // Create a new KYC record
+        // Create a new KYC record if one does not already exist
         const newKYC = new Kyc({
           owner: existingOwner._id,
           name: existingOwner.name,
@@ -96,7 +112,10 @@ const updateKYC = async (req, res) => {
           ...updateData,
         });
         await newKYC.save();
-        return res.json({ message: "KYC updated successfully!", data: newKYC });
+        return res.json({
+          message: "KYC submitted successfully!",
+          data: newKYC,
+        });
       }
     });
   } catch (error) {
@@ -106,13 +125,13 @@ const updateKYC = async (req, res) => {
 };
 
 
-
-
-
+// Updated verifyKYC controller
+// Updated verifyKYC controller
 const verifyKYC = async (req, res) => {
   try {
     const { kycId, status, message } = req.body;
-    const adminId = req.user.id; // Assuming the admin ID is available from middleware
+    const adminId = req.user.id; // Assuming the admin ID is available via middleware
+    console.log("KYC Id printing here", kycId);
 
     // Validate required fields
     if (!kycId || !status) {
@@ -135,32 +154,79 @@ const verifyKYC = async (req, res) => {
       return res.status(404).json({ error: "KYC record not found." });
     }
 
-    // Update KYC status
-    kycRecord.verificationStatus = status;
+    const previousStatus = kycRecord.verificationStatus; // Store previous status
 
-    // If rejected, set rejection message
+    // Update KYC status and rejection message if applicable
+    kycRecord.verificationStatus = status;
     if (status === "rejected") {
       kycRecord.rejectMsg = message || "No reason provided.";
     } else {
-      kycRecord.rejectMsg = null; // Clear rejection message if approved/pending
+      kycRecord.rejectMsg = null;
+    }
+    await kycRecord.save();
+
+    // If approved, create the Venue (only if it doesn't already exist)
+    if (status === "approved") {
+      const existingVenue = await Venue.findOne({
+        owner: kycRecord.owner,
+        name: kycRecord.venueName,
+      });
+      if (!existingVenue) {
+        const newVenue = new Venue({
+          name: kycRecord.venueName,
+          owner: kycRecord.owner,
+          location: kycRecord.venueAddress,
+          description: "Venue verified via KYC.",
+          verification_status: "Verified",
+          profile_image: kycRecord.profile || "",
+          contact_details: {
+            phone: kycRecord.phone,
+            email: kycRecord.email,
+          },
+        });
+        await newVenue.save();
+
+        // Update the VenueOwner's venues array and mark the owner as verified
+        await VenueOwner.findByIdAndUpdate(kycRecord.owner, {
+          $push: { venues: newVenue._id },
+          $set: { verified: true, status: "verified" },
+        });
+      } else {
+        // Even if the venue exists, ensure the owner is marked as verified
+        await VenueOwner.findByIdAndUpdate(kycRecord.owner, {
+          $set: { verified: true, status: "verified" },
+        });
+      }
     }
 
-    await kycRecord.save();
+    // If status changed from "approved" to "rejected", delete the existing venue
+    // and update the VenueOwner's venues array and verified status accordingly.
+    if (previousStatus === "approved" && status === "rejected") {
+      const existingVenue = await Venue.findOne({
+        owner: kycRecord.owner,
+        name: kycRecord.venueName,
+      });
+      if (existingVenue) {
+        await Venue.deleteOne({ _id: existingVenue._id });
+        await VenueOwner.findByIdAndUpdate(kycRecord.owner, {
+          $pull: { venues: existingVenue._id },
+          $set: { verified: false, status: "rejected" },
+        });
+      }
+    }
 
     // Create a notification for the VenueOwner
     const notificationMessage =
       status === "approved"
-        ? "Your KYC verification has been approved."
+        ? "Your KYC verification has been approved and your venue has been created."
         : status === "rejected"
         ? `Your KYC verification was rejected. Reason: ${message || "No reason provided."}`
         : "Your KYC verification is pending.";
-
     const notification = new Notification({
-      userId: kycRecord.owner, // Assuming `ownerId` is the VenueOwner's ID
+      userId: kycRecord.owner,
       message: notificationMessage,
       role: "VenueOwner",
     });
-
     await notification.save();
 
     res.json({
@@ -173,18 +239,18 @@ const verifyKYC = async (req, res) => {
   }
 };
 
-// Controller for Admin to get all KYC requests
+
+// Other KYC controllers remain unchanged
+
 const getAllKYC = async (req, res) => {
   try {
     const { status } = req.query; // Get the status from query params
 
-    // Define a filter object to apply conditions dynamically
     let filter = {};
     if (status) {
-      filter.verificationStatus = status; // Filter based on status if provided
+      filter.verificationStatus = status;
     }
 
-    // Fetch KYC records based on the filter
     const kycRecords = await Kyc.find(filter)
       .populate("owner", "name contact_number email")
       .exec();
@@ -193,66 +259,63 @@ const getAllKYC = async (req, res) => {
       return res.status(404).json({ error: "No KYC records found." });
     }
 
-    // Format the response data
     const kycData = kycRecords.map((record) => ({
       _id: record._id,
-      venueOwnerName: record.owner?.name || "Unknown", // Get owner's name
+      venueOwnerName: record.owner?.name || "Unknown",
       venueName: record.venueName,
       location: `${record.venueAddress.address}, ${record.venueAddress.city}, ${record.venueAddress.state}, ${record.venueAddress.zip_code}`,
       phoneNumber: record.owner?.contact_number || "N/A",
       status: record.verificationStatus,
     }));
 
-    res.json({ message: "KYC records fetched successfully.", data: kycData });
+    res.json({
+      message: "KYC records fetched successfully.",
+      data: kycData,
+    });
   } catch (error) {
     console.error("Error fetching KYC records:", error.message);
     res.status(500).json({ error: "Server error. Please try again later." });
   }
 };
 
-
-// getAllKYC controller - Fetches all KYC records for the admin
-// getProfileKyc controller - Fetch a specific KYC record based on kycId
-async function getProfileKyc(req, res) {
+const getProfileKyc = async (req, res) => {
   try {
-    const { kycId } = req.params; // Get the kycId from the request params
+    // Get the kycId from the query parameters
+    const { kycId } = req.params;
 
-    // Validate if kycId is provided
     if (!kycId) {
-      return res.status(400).json({ error: "KYC ID is required." });
+      return res.status(400).json({ error: "KYC id is required." });
     }
 
-    // Fetch the specific KYC record using the kycId
+    // Find the KYC record by its _id and populate the owner details
     const kycRecord = await Kyc.findById(kycId)
-      .populate("owner", "name contact_number email") // Populate the venue owner details (name, phone, email)
+      .populate("owner", "name contact_number email")
       .exec();
 
-    // If the KYC record is not found, return an error
     if (!kycRecord) {
       return res.status(404).json({ error: "KYC record not found." });
     }
 
-    // Return the detailed KYC data
     const kycData = {
-      venueOwnerName: kycRecord.owner?.name || "N/A", // Venue Owner Name (from populated data)
-      venueName: kycRecord.venueName, // Venue Name
+      venueOwnerName: kycRecord.owner?.name || "N/A",
+      venueName: kycRecord.venueName,
       venueAddress: {
         address: kycRecord.venueAddress.address,
         city: kycRecord.venueAddress.city,
         state: kycRecord.venueAddress.state,
         zip_code: kycRecord.venueAddress.zip_code,
-      }, // Venue Address
-      phoneNumber: kycRecord.owner?.contact_number || "N/A", // Venue Owner Phone Number (from populated data)
-      email: kycRecord.owner?.email || "N/A", // Venue Owner Email
-      status: kycRecord.verificationStatus, // KYC Status (approved, rejected, pending)
-      rejectMsg: kycRecord.rejectMsg || null, // Rejection message (if available)
-      profileImage: kycRecord.profile || "No profile image", // Profile Image URL
-      citizenshipFront: kycRecord.citizenshipFront || "No file uploaded", // Citizenship Front
-      citizenshipBack: kycRecord.citizenshipBack || "No file uploaded", // Citizenship Back
-      pan: kycRecord.pan || "No file uploaded", // PAN document
-      map: kycRecord.map || "No map file uploaded", // Map image
-      signature: kycRecord.signature || "No signature uploaded", // Signature image
-      venueImages: kycRecord.venueImages || "No venue images uploaded", // Venue Images
+      },
+      phoneNumber: kycRecord.owner?.contact_number || "N/A",
+      email: kycRecord.owner?.email || "N/A",
+      status: kycRecord.verificationStatus,
+      rejectMsg: kycRecord.rejectMsg || null,
+      profileImage: kycRecord.profile || "No profile image",
+      citizenshipFront: kycRecord.citizenshipFront || "No file uploaded",
+      citizenshipBack: kycRecord.citizenshipBack || "No file uploaded",
+      pan: kycRecord.pan || "No file uploaded",
+      map: kycRecord.map || "No map file uploaded",
+      signature: kycRecord.signature || "No signature uploaded",
+      venueImages: kycRecord.venueImages || "No venue images uploaded",
     };
 
     res.json({
@@ -263,31 +326,75 @@ async function getProfileKyc(req, res) {
     console.error("Error fetching KYC profile:", error.message);
     res.status(500).json({ error: "Server error. Please try again later." });
   }
-}
-// Controller to fetch Venue Owner's current information
+};
+
+// check venueowner kcy
+const getVenueOwnerProfileKyc = async (req, res) => {
+  try {
+    // Get the user id from the authenticated user (set by your auth middleware)
+    const userId = req.user.id;
+
+    // Find the KYC record associated with this user
+    const kycRecord = await Kyc.findOne({ owner: userId })
+      .populate("owner", "name contact_number email")
+      .exec();
+
+    if (!kycRecord) {
+      return res
+        .status(404)
+        .json({ error: "KYC record not found for this user." });
+    }
+
+    const kycData = {
+      venueOwnerName: kycRecord.owner?.name || "N/A",
+      venueName: kycRecord.venueName,
+      venueAddress: {
+        address: kycRecord.venueAddress.address,
+        city: kycRecord.venueAddress.city,
+        state: kycRecord.venueAddress.state,
+        zip_code: kycRecord.venueAddress.zip_code,
+      },
+      phoneNumber: kycRecord.owner?.contact_number || "N/A",
+      email: kycRecord.owner?.email || "N/A",
+      status: kycRecord.verificationStatus,
+      rejectMsg: kycRecord.rejectMsg || null,
+      profileImage: kycRecord.profile || "No profile image",
+      citizenshipFront: kycRecord.citizenshipFront || "No file uploaded",
+      citizenshipBack: kycRecord.citizenshipBack || "No file uploaded",
+      pan: kycRecord.pan || "No file uploaded",
+      map: kycRecord.map || "No map file uploaded",
+      signature: kycRecord.signature || "No signature uploaded",
+      venueImages: kycRecord.venueImages || "No venue images uploaded",
+    };
+
+    res.json({
+      message: "KYC profile fetched successfully.",
+      data: kycData,
+    });
+  } catch (error) {
+    console.error("Error fetching KYC profile:", error.message);
+    res.status(500).json({ error: "Server error. Please try again later." });
+  }
+};
+
 const getVenueOwnerProfile = async (req, res) => {
   try {
-    const userId = req.user.id; // Assuming user ID is available via auth token
-
-    // Fetch the venue owner based on userId
+    const userId = req.user.id;
     const venueOwner = await VenueOwner.findById(userId);
     if (!venueOwner) {
       return res.status(404).json({ error: "Venue owner not found." });
     }
-
-    // Return venue owner's current profile data
     res.json({
       message: "Venue owner profile fetched successfully.",
       data: {
         name: venueOwner.name,
         contact_number: venueOwner.contact_number,
         email: venueOwner.email,
-        address: venueOwner.address || null, // Show address if available
+        address: venueOwner.address || null,
         city: venueOwner.city || null,
         state: venueOwner.state || null,
         zip_code: venueOwner.zip_code || null,
         venueName: venueOwner.venueName || null,
-        // Add more fields as needed
       },
     });
   } catch (error) {
@@ -296,4 +403,11 @@ const getVenueOwnerProfile = async (req, res) => {
   }
 };
 
-module.exports = { updateKYC, verifyKYC, getAllKYC, getProfileKyc,getVenueOwnerProfile };
+module.exports = {
+  updateKYC,
+  verifyKYC,
+  getAllKYC,
+  getProfileKyc,
+  getVenueOwnerProfile,
+  getVenueOwnerProfileKyc,
+};
