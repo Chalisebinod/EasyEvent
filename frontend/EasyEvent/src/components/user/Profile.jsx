@@ -3,7 +3,7 @@ import { FaCog } from "react-icons/fa";
 import Navbar from "./Navbar";
 import BottomNavbar from "./BottomNavbar";
 import axios from "axios";
-import { useNavigate } from "react-router-dom"; // Use useNavigate from React Router v6
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 const Profile = () => {
@@ -16,11 +16,13 @@ const Profile = () => {
     profile_image: null,
   });
   const accessToken = localStorage.getItem("access_token");
-  const navigate = useNavigate(); // Hook for navigation
+  const navigate = useNavigate();
+
   const handleLogout = () => {
-    localStorage.removeItem("access_token"); // Remove token
-    navigate("/login"); // Redirect to login page
+    localStorage.removeItem("access_token");
+    navigate("/login");
   };
+
   useEffect(() => {
     const fetchProfile = async () => {
       if (!accessToken) {
@@ -45,7 +47,6 @@ const Profile = () => {
       } catch (error) {
         console.error("Error fetching profile:", error);
         if (error.response && error.response.status === 401) {
-          // Handle unauthorized error
           toast.error("Session expired, please login again.");
           navigate("/login");
         } else {
@@ -55,12 +56,11 @@ const Profile = () => {
     };
 
     fetchProfile();
-  }, [navigate]); // Only include `navigate` in the dependency array
+  }, [navigate]);
 
   const handleEditProfile = () => {
     setIsEditing(true);
   };
-
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -93,10 +93,10 @@ const Profile = () => {
       await axios.put("http://localhost:8000/api/profile", formData, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "multipart/form-data", 
+          "Content-Type": "multipart/form-data",
         },
       });
-      alert("Profile updated successfully!");
+      toast.success("Profile updated successfully!");
       setIsEditing(false);
       setProfile((prevState) => ({
         ...prevState,
@@ -104,143 +104,157 @@ const Profile = () => {
       }));
     } catch (error) {
       console.error("Error updating profile:", error);
-      alert("Failed to update profile.");
+      toast.error("Failed to update profile.");
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100">
+    <div className="min-h-screen bg-gray-100">
       <Navbar />
-      <div className="flex flex-1 p-6">
-        {/* Sidebar (Options Section) */}
-        <div className="hidden md:flex flex-col bg-white shadow-lg rounded-lg p-4 w-1/4">
-          <h3 className="text-lg font-semibold text-gray-800">Options</h3>
-          <ul className="mt-4 space-y-2">
-            <li
-              className="cursor-pointer p-2 bg-gray-100 rounded hover:bg-orange-100"
-              onClick={handleEditProfile}
-            >
-              Edit Profile
-            </li>
-            <li
-              className="cursor-pointer p-2 bg-gray-100 rounded hover:bg-orange-100"
-              onClick={() => navigate("/change-password")} // Navigate to Change Password page
-            >
-              Change Password
-            </li>
-            <li
-              className="cursor-pointer p-2 bg-gray-100 rounded hover:bg-orange-100"
-              onClick={() => navigate("/payment-details")} // Navigate to Payment Details page
-            >
-              Payment Details
-            </li>
-            <li
-              className="cursor-pointer p-2 bg-gray-100 rounded hover:bg-orange-100"
-              onClick={handleLogout} // Navigate to Delete Account page
-            >
-             Logout
-            </li>
-            <li
-              className="cursor-pointer p-2 bg-gray-100 rounded hover:bg-orange-100"
-              onClick={() => navigate("/delete-account")} // Navigate to Delete Account page
-            >
-              Delete Account
-            </li>
-          </ul>
-        </div>
+      <div className="max-w-6xl mx-auto px-6 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Left Sidebar */}
+          <div className="bg-white shadow-xl rounded-lg p-6 space-y-6">
+            <h2 className="text-3xl font-semibold text-gray-800">
+              Profile Options
+            </h2>
+            <div className="flex flex-col space-y-4">
+              <button
+                className="text-lg text-white bg-teal-600 hover:bg-teal-700 py-2 px-4 rounded-lg shadow-md transition duration-300"
+                onClick={handleEditProfile}
+              >
+                Edit Profile
+              </button>
+              <button
+                className="text-lg text-white bg-gray-600 hover:bg-gray-700 py-2 px-4 rounded-lg shadow-md transition duration-300"
+                onClick={() => navigate("/change-password")}
+              >
+                Change Password
+              </button>
+              <button
+                className="text-lg text-white bg-blue-600 hover:bg-blue-700 py-2 px-4 rounded-lg shadow-md transition duration-300"
+                onClick={() => navigate("/payment-details")}
+              >
+                Payment Details
+              </button>
+              <button
+                className="text-lg text-white bg-red-600 hover:bg-red-700 py-2 px-4 rounded-lg shadow-md transition duration-300"
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
+              <button
+                className="text-lg text-white bg-yellow-600 hover:bg-yellow-700 py-2 px-4 rounded-lg shadow-md transition duration-300"
+                onClick={() => navigate("/delete-account")}
+              >
+                Delete Account
+              </button>
+            </div>
+          </div>
 
-        <div className="flex flex-1 p-6">
-          {/* Profile Content */}
-          <div className="flex flex-col bg-white shadow-lg rounded-lg w-full md:w-3/4 p-6 mx-auto">
-            {profile ? ( // Check if profile is not null
-              isEditing ? (
-                <form onSubmit={handleSaveChanges} className="space-y-4">
-                  <div>
-                    <label className="block text-gray-700">Name</label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={updatedProfile.name}
-                      onChange={handleInputChange}
-                      className="w-full border p-2 rounded"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-700">Email</label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={updatedProfile.email}
-                      onChange={handleInputChange}
-                      className="w-full border p-2 rounded"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-700">Phone Number</label>
-                    <input
-                      type="text"
-                      name="contact_number"
-                      value={updatedProfile.contact_number}
-                      onChange={handleInputChange}
-                      className="w-full border p-2 rounded"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-700">Profile Image</label>
-                    <input
-                      type="file"
-                      name="profile_image"
-                      onChange={handleImageChange}
-                      className="w-full p-2 rounded"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="px-6 py-2 bg-orange-500 text-white rounded-lg shadow-md hover:bg-orange-600 transition"
-                  >
-                    Save Changes
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsEditing(false)}
-                    className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg shadow-md hover:bg-gray-300 transition"
-                  >
-                    Cancel
-                  </button>
-                </form>
-              ) : (
-                <div>
-                  <div className="flex flex-col md:flex-row items-center">
-                    <img
-                      src={
-                        profile.profile_image ||
-                        "https://via.placeholder.com/150"
-                      }
-                      alt="Profile"
-                      className="w-32 h-32 rounded-full border-4 border-orange-500"
-                    />
-                    <div className="ml-6 mt-4 md:mt-0">
-                      <h2 className="text-2xl font-semibold text-gray-800">
-                        {profile.name}
-                      </h2>
-                      <p className="text-gray-500">{profile.email}</p>
+          {/* Main Profile Content */}
+          <div className="col-span-2 bg-white shadow-xl rounded-lg p-8">
+            <div className="space-y-6">
+              {profile ? (
+                isEditing ? (
+                  <form onSubmit={handleSaveChanges} className="space-y-6">
+                    <div className="space-y-4">
+                      <label className="block text-lg font-medium text-gray-700">
+                        Name
+                      </label>
+                      <input
+                        type="text"
+                        name="name"
+                        value={updatedProfile.name}
+                        onChange={handleInputChange}
+                        className="w-full p-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-teal-600 transition duration-300"
+                      />
+                    </div>
+                    <div className="space-y-4">
+                      <label className="block text-lg font-medium text-gray-700">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={updatedProfile.email}
+                        onChange={handleInputChange}
+                        className="w-full p-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-teal-600 transition duration-300"
+                      />
+                    </div>
+                    <div className="space-y-4">
+                      <label className="block text-lg font-medium text-gray-700">
+                        Phone Number
+                      </label>
+                      <input
+                        type="text"
+                        name="contact_number"
+                        value={updatedProfile.contact_number}
+                        onChange={handleInputChange}
+                        className="w-full p-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-teal-600 transition duration-300"
+                      />
+                    </div>
+                    <div className="space-y-4">
+                      <label className="block text-lg font-medium text-gray-700">
+                        Profile Image
+                      </label>
+                      <input
+                        type="file"
+                        name="profile_image"
+                        onChange={handleImageChange}
+                        className="w-full p-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-teal-600 transition duration-300"
+                      />
+                    </div>
+                    <div className="flex space-x-4">
+                      <button
+                        type="submit"
+                        className="px-6 py-3 bg-teal-600 text-white rounded-md shadow-md hover:bg-teal-700 transition duration-300"
+                      >
+                        Save Changes
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditing(false)}
+                        className="px-6 py-3 bg-gray-300 text-gray-700 rounded-md shadow-md hover:bg-gray-400 transition duration-300"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="flex items-center space-x-6">
+                      <img
+                        src={
+                          profile.profile_image ||
+                          "https://via.placeholder.com/150"
+                        }
+                        alt="Profile"
+                        className="w-32 h-32 rounded-full border-4 border-teal-600"
+                      />
+                      <div>
+                        <h2 className="text-3xl font-semibold text-gray-800">
+                          {profile.name}
+                        </h2>
+                        <p className="text-lg text-gray-600">{profile.email}</p>
+                      </div>
+                    </div>
+                    <div className="text-lg text-gray-600">
+                      <p>
+                        <strong>Phone:</strong>{" "}
+                        {profile.contact_number || "Not provided"}
+                      </p>
+                      <p>
+                        <strong>Location:</strong>{" "}
+                        {profile.location || "Not provided"}
+                      </p>
                     </div>
                   </div>
-                  <div className="mt-6">
-                    <p className="text-gray-700">
-                      <strong>Phone:</strong>{" "}
-                      {profile.contact_number || "Not provided"}
-                    </p>
-                    <p className="text-gray-700">
-                      <strong>Location:</strong>{" "}
-                      {profile.location || "Not provided"}
-                    </p>
-                  </div>
-                </div>
-              )
-            ) : (
-              <p>Loading profile...</p> // Handle the loading state
-            )}
+                )
+              ) : (
+                <p>Loading profile...</p>
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -18,6 +18,7 @@ const KycProfile = () => {
   // For image modal viewing
   const [selectedImage, setSelectedImage] = useState(null);
 
+  // console.log("profile",profile)
   useEffect(() => {
     const accessToken = localStorage.getItem("access_token");
     axios
@@ -132,7 +133,7 @@ const KycProfile = () => {
                   {profile.venueOwnerName}
                 </h3>
                 <p className="text-gray-700">
-                  <strong>Phone:</strong> {profile.phone}
+                  <strong>Phone:</strong> {profile.phoneNumber}
                 </p>
                 <p className="text-gray-700">
                   <strong>Email:</strong> {profile.email}
@@ -140,16 +141,16 @@ const KycProfile = () => {
                 <p className="mt-2">
                   <span
                     className={`px-3 py-1 inline-block text-sm font-semibold rounded-full ${
-                      profile.verificationStatus === "approved"
+                      profile.status === "approved"
                         ? "bg-green-100 text-green-800"
-                        : profile.verificationStatus === "rejected"
+                        : profile.status === "rejected"
                         ? "bg-red-100 text-red-800"
                         : "bg-yellow-100 text-yellow-800"
                     }`}
                   >
-                    {profile.verificationStatus}
+                    {profile.status}
                   </span>
-                  {profile.verificationStatus === "rejected" && (
+                  {profile.status === "rejected" && (
                     <span className="ml-4 text-red-600">
                       (Reason: {profile.rejectMsg})
                     </span>

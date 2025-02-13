@@ -27,6 +27,7 @@ const UserLogin = () => {
         if (response.data.role === "admin") {
           navigate("/admin-dashboard");
         } else if (response.data.role === "venueOwner") {
+          localStorage.setItem("venueId", response.data.venueId);
           navigate("/venue-owner-dashboard");
         } else {
           navigate("/user-dashboard");

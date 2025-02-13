@@ -81,16 +81,20 @@ const signup = async (req, res) => {
 
 // signup venueOwner
 const signupVenueOwner = async (req, res) => {
-  const {
+  let {
     name,
     email,
     password,
     contact_number,
     profileImage, // profileImage received from the request body
-    role = "venueOwner", // Default role is venueOwner
+    role = "venueOwner",
+    venue, // Don't assign null here
   } = req.body;
 
-  console.log("Received data:", req.body); // Check if profileImage is in the request
+  // Ensure venue is null if not provided
+  venue = venue || null;
+
+  console.log("Received data:", req.body); // Debugging
 
   // Validate required fields
   if (!name || !email || !password || !contact_number || !role) {
@@ -107,19 +111,15 @@ const signupVenueOwner = async (req, res) => {
     const existingContact = await VenueOwner.findOne({ contact_number });
 
     if (existingUser || existingVenueOwner) {
-      return res
-        .status(400)
-        .json({
-          message: `Email ${email} is already in use by another account.`,
-        });
+      return res.status(400).json({
+        message: `Email ${email} is already in use by another account.`,
+      });
     }
 
     if (existingContact) {
-      return res
-        .status(400)
-        .json({
-          message: `Contact number ${contact_number} is already in use by another venue owner.`,
-        });
+      return res.status(400).json({
+        message: `Contact number ${contact_number} is already in use by another venue owner.`,
+      });
     }
 
     // Hash the password
@@ -135,7 +135,8 @@ const signupVenueOwner = async (req, res) => {
       password: hashedPassword,
       contact_number,
       role,
-      profile_image: finalProfileImage, // Set profileImage to null if not provided
+      profile_image: finalProfileImage,
+      venue, // Ensure venue is included
     });
 
     // Save the venue owner
@@ -144,18 +145,22 @@ const signupVenueOwner = async (req, res) => {
     // Generate a token
     const token = generateToken(savedVenueOwner);
 
-    res
-      .status(201)
-      .json({ message: "Venue owner registered successfully", token });
+    res.status(201).json({
+      message: "Venue owner registered successfully",
+      token,
+      savedVenueOwner,
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
 
+
+
 // Login Controller
 const login = async (req, res) => {
-  console.log("User login details : ", req.body); // Log the request body to see if email and password are being sent
+  console.log("User login details:", req.body); // Log the request body for debugging
 
   const { email, password } = req.body;
 
@@ -164,31 +169,40 @@ const login = async (req, res) => {
   }
 
   try {
-    let user = await User.findOne({ email }); // Try to find as a regular user
+    // Try to find as a regular user first
+    let user = await User.findOne({ email });
+    // If not found, try to find as a venueOwner
     if (!user) {
-      user = await VenueOwner.findOne({ email }); // If not, try to find as venueOwner
+      user = await VenueOwner.findOne({ email });
     }
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Log for debugging purposes
     console.log("User found:", user);
 
     const isMatch = await bcrypt.compare(password, user.password);
-
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-
-    // Log password comparison result for debugging
     console.log("Password match:", isMatch);
 
     const token = generateToken(user);
-    res
-      .status(200)
-      .json({ message: "Login successful", token, role: user.role });
+
+    // If the user is a venueOwner, check for venues.
+    let responseData = {
+      message: "Login successful",
+      token,
+      role: user.role,
+    };
+
+    if (user.role === "venueOwner") {
+      responseData.venueId =
+        user.venues && user.venues.length > 0 ? user.venues : "no venue";
+    }
+
+    res.status(200).json(responseData);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }

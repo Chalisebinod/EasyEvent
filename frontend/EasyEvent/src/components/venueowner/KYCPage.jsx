@@ -7,14 +7,16 @@ const KYCPage = () => {
   const navigate = useNavigate();
   const fileInputRefs = useRef({});
   const [loading, setLoading] = useState(false);
+  const [existingKyc, setExistingKyc] = useState(null); // stores fetched KYC data
 
   // To store preview URLs for individual document uploads
   const [docPreviewUrls, setDocPreviewUrls] = useState({});
-  // To store the actual file objects for required documents
+  // To store the actual file objects for required documents (only for new uploads)
   const [docFiles, setDocFiles] = useState({});
 
-  // Venue images (should be exactly 2 or 3)
+  // Venue images (files selected in the current session)
   const [venueImages, setVenueImages] = useState([]);
+  // URLs to preview images (either fetched from backend or created on the fly)
   const [venueImagesUrls, setVenueImagesUrls] = useState([]);
 
   // Form values for venue details
@@ -36,7 +38,11 @@ const KYCPage = () => {
     "signature",
   ];
 
-  // Cleanup created object URLs on unmount or when URLs change
+  // Determine if the form is editable.
+  // It is editable when there is no existing KYC or if the existing KYC verificationStatus is "Rejected".
+  const isEditable = !existingKyc || existingKyc.status === "rejected";
+
+  // Cleanup object URLs on unmount or when they change
   useEffect(() => {
     return () => {
       Object.values(docPreviewUrls).forEach(
@@ -46,28 +52,93 @@ const KYCPage = () => {
     };
   }, [docPreviewUrls, venueImagesUrls]);
 
+  const getImageUrl = (path) => {
+    if (path && path.startsWith("http")) {
+      return path;
+    }
+    return `http://localhost:8000/${path}`; // Adjust base URL as needed
+  };
+
+  useEffect(() => {
+    const fetchKyc = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        const response = await axios.get(
+          "http://localhost:8000/api/kyc/venue-kycs",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (response.data && response.data.data) {
+          const kycData = response.data.data;
+          setExistingKyc(kycData);
+          // Populate form values with fetched data
+          setFormValues({
+            venueName: kycData.venueName || "",
+            address: kycData.venueAddress?.address || "",
+            city: kycData.venueAddress?.city || "",
+            state: kycData.venueAddress?.state || "",
+            zip_code: kycData.venueAddress?.zip_code || "",
+          });
+          // Set file preview URLs based on the existing data, using getImageUrl
+          setDocPreviewUrls({
+            profile: kycData.profileImage
+              ? getImageUrl(kycData.profileImage)
+              : "",
+            citizenshipFront: kycData.citizenshipFront
+              ? getImageUrl(kycData.citizenshipFront)
+              : "",
+            citizenshipBack: kycData.citizenshipBack
+              ? getImageUrl(kycData.citizenshipBack)
+              : "",
+            pan: kycData.pan ? getImageUrl(kycData.pan) : "",
+            map: kycData.map ? getImageUrl(kycData.map) : "",
+            signature: kycData.signature ? getImageUrl(kycData.signature) : "",
+          });
+          // Set the venue images preview URLs (if any), converting each path with getImageUrl
+          if (kycData.venueImages && Array.isArray(kycData.venueImages)) {
+            setVenueImagesUrls(
+              kycData.venueImages.map((path) => getImageUrl(path))
+            );
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching KYC data", error);
+      }
+    };
+
+    fetchKyc();
+  }, []);
+
   // Handle input changes for venue information
   const handleInputChange = (e) => {
     setFormValues((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  // Handle file changes for individual documents or for venue images
+  // Handle file input changes
+  // If "multiple" is true, we assume the field is for venue images.
   const handleFileChange = (field, e, multiple = false) => {
+    if (!isEditable) return; // Prevent changes if not editable
+
     if (multiple) {
       const files = Array.from(e.target.files);
-      // Limit the maximum allowed to 3 files, ignore any extras
-      if (files.length > 3) {
-        alert("Please select a maximum of 3 venue images.");
+      // Check if appending these files would exceed the limit of 3 images
+      if (venueImages.length + files.length > 3) {
+        alert("You can only upload a total of 3 venue images.");
         return;
       }
       const urls = files.map((file) => URL.createObjectURL(file));
-      setVenueImages(files);
-      setVenueImagesUrls(urls);
+      setVenueImages((prev) => [...prev, ...files]);
+      setVenueImagesUrls((prev) => [...prev, ...urls]);
+      // Clear the file input
+      e.target.value = "";
     } else {
       const file = e.target.files[0];
       if (!file) return;
 
-      // Validate file type and size (5MB max)
+      // Validate file type and size (max 5MB)
       const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];
       const maxSize = 5 * 1024 * 1024;
       if (!allowedTypes.includes(file.type) || file.size > maxSize) {
@@ -84,28 +155,25 @@ const KYCPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!isEditable) return;
+
     const { venueName, address, city, state, zip_code } = formValues;
     if (!venueName || !address || !city || !state || !zip_code) {
       alert("Please fill in all required venue details.");
       return;
     }
 
-    // Check that required documents are uploaded
-    if (
-      !docFiles.profile ||
-      !docFiles.citizenshipFront ||
-      !docFiles.citizenshipBack ||
-      !docFiles.pan ||
-      !docFiles.map ||
-      !docFiles.signature
-    ) {
-      alert("Please upload all required documents.");
+    // Validate required documents...
+    if (!docFiles.profile && !docPreviewUrls.profile) {
+      alert("Please upload your profile document.");
       return;
     }
+    // ... (other document validations)
 
-    // Validate that the user has selected exactly 2 or 3 venue images.
-    if (venueImages.length < 2 || venueImages.length > 3) {
-      alert("Please upload exactly 2 or 3 venue images.");
+    // Validate venue images using the preview array (which holds both existing and new uploads)
+    const totalVenueImages = venueImagesUrls.length;
+    if (totalVenueImages !== 3) {
+      alert("Please upload exactly 3 venue images.");
       return;
     }
 
@@ -117,31 +185,27 @@ const KYCPage = () => {
     const venueAddress = { address, city, state, zip_code };
     formDataToSend.append("venueAddress", JSON.stringify(venueAddress));
 
-    // Append required document files
+    // Append required document files (only new files will be sent)
     fileFields.forEach((field) => {
       if (docFiles[field]) {
         formDataToSend.append(field, docFiles[field]);
       }
     });
 
-    // Append venue images (exactly 2 or 3)
+    // Append new venue images (if any)
     venueImages.forEach((file) => {
       formDataToSend.append("venueImages", file);
     });
 
-    // Log the formData before sending
-    console.log("Form Data to Send:", formDataToSend);
-
     try {
-      const token = localStorage.getItem("access_token"); // Get access token from localStorage (or sessionStorage, or state)
-
+      const token = localStorage.getItem("access_token");
       const response = await axios.post(
         "http://localhost:8000/api/kyc/post",
         formDataToSend,
         {
           headers: {
             "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`, // Send access token as Bearer token
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -159,24 +223,44 @@ const KYCPage = () => {
     }
   };
 
+  console.log("Checking the kyc data", existingKyc);
   return (
     <div className="min-h-screen flex">
       <VenueSidebar />
       <div className="flex-grow">
         <header className="bg-white shadow p-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-orange-600">EasyEvent</h1>
-          <button
-            onClick={() => navigate("/")}
-            className="text-orange-600 border border-orange-600 px-4 py-2 rounded hover:bg-orange-600 hover:text-white transition"
-          >
-            Back to Home
-          </button>
         </header>
         <main className="p-8 bg-gray-50">
           <div className="max-w-3xl mx-auto bg-white shadow rounded-lg p-6">
             <h2 className="text-xl font-bold text-orange-600 mb-4 text-center">
               KYC Verification
             </h2>
+
+            {/* Show KYC status messages if data exists */}
+            {existingKyc && (
+              <div className="mb-4 p-4 border rounded-md text-center">
+                {existingKyc.status === "pending" && (
+                  <p className="text-blue-600">
+                    Your KYC has been submitted for review. You cannot edit your
+                    details until a decision is made.
+                  </p>
+                )}
+                {existingKyc.status === "approved" && (
+                  <p className="text-green-600">
+                    Your KYC is verified. You cannot modify your details.
+                  </p>
+                )}
+                {existingKyc.status === "rejected" && (
+                  <div className="text-red-600">
+                    <p>Your KYC was rejected.</p>
+                    <p>Reason: {existingKyc.rejectMsg}</p>
+                    <p>You can update your details and resubmit.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Venue Information Section */}
               <section>
@@ -197,6 +281,7 @@ const KYCPage = () => {
                       name="venueName"
                       value={formValues.venueName}
                       onChange={handleInputChange}
+                      disabled={!isEditable}
                       className="mt-1 w-full border border-gray-300 rounded-md p-2"
                       required
                     />
@@ -214,6 +299,7 @@ const KYCPage = () => {
                       name="address"
                       value={formValues.address}
                       onChange={handleInputChange}
+                      disabled={!isEditable}
                       className="mt-1 w-full border border-gray-300 rounded-md p-2"
                       required
                     />
@@ -232,6 +318,7 @@ const KYCPage = () => {
                         name="city"
                         value={formValues.city}
                         onChange={handleInputChange}
+                        disabled={!isEditable}
                         className="mt-1 w-full border border-gray-300 rounded-md p-2"
                         required
                       />
@@ -249,6 +336,7 @@ const KYCPage = () => {
                         name="state"
                         value={formValues.state}
                         onChange={handleInputChange}
+                        disabled={!isEditable}
                         className="mt-1 w-full border border-gray-300 rounded-md p-2"
                         required
                       />
@@ -266,6 +354,7 @@ const KYCPage = () => {
                         name="zip_code"
                         value={formValues.zip_code}
                         onChange={handleInputChange}
+                        disabled={!isEditable}
                         className="mt-1 w-full border border-gray-300 rounded-md p-2"
                         required
                       />
@@ -299,148 +388,98 @@ const KYCPage = () => {
                           <span className="text-gray-400 text-sm">No file</span>
                         )}
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => fileInputRefs.current[field]?.click()}
-                        className="bg-orange-500 text-white px-3 py-1 rounded hover:bg-orange-600 transition"
-                      >
-                        Upload
-                      </button>
-                      <input
-                        type="file"
-                        ref={(el) => (fileInputRefs.current[field] = el)}
-                        onChange={(e) => handleFileChange(field, e)}
-                        className="hidden"
-                        accept="image/*,application/pdf"
-                      />
+                      {isEditable && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              fileInputRefs.current[field]?.click()
+                            }
+                            className="bg-orange-500 text-white px-3 py-1 rounded hover:bg-orange-600 transition"
+                          >
+                            Upload
+                          </button>
+                          <input
+                            type="file"
+                            ref={(el) => (fileInputRefs.current[field] = el)}
+                            onChange={(e) => handleFileChange(field, e)}
+                            className="hidden"
+                            accept="image/*,application/pdf"
+                          />
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>
               </section>
 
-              {/* Venue Images (Required 2 or 3) */}
               {/* Venue Images Section */}
               <section>
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">
                   Upload Venue Images <span className="text-red-500">*</span>
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Venue Image 1 */}
-                  <div className="flex flex-col items-center border p-4 rounded-md">
-                    <label className="mb-2 text-gray-700 font-medium">
-                      Venue Image 1
-                    </label>
-                    <div className="w-32 h-32 border border-dashed border-gray-300 flex items-center justify-center mb-2 rounded-md bg-gray-100">
-                      {venueImagesUrls[0] ? (
+                  {/* Render 3 image slots */}
+                  {[0, 1, 2].map((index) => (
+                    <div
+                      key={index}
+                      className="border p-4 rounded-md flex flex-col items-center"
+                    >
+                      {venueImagesUrls[index] ? (
                         <img
-                          src={venueImagesUrls[0]}
-                          alt="Venue Image 1"
-                          className="object-cover w-full h-full rounded-md"
+                          src={venueImagesUrls[index]}
+                          alt={`Venue Image ${index + 1}`}
+                          className="w-32 h-32 object-cover rounded-md"
                         />
                       ) : (
                         <span className="text-gray-400 text-sm">No file</span>
                       )}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        fileInputRefs.current["venueImage1"]?.click()
-                      }
-                      className="bg-orange-500 text-white px-3 py-1 rounded hover:bg-orange-600 transition"
-                    >
-                      Upload Image 1
-                    </button>
-                    <input
-                      type="file"
-                      ref={(el) => (fileInputRefs.current["venueImage1"] = el)}
-                      onChange={(e) => handleFileChange("venueImage1", e)}
-                      className="hidden"
-                      accept="image/*"
-                    />
-                  </div>
-
-                  {/* Venue Image 2 */}
-                  <div className="flex flex-col items-center border p-4 rounded-md">
-                    <label className="mb-2 text-gray-700 font-medium">
-                      Venue Image 2
-                    </label>
-                    <div className="w-32 h-32 border border-dashed border-gray-300 flex items-center justify-center mb-2 rounded-md bg-gray-100">
-                      {venueImagesUrls[1] ? (
-                        <img
-                          src={venueImagesUrls[1]}
-                          alt="Venue Image 2"
-                          className="object-cover w-full h-full rounded-md"
-                        />
-                      ) : (
-                        <span className="text-gray-400 text-sm">No file</span>
-                      )}
+                  ))}
+                  {/* Venue image upload button (only if editable) */}
+                  {isEditable && (
+                    <div className="border p-4 rounded-md flex flex-col items-center">
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={(e) =>
+                          handleFileChange("venueImages", e, true)
+                        }
+                        className="hidden"
+                        ref={(el) =>
+                          (fileInputRefs.current["venueImages"] = el)
+                        }
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          fileInputRefs.current["venueImages"]?.click()
+                        }
+                        className="bg-orange-500 text-white px-3 py-1 rounded hover:bg-orange-600 transition"
+                      >
+                        Upload Venue Images
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        fileInputRefs.current["venueImage2"]?.click()
-                      }
-                      className="bg-orange-500 text-white px-3 py-1 rounded hover:bg-orange-600 transition"
-                    >
-                      Upload Image 2
-                    </button>
-                    <input
-                      type="file"
-                      ref={(el) => (fileInputRefs.current["venueImage2"] = el)}
-                      onChange={(e) => handleFileChange("venueImage2", e)}
-                      className="hidden"
-                      accept="image/*"
-                    />
-                  </div>
-
-                  {/* Venue Image 3 */}
-                  <div className="flex flex-col items-center border p-4 rounded-md">
-                    <label className="mb-2 text-gray-700 font-medium">
-                      Venue Image 3
-                    </label>
-                    <div className="w-32 h-32 border border-dashed border-gray-300 flex items-center justify-center mb-2 rounded-md bg-gray-100">
-                      {venueImagesUrls[2] ? (
-                        <img
-                          src={venueImagesUrls[2]}
-                          alt="Venue Image 3"
-                          className="object-cover w-full h-full rounded-md"
-                        />
-                      ) : (
-                        <span className="text-gray-400 text-sm">No file</span>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        fileInputRefs.current["venueImage3"]?.click()
-                      }
-                      className="bg-orange-500 text-white px-3 py-1 rounded hover:bg-orange-600 transition"
-                    >
-                      Upload Image 3
-                    </button>
-                    <input
-                      type="file"
-                      ref={(el) => (fileInputRefs.current["venueImage3"] = el)}
-                      onChange={(e) => handleFileChange("venueImage3", e)}
-                      className="hidden"
-                      accept="image/*"
-                    />
-                  </div>
+                  )}
                 </div>
                 <small className="mt-2 text-gray-500">
                   Please upload exactly 3 images.
                 </small>
               </section>
 
-              <div className="text-center">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="bg-orange-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-orange-700 transition disabled:opacity-50"
-                >
-                  {loading ? "Submitting..." : "Submit KYC"}
-                </button>
-              </div>
+              {/* Submit button appears only if the form is editable */}
+              {isEditable && (
+                <div className="text-center">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="bg-orange-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-orange-700 transition disabled:opacity-50"
+                  >
+                    {loading ? "Submitting..." : "Submit KYC"}
+                  </button>
+                </div>
+              )}
             </form>
           </div>
         </main>

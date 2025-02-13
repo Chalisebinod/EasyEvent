@@ -5,7 +5,8 @@ const kycSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "VenueOwner",
     required: true,
-  }, // Reference to VenueOwner
+    unique: true, // Enforce one KYC per owner at the database level
+  },
 
   // Name, phone, and location will be derived from the venue owner
   phone: { type: String, required: true },

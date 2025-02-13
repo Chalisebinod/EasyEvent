@@ -37,6 +37,8 @@ import EventBookingForm from "./components/user/EventBookingForm";
 import KycRequest from "./components/admin/KycRequest";
 import KycProfile from "./components/admin/KycProfile";
 import Notification from "./components/venueowner/Notification";
+import Hall from "./components/venueowner/Hall";
+import PartyPalace from "./components/user/PartyPalace";
 
 function App() {
   // useEffect(() => {
@@ -79,6 +81,10 @@ function App() {
       <ToastContainer />
       <Routes>
         <Route path="/Venue-profile" element={<VenueProfile />} />
+        <Route path="/halls" element={<Hall />} />
+        <Route path="/party-palace/:id" element={<PartyPalace />} />
+
+
         <Route path="/venueOwnerKyc" element={<KYCPage />} />
         <Route path="/notification" element={<Notification />} />
 

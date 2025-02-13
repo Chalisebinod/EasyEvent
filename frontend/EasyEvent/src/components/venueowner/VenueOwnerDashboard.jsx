@@ -11,8 +11,8 @@ import {
   Legend,
 } from "chart.js";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom"; // For navigation
-import VenueSidebar from "./VenueSideBar";
+import { useNavigate } from "react-router-dom";
+import VenueSidebar from "./VenueSidebar";
 
 ChartJS.register(
   CategoryScale,
@@ -24,35 +24,63 @@ ChartJS.register(
 );
 
 const VenueOwnerDashboard = () => {
-  const [verified, setVerified] = useState(false);
-  const [showWarning, setShowWarning] = useState(false);
+  const [verified, setVerified] = useState(null); // null indicates status not yet determined
   const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
-    // if (!token) {
-    //   console.log("No access token");
-    //   toast.error("You are not logged in.");
-    //   return;
-    // }
-    // Example logic to check KYC status (add your own logic here)
+
     axios
       .get("http://localhost:8000/api/check-kyc-status", {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((response) => {
-        if (response.data.kycStatus !== "verified") {
-          setShowWarning(true);
-        } else {
+        console.log("KYC status response:", response.data.status);
+        if (response.data.status.toLowerCase() === "approved") {
           setVerified(true);
+        } else {
+          setVerified(false);
         }
       })
       .catch((error) => {
         console.error("Error checking KYC status:", error);
         toast.error("Error verifying KYC status.");
+        setVerified(false);
       });
   }, []);
 
+  // Show a loader (or nothing) until we have determined the KYC status
+  if (verified === null) {
+    return <div className="h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  // If KYC is not approved, display only the KYC warning message
+  if (!verified) {
+    return (
+      <div className="h-screen flex bg-gray-100">
+        {/* Sidebar remains visible */}
+        <VenueSidebar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <p className="font-bold text-2xl text-yellow-500 mb-4">
+              KYC Verification Required
+            </p>
+            <p className="mb-6">
+              Your KYC is not approved. Please update your KYC to access the dashboard.
+            </p>
+            <button
+              className="bg-orange-600 text-white px-6 py-2 rounded hover:bg-orange-700 transition"
+              onClick={() => navigate("/venue-KYC")}
+            >
+              Update KYC
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Dashboard data and options (rendered only if verified)
   const barData = {
     labels: ["A", "B", "C", "D"],
     datasets: [
@@ -74,24 +102,19 @@ const VenueOwnerDashboard = () => {
     ],
   };
 
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "top",
+      },
+    },
+  };
+
   return (
     <div className="h-screen flex bg-gray-100">
-      {/* KYC Warning Box */}
-      {showWarning && (
-        <div className="fixed top-0 left-0 right-0 bg-yellow-500 text-white p-4 text-center">
-          <p className="font-bold text-lg">KYC Verification Required</p>
-          <p>Please update your KYC to use all features.</p>
-          <button
-            className="mt-4 bg-orange-600 text-white px-6 py-2 rounded"
-            onClick={() => navigate("/venue-KYC")}
-          >
-            Update KYC
-          </button>
-        </div>
-      )}
-      {/* Sidebar */}
-      <VenueSidebar /> {/* Use the Sidebar component here */}
-      {/* Main Content */}
+      <VenueSidebar />
       <main className="flex-1 p-6">
         <header className="flex justify-between items-center mb-8">
           <h2 className="text-xl font-bold text-orange-500">Dashboard</h2>
@@ -124,17 +147,17 @@ const VenueOwnerDashboard = () => {
 
         {/* Charts Section */}
         <div className="grid grid-cols-2 gap-6">
-          <div className="bg-white p-4 shadow rounded">
+          <div className="bg-white p-4 shadow rounded" style={{ height: "400px" }}>
             <h3 className="text-lg font-bold text-gray-700 mb-4">
               Monthly Data
             </h3>
-            <Bar data={barData} />
+            <Bar data={barData} options={chartOptions} />
           </div>
-          <div className="bg-white p-4 shadow rounded">
+          <div className="bg-white p-4 shadow rounded" style={{ height: "400px" }}>
             <h3 className="text-lg font-bold text-gray-700 mb-4">
               Event Types
             </h3>
-            <Pie data={pieData} />
+            <Pie data={pieData} options={chartOptions} />
           </div>
         </div>
       </main>

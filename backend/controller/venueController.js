@@ -105,7 +105,7 @@ async function editVenue(req, res) {
   try {
     const venueOwnerId = req.user.id;
     const venueId = req.params.venueId;
-    const { name, location, capacity, price, images, description } = req.body;
+    const { payment_policy, description } = req.body;
 
     // Find venue and check if it belongs to the venue owner
     const venue = await Venue.findOne({ _id: venueId, owner: venueOwnerId });
@@ -115,21 +115,56 @@ async function editVenue(req, res) {
         .json({ message: "Venue not found or unauthorized" });
     }
 
-    // Update venue details
-    venue.name = name || venue.name;
-    venue.location = location || venue.location;
-    venue.capacity = capacity || venue.capacity;
-    venue.price = price || venue.price;
-    venue.images = images || venue.images;
-    venue.description = description || venue.description;
+    // Update profile image if a new file was uploaded
+    if (req.files && req.files.profile_image) {
+      // Since profile_image is a single file, use the first element
+      venue.profile_image = req.files.profile_image[0].path;
+    }
+
+    // Update gallery images if files were uploaded under the "images" field
+    if (req.files && req.files.images) {
+      const uploadedImages = req.files.images;
+      if (uploadedImages.length > 5) {
+        return res
+          .status(400)
+          .json({ message: "You can upload a maximum of 5 images." });
+      }
+      // Map the uploaded file objects to their storage paths
+      const imagesPaths = uploadedImages.map((file) => file.path);
+      venue.images = imagesPaths;
+    }
+
+    // Update payment policy if provided (merging with the current policy)
+    if (payment_policy) {
+      let parsedPolicy = payment_policy;
+      // If payment_policy comes as a JSON string, parse it
+      if (typeof payment_policy === "string") {
+        try {
+          parsedPolicy = JSON.parse(payment_policy);
+        } catch (err) {
+          return res
+            .status(400)
+            .json({ message: "Invalid payment_policy format" });
+        }
+      }
+      venue.payment_policy = { ...venue.payment_policy, ...parsedPolicy };
+    }
+
+    // Update description if provided
+    if (description) {
+      venue.description = description;
+    }
+
+    // Update the last_updated timestamp
+    venue.last_updated = Date.now();
 
     const updatedVenue = await venue.save();
     res
       .status(200)
       .json({ message: "Venue updated successfully", venue: updatedVenue });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    console.error("Error editing venue:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 }
 
@@ -162,32 +197,118 @@ async function deleteVenue(req, res) {
   }
 }
 
-async function getAllVenuesForShowcase(req, res) {
-    try {
-      // Fetch all venues from the database, only selecting the relevant fields
-      const venues = await Venue.find({}, 'name description location reviews')
-        .populate('reviews.user', 'name') // Populate the user details in the reviews
-        .exec();
-  
-      if (!venues || venues.length === 0) {
-        return res.status(404).json({ message: "No venues found" });
-      }
-  
-      // Prepare the venue data with calculated rating
-      const venuesWithRating = venues.map(venue => ({
-        name: venue.name,
-        description: venue.description,
-        rating: venue.rating, // Virtual field for rating
-        location: venue.location,
-      }));
-  
-      // Return the list of venues with selected fields
-      res.status(200).json({ venues: venuesWithRating });
-    } catch (error) {
-      console.error("Error fetching venues:", error);
-      res.status(500).json({ message: "Server error", error: error.message });
+// Venue Profile for the venueOwner
+const getVenueProfile = async (req, res) => {
+  try {
+    const venueOwnerId = req.user.id;
+    const venue = await Venue.findOne({ owner: venueOwnerId })
+      .populate("reviews.user", "name") // Populate review user details (e.g. name)
+      .populate("event_pricing.hall"); // Populate hall details in event pricing if any
+
+    if (!venue) {
+      return res
+        .status(404)
+        .json({ message: "Verify Kyc First to see your venue" });
     }
+
+    res.status(200).json({
+      message: "Venue profile fetched successfully",
+      venueId: venue._id, // Explicitly including venue ID
+      venue, // Returning full venue details
+    });
+  } catch (error) {
+    console.error("Error fetching venue profile:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
+};
+
+const getAllVenuesForShowcase = async (req, res) => {
+  try {
+    // Fetch all venues with all required details
+    const venues = await Venue.find({})
+      .populate("reviews.user", "name") // Populate user details in reviews
+      .populate("event_pricing.hall", "name capacity") // Populate hall details
+      .exec();
+
+    if (!venues || venues.length === 0) {
+      return res.status(404).json({ message: "No venues found" });
+    }
+
+    // Prepare the venue data with all relevant fields
+    const venuesWithDetails = venues.map((venue) => ({
+      id: venue._id,
+      name: venue.name,
+      description: venue.description,
+      location: venue.location,
+      profile_image: venue.profile_image,
+      images: venue.images,
+      event_pricing: venue.event_pricing.map((pricing) => ({
+        event_type: pricing.event_type,
+        pricePerPlate: pricing.pricePerPlate,
+        description: pricing.description,
+        services_included: pricing.services_included,
+        hall: pricing.hall
+          ? {
+              id: pricing.hall._id,
+              name: pricing.hall.name,
+              capacity: pricing.hall.capacity,
+            }
+          : null,
+      })),
+      additional_services: venue.additional_services,
+      contact_details: venue.contact_details,
+      payment_policy: venue.payment_policy,
+      verification_status: venue.verification_status,
+      reported_count: venue.reported_count,
+      status: venue.status,
+      date_created: venue.date_created,
+      last_updated: venue.last_updated,
+      rating:
+        venue.reviews.length > 0
+          ? (
+              venue.reviews.reduce((acc, review) => acc + review.rating, 0) /
+              venue.reviews.length
+            ).toFixed(1)
+          : "No ratings yet",
+      reviews: venue.reviews.map((review) => ({
+        user: review.user.name,
+        comment: review.comment,
+        rating: review.rating,
+        date: review.date,
+      })),
+    }));
+
+    // Return the list of venues with all details
+    res.status(200).json({ venues: venuesWithDetails });
+  } catch (error) {
+    console.error("Error fetching venues:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+const getVenueById = async (req, res) => {
+  try {
+    const { id } = req.params; // Extract venue ID from route parameters
+
+    // Find the venue by its ID and populate necessary fields
+    const venue = await Venue.findById(id)
+      .populate("reviews.user", "name") // Populate review user details (e.g., name)
+      .populate("event_pricing.hall"); // Populate hall details in event pricing if any
+
+    if (!venue) {
+      return res.status(404).json({ message: "Venue not found" });
+    }
+
+    res.status(200).json({
+      message: "Venue profile fetched successfully",
+      venueId: venue._id, // Explicitly include the venue ID
+      venue, // Return the full venue details
+    });
+  } catch (error) {
+    console.error("Error fetching venue profile:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
 
 module.exports = {
   createVenue,
@@ -195,4 +316,6 @@ module.exports = {
   deleteVenue,
   getAllVenuesForUser,
   getAllVenuesForShowcase,
+  getVenueProfile,
+  getVenueById,
 };

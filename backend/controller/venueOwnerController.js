@@ -1,51 +1,58 @@
-const VenueOwner = require("../model/venueOwner"); 
+const VenueOwner = require("../model/venueOwner");
 const bcrypt = require("bcrypt");
 
-async function checkKycStatus (req, res) {
+const Kyc = require("../model/KYC");
+
+async function checkKycStatus(req, res) {
   try {
-    // Get the venueOwnerId from the middleware (e.g., req.user.id if using JWT auth)
+    // Get the venue owner ID from the authentication middleware
     const venueOwnerId = req.user.id;
 
-    // Find the venue owner by their ID
+    // (Optional) Verify the VenueOwner exists
     const venueOwner = await VenueOwner.findById(venueOwnerId);
-
-    // If no venue owner found, return error
     if (!venueOwner) {
       return res.status(404).json({ message: "Venue Owner not found" });
     }
 
-    // Check if the venue owner's KYC is verified (both 'citizenship_front' and 'citizenship_back' should exist)
-    const isKYCVerified =
-      venueOwner.status === "verified" &&
-      venueOwner.citizenship_front &&
-      venueOwner.citizenship_back;
+    // Find the KYC record for this venue owner
+    const kycRecord = await Kyc.findOne({ owner: venueOwnerId });
+    if (!kycRecord) {
+      return res.status(404).json({ message: "KYC record not found" });
+    }
 
-    // Respond with the KYC verification status
+    // Determine if the KYC is verified.
+    // Here we expect verificationStatus to be "approved" (or "verified" if you prefer)
+    // and that both citizenshipFront and citizenshipBack files exist.
+    const isKYCVerified =
+      kycRecord.verificationStatus.toLowerCase() === "approved" &&
+      kycRecord.citizenshipFront &&
+      kycRecord.citizenshipBack;
+
     if (isKYCVerified) {
       return res.status(200).json({
         message: "KYC Verified",
-        status: "verified",
+        status: kycRecord.verificationStatus, // e.g., "approved"
       });
     } else {
       return res.status(200).json({
         message: "KYC Pending or Incomplete",
-        status: venueOwner.status, // Show current status (pending or rejected)
+        status: kycRecord.verificationStatus, // e.g., "pending" or "rejected"
       });
     }
   } catch (error) {
-    console.error(error);
+    console.error("Error checking KYC status:", error.message);
     return res.status(500).json({ message: "Server error, try again later" });
   }
-};
-
-
+}
 
 
 // Get Venue Owner Profile
 async function getVenueOwnerProfile(req, res) {
   try {
     const venueOwnerId = req.user.id; // Venue Owner ID from the middleware
-    const venueOwner = await VenueOwner.findById(venueOwnerId).select("-password"); // Exclude password
+    const venueOwner = await VenueOwner.findById(venueOwnerId).select(
+      "-password"
+    ); // Exclude password
 
     if (!venueOwner) {
       return res.status(404).json({ message: "Venue Owner not found" });
@@ -56,10 +63,10 @@ async function getVenueOwnerProfile(req, res) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
-};
+}
 
 // Update Venue Owner Profile
-async function updateVenueOwnerProfile (req, res) {
+async function updateVenueOwnerProfile(req, res) {
   try {
     const venueOwnerId = req.user.venueOwnerId;
     const { name, contact_number, location, profile_image } = req.body;
@@ -74,15 +81,18 @@ async function updateVenueOwnerProfile (req, res) {
       return res.status(404).json({ message: "Venue Owner not found" });
     }
 
-    res.status(200).json({ message: "Profile updated successfully", venueOwner: updatedVenueOwner });
+    res.status(200).json({
+      message: "Profile updated successfully",
+      venueOwner: updatedVenueOwner,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
-};
+}
 
 // Change Password for Venue Owner
-async function changeVenueOwnerPassword (req, res)  {
+async function changeVenueOwnerPassword(req, res) {
   try {
     const venueOwnerId = req.user.id;
     const { currentPassword, newPassword } = req.body;
@@ -106,9 +116,11 @@ async function changeVenueOwnerPassword (req, res)  {
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
-};
+}
 
 module.exports = {
-checkKycStatus,getVenueOwnerProfile,changeVenueOwnerPassword,updateVenueOwnerProfile
-
-  };
+  checkKycStatus,
+  getVenueOwnerProfile,
+  changeVenueOwnerPassword,
+  updateVenueOwnerProfile,
+};

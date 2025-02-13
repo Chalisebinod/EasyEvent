@@ -12,6 +12,7 @@ const kycRoute = require("./route/kycRoute");
 const venueRoutes = require("./route/venueRoutes");
 const bookingRoutes = require("./route/userBookingRoute");
 const notificationRoutes = require("./route/notificationRoute");
+const hallRoutes  = require("./route/hallRoute")
 
 dotenv.config();
 
@@ -32,6 +33,8 @@ app.use("/api/kyc", kycRoute);
 app.use("/api", venueRoutes);
 app.use("/api/book", bookingRoutes);
 app.use("/api/notification", notificationRoutes);
+app.use("/api/halls",hallRoutes);
+
 
 // Connect to MongoDB
 mongoose

@@ -14,12 +14,12 @@ const venueOwnerSchema = new mongoose.Schema(
       enum: ["verified", "pending", "rejected"], // Enum to define the status values
       default: "pending", // Default status is 'pending'
     },
-    venues: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Venue", // Reference to the Venue schema
-      },
-    ],
+    venue: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Venue",
+      default: null, // Ensure it is null initially, instead of an empty string
+    },
+    
     reported_count: { type: Number, default: 0 }, // Tracks reports against the owner
     is_blocked: { type: Boolean, default: false }, // Active, Suspended
     last_login: { type: Date, default: null },
