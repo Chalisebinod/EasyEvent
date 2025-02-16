@@ -39,6 +39,7 @@ import KycProfile from "./components/admin/KycProfile";
 import Notification from "./components/venueowner/Notification";
 import Hall from "./components/venueowner/Hall";
 import PartyPalace from "./components/user/PartyPalace";
+import AgreementPage from "./components/venueowner/AgreementPage";
 
 function App() {
   // useEffect(() => {
@@ -84,11 +85,9 @@ function App() {
         <Route path="/halls" element={<Hall />} />
         <Route path="/party-palace/:id" element={<PartyPalace />} />
 
-
         <Route path="/venueOwnerKyc" element={<KYCPage />} />
         <Route path="/notification" element={<Notification />} />
-
-
+        <Route path="/agreement" element={<AgreementPage />} />
 
         {/* Landing Page */}
         <Route path="/" element={<LandingPage />} />
@@ -114,7 +113,6 @@ function App() {
         <Route path="/all-admin" element={<AdminPage />} />
         <Route path="/kyc-request" element={<KycRequest />} />
         <Route path="/kyc-profile/:kycId" element={<KycProfile />} />
-
 
         <Route
           path="/venueOwner-profile/:id"

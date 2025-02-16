@@ -51,7 +51,11 @@ const VenueOwnerDashboard = () => {
 
   // Show a loader (or nothing) until we have determined the KYC status
   if (verified === null) {
-    return <div className="h-screen flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    );
   }
 
   // If KYC is not approved, display only the KYC warning message
@@ -66,7 +70,8 @@ const VenueOwnerDashboard = () => {
               KYC Verification Required
             </p>
             <p className="mb-6">
-              Your KYC is not approved. Please update your KYC to access the dashboard.
+              Your KYC is not approved. Please update your KYC to access the
+              dashboard.
             </p>
             <button
               className="bg-orange-600 text-white px-6 py-2 rounded hover:bg-orange-700 transition"
@@ -147,13 +152,19 @@ const VenueOwnerDashboard = () => {
 
         {/* Charts Section */}
         <div className="grid grid-cols-2 gap-6">
-          <div className="bg-white p-4 shadow rounded" style={{ height: "400px" }}>
+          <div
+            className="bg-white p-4 shadow rounded"
+            style={{ height: "400px" }}
+          >
             <h3 className="text-lg font-bold text-gray-700 mb-4">
               Monthly Data
             </h3>
             <Bar data={barData} options={chartOptions} />
           </div>
-          <div className="bg-white p-4 shadow rounded" style={{ height: "400px" }}>
+          <div
+            className="bg-white p-4 shadow rounded"
+            style={{ height: "400px" }}
+          >
             <h3 className="text-lg font-bold text-gray-700 mb-4">
               Event Types
             </h3>

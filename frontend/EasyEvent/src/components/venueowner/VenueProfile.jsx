@@ -3,10 +3,7 @@ import axios from "axios";
 import VenueSidebar from "./VenueSideBar";
 import { toast, ToastContainer } from "react-toastify";
 
-
-
 const VenueProfile = () => {
-
   const [venue, setVenue] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -54,7 +51,7 @@ const VenueProfile = () => {
         );
         // If a venue exists, update state; otherwise, set the error message.
         if (response.data && response.data.venue) {
-          localStorage.setItem("venueID", response.data.venue._id)
+          localStorage.setItem("venueID", response.data.venue._id);
           setVenue(response.data.venue);
         } else if (response.data && response.data.message) {
           setError(response.data.message);
