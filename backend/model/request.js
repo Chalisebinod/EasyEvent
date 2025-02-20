@@ -1,9 +1,9 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const bookingRequestSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Who is making the request
-  venue: { type: mongoose.Schema.Types.ObjectId, ref: 'Venue', required: true }, // Which venue is being booked
-  hall: { type: mongoose.Schema.Types.ObjectId, ref: 'Hall', required: true }, // Selected Hall
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Who is making the request
+  venue: { type: mongoose.Schema.Types.ObjectId, ref: "Venue", required: true }, // Which venue is being booked
+  hall: { type: mongoose.Schema.Types.ObjectId, ref: "Hall", required: true }, // Selected Hall
 
   event_details: {
     event_type: { type: String, required: true }, // e.g., "Marriage", "Birthday"
@@ -11,13 +11,13 @@ const bookingRequestSchema = new mongoose.Schema({
     guest_count: { type: Number, required: true }, // Total guests
   },
 
-  selected_foods: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Food' }], // Reference to Food Schema
+  selected_foods: [{ type: mongoose.Schema.Types.ObjectId, ref: "Food" }], // Reference to Food Schema
 
   additional_services: [
     {
       name: { type: String, required: true },
       description: { type: String, default: "" },
-    }
+    },
   ],
 
   pricing: {
@@ -27,20 +27,33 @@ const bookingRequestSchema = new mongoose.Schema({
     total_cost: { type: Number }, // Final total cost after acceptance
   },
 
-  status: { 
-    type: String, 
-    enum: ["Pending", "Accepted", "Rejected", "Cancelled"], 
-    default: "Pending" 
-  }, // Status of booking request
+  cancellation_policy: {
+    cancel_before_days: { type: Number, required: false }, // How many days before the event a user can cancel
+    cancellation_fee: { type: Number, default: 0 }, // Optional: Fee if cancellation occurs
+  },
 
-  payment_status: { 
-    type: String, 
-    enum: ["Unpaid", "Partially Paid", "Paid"], 
-    default: "Unpaid" 
+  status: {
+    type: String,
+    enum: ["Pending", "Accepted", "Rejected", "Cancelled"],
+    default: "Pending",
+  }, // Status of booking request
+  reason: {
+    type: String, default: "no status has been added",
+  },
+  payment_status: {
+    type: String,
+    enum: ["Unpaid", "Partially Paid", "Paid"],
+    default: "Unpaid",
   }, // Payment tracking
 
   created_at: { type: Date, default: Date.now }, // When request was made
-  updated_at: { type: Date, default: Date.now }
+  updated_at: { type: Date, default: Date.now },
 });
 
-module.exports = mongoose.model('BookingRequest', bookingRequestSchema);
+// Middleware to auto-update `updated_at`
+bookingRequestSchema.pre("save", function (next) {
+  this.updated_at = Date.now();
+  next();
+});
+
+module.exports = mongoose.model("BookingRequest", bookingRequestSchema);

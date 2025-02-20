@@ -1,7 +1,8 @@
 const VenueOwner = require("../model/venueOwner");
 const bcrypt = require("bcrypt");
-
+const mongoose = require("mongoose");
 const Kyc = require("../model/KYC");
+const Venue = require("../model/venue");
 
 async function checkKycStatus(req, res) {
   try {
@@ -49,18 +50,34 @@ async function checkKycStatus(req, res) {
 // Get Venue Owner Profile
 async function getVenueOwnerProfile(req, res) {
   try {
-    const venueOwnerId = req.user.id; // Venue Owner ID from the middleware
-    const venueOwner = await VenueOwner.findById(venueOwnerId).select(
-      "-password"
-    ); // Exclude password
+    const venueOwnerId = req.user.id; // Venue Owner ID from authentication middleware
 
+    // Fetch Venue Owner details excluding password
+    const venueOwner = await VenueOwner.findById(venueOwnerId).select("-password");
     if (!venueOwner) {
       return res.status(404).json({ message: "Venue Owner not found" });
     }
 
-    res.status(200).json(venueOwner);
+    // Ensure venueOwnerId is an ObjectId
+    const ownerObjectId = new mongoose.Types.ObjectId(venueOwnerId);
+
+    // Find the venue associated with this owner
+    const venue = await Venue.findOne({ owner: ownerObjectId });
+
+    if (!venue) {
+      console.log(`Venue not found for owner: ${venueOwnerId}`);
+    }
+
+    // Construct response with venue details
+    const venueOwnerProfile = {
+      ...venueOwner.toObject(), // Convert Mongoose document to plain object
+      venueId: venue ? venue._id : null, // Attach venue ID if found
+      venue: venue || null, // Optional: Include full venue details
+    };
+
+    res.status(200).json(venueOwnerProfile);
   } catch (error) {
-    console.error(error);
+    console.error("Error fetching venue owner profile:", error);
     res.status(500).json({ message: "Server error" });
   }
 }

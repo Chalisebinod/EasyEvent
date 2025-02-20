@@ -2,18 +2,40 @@ const Hall = require("../model/hallSchema");
 
 
 exports.addHall = async (req, res) => {
-    try {
-      const hallData = req.body;
-      // If images are uploaded, add their file paths to hallData.images
-      if (req.files && req.files.length > 0) {
-        hallData.images = req.files.map(file => file.path);
+  try {
+      const { venue, name, capacity, pricePerPlate, features, seating_arrangements } = req.body;
+
+      // Validate that venueId is present
+      if (!venue) {
+          return res.status(400).json({ message: "Venue ID is required." });
       }
-      const hall = await Hall.create(hallData);
+
+      // If images are uploaded, add their file paths to images array
+      let images = [];
+      if (req.files && req.files.length > 0) {
+          images = req.files.map(file => file.path);
+      }
+
+      // Create the hall with default availability set to false
+      const hall = await Hall.create({
+          venue,
+          name,
+          capacity,
+          pricePerPlate,
+          features,
+          images,
+          availability: false, // Set availability to false by default
+          seating_arrangements
+      });
+
       return res.status(201).json({ hall });
-    } catch (error) {
+
+  } catch (error) {
       return res.status(500).json({ message: error.message });
-    }
-  };
+  }
+};
+
+
   
 
   exports.editHall = async (req, res) => {
@@ -34,6 +56,82 @@ exports.addHall = async (req, res) => {
     }
   };
   
+/**
+ * Book a hall by adding dates to the hall's blocked_dates array.
+ * Example usage: booking a hall for a wedding on a certain date.
+ */
+exports.bookHall = async (req, res) => {
+  try {
+    // hallId can come from URL params: e.g., /bookHall/:id
+    const hallId = req.params.id;
+    const { dates } = req.body; 
+    // 'dates' can be a single date or an array of dates
+
+    // Make sure dates exist in the request body
+    if (!dates || dates.length === 0) {
+      return res.status(400).json({ message: "At least one date is required to book the hall." });
+    }
+
+    const hall = await Hall.findById(hallId);
+    if (!hall) {
+      return res.status(404).json({ message: "Hall not found." });
+    }
+
+    // If 'dates' is a single date string, wrap it in an array for consistency
+    const datesArray = Array.isArray(dates) ? dates : [dates];
+
+    // Convert each date to a JS Date object and push to the hall's blocked_dates
+    datesArray.forEach((dateString) => {
+      const dateObj = new Date(dateString);
+      // Optional check: if dateObj already in blocked_dates, skip or throw an error
+      // e.g., if (hall.blocked_dates.some(d => d.getTime() === dateObj.getTime())) {...}
+      hall.blocked_dates.push(dateObj);
+    });
+
+    await hall.save();
+
+    return res.status(200).json({
+      message: "Hall booked successfully.",
+      hall,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * Update hall availability (e.g., to false when under renovation).
+ * Example usage: set hall availability to false if hall is closed for maintenance.
+ */
+exports.updateHallAvailability = async (req, res) => {
+  try {
+    // hallId can come from URL params: e.g., /updateAvailability/:id
+    const hallId = req.params.id;
+    const { availability } = req.body; // true or false
+
+    if (availability === undefined) {
+      return res
+        .status(400)
+        .json({ message: "Availability status (true/false) is required." });
+    }
+
+    const hall = await Hall.findById(hallId);
+    if (!hall) {
+      return res.status(404).json({ message: "Hall not found." });
+    }
+
+    hall.availability = availability;
+    await hall.save();
+
+    return res.status(200).json({
+      message: `Hall availability updated to ${availability}`,
+      hall,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 
   exports.deleteHall = async (req, res) => {
     try {

@@ -11,6 +11,7 @@ const Navbar = () => {
   };
 
   return (
+    
     <header className="bg-gradient-to-r from-orange-500 to-orange-700 text-white shadow-md sticky top-0 z-50">
       <div className="container mx-auto px-6 py-4 flex items-center justify-between">
         {/* Logo */}
@@ -39,7 +40,7 @@ const Navbar = () => {
             Proposal
           </a>
           <a
-            href="#"
+            href="/user-bookings"
             className="text-lg font-medium text-white hover:text-blue-900 hover:border-b-2 border-blue-900 transition"
           >
             My Bookings
