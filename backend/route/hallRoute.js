@@ -30,6 +30,9 @@ router.get(
 // Get halls profile for the venue owner
 router.get("/profile", checkAuthentication, hallController.getHallsProfile);
 router.get("/:venueId", checkAuthentication, hallController.getHallsByVenue);
+router.get("book/:hallId ", checkAuthentication, hallController.bookHall);
+router.get("update/:hallId ", checkAuthentication, hallController.updateHallAvailability);
+
 
 
 

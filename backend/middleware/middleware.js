@@ -54,9 +54,22 @@ const checkIsUser = (req, res, next) => {
   next(); // User is a regular user, proceed to the next middleware or route
 };
 
+
+// Middleware to check if the user is allowed to submit a review (only users)
+const checkCanSubmitReview = (req, res, next) => {
+  if (req.user.role !== "user") {
+    return res
+      .status(403)
+      .json({ message: "Access denied, only users can submit reviews." });
+  }
+  next(); // User is allowed to submit a review
+};
+
+
 module.exports = {
   checkAuthentication,
   checkIsAdmin,
   checkIsVenueOwner,
   checkIsUser,
+  checkCanSubmitReview,
 };

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import VenueSidebar from "./VenueSideBar";
+import VenueSidebar from "./VenueSidebar";
+
 
 const Notification = () => {
   const [notifications, setNotifications] = useState([]);

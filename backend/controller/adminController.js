@@ -9,7 +9,7 @@ async function getAllUsers(req, res) {
       search = "",
       sort = "date",
       blockStatus = "all",
-    } = req.query;
+    } = req.query;S
 
     // Calculate the starting index
     const startIndex = (parseInt(page) - 1) * parseInt(limit);
@@ -230,7 +230,7 @@ const getVenueOwner = async (req, res) => {
 
   try {
     // Find the venue owner by the userId and exclude the password field
-    const venueOwner = await VenueOwner.findById(userId).select('-password');
+    const venueOwner = await VenueOwner.findById(userId).select("-password");
 
     if (!venueOwner) {
       return res.status(404).json({ message: "Venue owner not found" });
@@ -239,8 +239,12 @@ const getVenueOwner = async (req, res) => {
     // Extract createdAt and updatedAt and format them if necessary
     const formattedVenueOwner = {
       ...venueOwner.toObject(),
-      date_created: venueOwner.createdAt ? venueOwner.createdAt.toLocaleString() : null, // Handle createdAt field
-      date_updated: venueOwner.updatedAt ? venueOwner.updatedAt.toLocaleString() : null, // Handle updatedAt field
+      date_created: venueOwner.createdAt
+        ? venueOwner.createdAt.toLocaleString()
+        : null, // Handle createdAt field
+      date_updated: venueOwner.updatedAt
+        ? venueOwner.updatedAt.toLocaleString()
+        : null, // Handle updatedAt field
     };
 
     // Return the formatted venue owner details
@@ -250,9 +254,6 @@ const getVenueOwner = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
-
-
-
 
 module.exports = {
   getAllUsers,

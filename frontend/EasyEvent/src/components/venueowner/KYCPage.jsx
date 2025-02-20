@@ -1,7 +1,8 @@
 import axios from "axios";
 import React, { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import VenueSidebar from "./VenueSideBar";
+import VenueSidebar from "./VenueSidebar";
+
 
 const KYCPage = () => {
   const navigate = useNavigate();

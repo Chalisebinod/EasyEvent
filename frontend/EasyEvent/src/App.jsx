@@ -40,6 +40,10 @@ import Notification from "./components/venueowner/Notification";
 import Hall from "./components/venueowner/Hall";
 import PartyPalace from "./components/user/PartyPalace";
 import AgreementPage from "./components/venueowner/AgreementPage";
+import Request from "./components/venueowner/Request";
+import EventDetails from "./components/venueowner/EventDetails";
+import UserBookings from "./components/user/UserBookings";
+import Booking from "./components/user/bookings/Booking";
 
 function App() {
   // useEffect(() => {
@@ -88,6 +92,12 @@ function App() {
         <Route path="/venueOwnerKyc" element={<KYCPage />} />
         <Route path="/notification" element={<Notification />} />
         <Route path="/agreement" element={<AgreementPage />} />
+        <Route path="/user-request" element={<Request />} />
+        <Route path="/event-details/:id" element={<EventDetails />} />
+
+        <Route path="/user-bookings" element={<UserBookings />} />
+        <Route path="/user-book/:id" element={<Booking />} />
+
 
         {/* Landing Page */}
         <Route path="/" element={<LandingPage />} />

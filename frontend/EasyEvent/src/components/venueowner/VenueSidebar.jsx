@@ -86,7 +86,7 @@ const VenueSidebar = () => {
             </ListItemIcon>
             <ListItemText primary="Dashboard" />
           </ListItem>
-          <ListItem button component={Link} to="/request">
+          <ListItem button component={Link} to="/user-request">
             <ListItemIcon>
               <RequestQuoteIcon sx={{ color: "#ECF0F1" }} />
             </ListItemIcon>

@@ -126,7 +126,6 @@ const updateKYC = async (req, res) => {
 
 
 // Updated verifyKYC controller
-// Updated verifyKYC controller
 const verifyKYC = async (req, res) => {
   try {
     const { kycId, status, message } = req.body;
@@ -154,6 +153,12 @@ const verifyKYC = async (req, res) => {
       return res.status(404).json({ error: "KYC record not found." });
     }
 
+    // Check if the venueOwner (KYC owner) exists in the VenueOwner model
+    const venueOwner = await VenueOwner.findById(kycRecord.owner);
+    if (!venueOwner) {
+      return res.status(400).json({ error: "Venue owner ID is invalid or does not exist." });
+    }
+
     const previousStatus = kycRecord.verificationStatus; // Store previous status
 
     // Update KYC status and rejection message if applicable
@@ -171,10 +176,11 @@ const verifyKYC = async (req, res) => {
         owner: kycRecord.owner,
         name: kycRecord.venueName,
       });
+
       if (!existingVenue) {
         const newVenue = new Venue({
           name: kycRecord.venueName,
-          owner: kycRecord.owner,
+          owner: venueOwner._id, // Ensuring only a registered VenueOwner's ID is used
           location: kycRecord.venueAddress,
           description: "Venue verified via KYC.",
           verification_status: "Verified",
@@ -184,6 +190,7 @@ const verifyKYC = async (req, res) => {
             email: kycRecord.email,
           },
         });
+
         await newVenue.save();
 
         // Update the VenueOwner's venues array and mark the owner as verified
@@ -238,6 +245,7 @@ const verifyKYC = async (req, res) => {
     res.status(500).json({ error: "Server error. Please try again later." });
   }
 };
+
 
 
 // Other KYC controllers remain unchanged
