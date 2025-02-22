@@ -123,14 +123,7 @@ const VenueOwnerDashboard = () => {
       <main className="flex-1 p-6">
         <header className="flex justify-between items-center mb-8">
           <h2 className="text-xl font-bold text-orange-500">Dashboard</h2>
-          <div className="flex items-center space-x-4">
-            <span className="text-orange-500 text-lg">🔔</span>
-            <img
-              src="https://via.placeholder.com/30"
-              alt="Profile"
-              className="w-8 h-8 rounded-full"
-            />
-          </div>
+        
         </header>
 
         {/* Stats Section */}

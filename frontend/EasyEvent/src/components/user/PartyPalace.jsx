@@ -1,30 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FaUserCircle, FaComments, FaRegPaperPlane } from "react-icons/fa";
-import { IoPersonCircleOutline } from "react-icons/io5";
+import { FaUserCircle, FaComments } from "react-icons/fa";
 import Navbar from "./Navbar";
 import BottomNavbar from "./BottomNavbar";
 
-// Add this CSS in your stylesheet to enable the animated stroke effect
-// .animated-stroke {
-//   position: relative;
-//   overflow: hidden;
-// }
-// .animated-stroke::after {
-//   content: "";
-//   position: absolute;
-//   top: 0;
-//   left: 0;
-//   width: 100%;
-//   height: 100%;
-//   border: 2px solid transparent;
-//   border-radius: 9999px;
-//   transition: border-color 0.3s ease;
-// }
-// .animated-stroke:hover::after {
-//   border-color: #F97316; /* or your preferred color */
-// }
-
+// ProfileIcon remains the same for navigation purposes
 const ProfileIcon = ({ ownerId }) => {
   const navigate = useNavigate();
   const handleClick = () => {
@@ -235,7 +215,8 @@ const PartyPalace = () => {
         {/* Content Section */}
         {activeTab === "overview" && (
           <div className="bg-white rounded-xl shadow-lg p-6 space-y-8">
-            <div className="flex flex-col md:flex-row justify-between">
+            {/* Top Row: Venue Name and Owner Info */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
               <div>
                 <h2 className="text-3xl font-bold text-gray-800">
                   {venue.name}
@@ -244,21 +225,38 @@ const PartyPalace = () => {
                   A premier venue for unforgettable events
                 </p>
               </div>
-              <div className="mt-4 md:mt-0">
-                <a
-                  href="#"
-                  className="text-orange-500 font-semibold hover:underline"
-                >
-                  View Details
-                </a>
-              </div>
+        
+<div className="mt-4 flex-col items-center">
+  <div className="w-24 h-24 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
+    <img
+      src={
+        venue.owner?.image
+          ? getImageUrl(venue.owner.image)
+          : "https://via.placeholder.com/80"
+      }
+      alt="Owner Profile"
+      className="w-20 h-20 rounded-full object-cover"
+    />
+  </div>
+  <p className="mt-2 text-lg font-semibold text-gray-800">
+    {venue.owner?.phone || "N/A"}
+  </p>
+  <p className="mt-1 text-gray-600">
+    {venue.owner?.email || "owner@example.com"}
+  </p>
+</div>
+
             </div>
+
+            {/* Description */}
             <div>
               <h3 className="text-2xl font-semibold text-gray-800 mb-2">
                 Description
               </h3>
               <p className="text-gray-700">{venue.description}</p>
             </div>
+
+            {/* Features */}
             <div>
               <h3 className="text-2xl font-semibold text-gray-800 mb-2">
                 Features
@@ -270,6 +268,8 @@ const PartyPalace = () => {
                   ))}
               </ul>
             </div>
+
+            {/* Three-Column Info */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-gray-50 p-4 rounded-xl shadow">
                 <h4 className="text-xl font-bold mb-2">Halls Info</h4>
@@ -280,14 +280,20 @@ const PartyPalace = () => {
                     ? venue.halls.capacities.join(" & ")
                     : "N/A"}
                 </p>
-                <p className="mt-2">Food: {venue.halls?.food_type || "N/A"}</p>
+                <p className="mt-2">
+                  Food: {venue.halls?.food_type || "N/A"}
+                </p>
               </div>
               <div className="bg-gray-50 p-4 rounded-xl shadow">
                 <h4 className="text-xl font-bold mb-2">Payment Policy</h4>
                 <p>Advance: {venue.payment_policy.advance_percentage}%</p>
-                <p>Security Deposit: {venue.payment_policy.security_deposit}</p>
+                <p>
+                  Security Deposit: {venue.payment_policy.security_deposit}
+                </p>
                 <p>Refund: {venue.payment_policy.refund_policy}</p>
-                <p>Cancellation: {venue.payment_policy.cancellation_penalty}</p>
+                <p>
+                  Cancellation: {venue.payment_policy.cancellation_penalty}
+                </p>
               </div>
               <div className="bg-gray-50 p-4 rounded-xl shadow">
                 <h4 className="text-xl font-bold mb-2">Contact Details</h4>
@@ -330,81 +336,13 @@ const PartyPalace = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-600">No completed events available.</p>
+              <p className="text-gray-600">
+                No completed events available.
+              </p>
             )}
           </div>
         )}
       </section>
-
-      {/* Chat Modal */}
-      {chatOpen && (
-        <>
-          {!isMinimized && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-              <div className="bg-white rounded-lg shadow-xl w-96 h-[80vh] flex flex-col">
-                <div className="flex justify-between items-center bg-orange-500 p-4 rounded-t-lg">
-                  <div className="flex items-center space-x-2">
-                    <IoPersonCircleOutline className="text-3xl text-white" />
-                    <h2 className="text-white text-xl font-semibold">Chat</h2>
-                  </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => setIsMinimized(true)}
-                      className="text-white text-sm hover:text-gray-200"
-                    >
-                      Minimize
-                    </button>
-                    <button
-                      onClick={() => setChatOpen(false)}
-                      className="text-white text-sm hover:text-gray-200"
-                    >
-                      Close
-                    </button>
-                  </div>
-                </div>
-                <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-100">
-                  {chatMessages.map((msg, index) => (
-                    <div
-                      key={index}
-                      className={`max-w-xs p-3 rounded-lg shadow ${
-                        msg.sender === "user"
-                          ? "bg-orange-500 text-white self-end"
-                          : "bg-gray-400 text-white self-start"
-                      }`}
-                    >
-                      {msg.text}
-                    </div>
-                  ))}
-                </div>
-                <div className="p-4 bg-white flex items-center border-t">
-                  <input
-                    type="text"
-                    placeholder="Type a message..."
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    className="flex-1 border rounded-full p-2 focus:outline-none"
-                  />
-                  <button
-                    onClick={sendChatMessage}
-                    className="ml-3 text-orange-500 hover:text-orange-600"
-                  >
-                    <FaRegPaperPlane size={24} />
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-          {isMinimized && (
-            <div
-              className="fixed bottom-20 right-6 bg-orange-500 p-4 rounded-full shadow-2xl z-50 cursor-pointer flex items-center text-white"
-              onClick={() => setIsMinimized(false)}
-            >
-              <FaComments size={28} className="mr-2" />
-              <span className="hidden md:block">Chat</span>
-            </div>
-          )}
-        </>
-      )}
 
       <BottomNavbar />
     </div>

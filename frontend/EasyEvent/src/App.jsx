@@ -19,6 +19,7 @@ import DashboardBefore from "./components/user/DashboardBefore";
 
 import Profile from "./components/user/Profile";
 import { reactLocalStorage } from "reactjs-localstorage";
+
 import ChangePassword from "./components/user/ChangePassword";
 import PaymentDetails from "./components/user/PaymentDetails";
 import DeleteAccount from "./components/user/DeleteAccount";
@@ -44,6 +45,9 @@ import Request from "./components/venueowner/Request";
 import EventDetails from "./components/venueowner/EventDetails";
 import UserBookings from "./components/user/UserBookings";
 import Booking from "./components/user/bookings/Booking";
+import Transaction from "./components/venueowner/Transaction";
+import PaymentPage from "./components/user/PaymentPage";
+import TransactionDetails from "./components/venueowner/TransactionDetails";
 
 function App() {
   // useEffect(() => {
@@ -93,7 +97,13 @@ function App() {
         <Route path="/notification" element={<Notification />} />
         <Route path="/agreement" element={<AgreementPage />} />
         <Route path="/user-request" element={<Request />} />
+        <Route path="/transaction" element={<Transaction />} />
+        <Route path="/transaction-details" element={<TransactionDetails />} />
         <Route path="/event-details/:id" element={<EventDetails />} />
+
+
+
+
 
         <Route path="/user-bookings" element={<UserBookings />} />
         <Route path="/user-book/:id" element={<Booking />} />
@@ -148,6 +158,7 @@ function App() {
         <Route path="/venue-KYC" element={<KYCPage />} />
         <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/payment-details" element={<PaymentDetails />} />
+        <Route path="/user-payment" element={<PaymentPage />} />
         <Route path="/delete-account" element={<DeleteAccount />} />
         {/* Redirect to Home if no match */}
         <Route path="*" element={<Navigate to="/" />} />
