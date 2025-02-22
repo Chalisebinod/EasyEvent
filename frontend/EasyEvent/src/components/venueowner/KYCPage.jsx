@@ -2,7 +2,8 @@ import axios from "axios";
 import React, { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import VenueSidebar from "./VenueSidebar";
-
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const KYCPage = () => {
   const navigate = useNavigate();
@@ -212,7 +213,7 @@ const KYCPage = () => {
       );
 
       if (response.status === 200) {
-        alert("KYC updated successfully!");
+        toast.success("KYC updated successfully!");
         navigate("/venue-owner-dashboard");
       }
     } catch (error) {
@@ -485,6 +486,7 @@ const KYCPage = () => {
           </div>
         </main>
       </div>
+      <ToastContainer />
     </div>
   );
 };

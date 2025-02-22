@@ -9,6 +9,11 @@ import {
   Badge,
   Divider,
   Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
 } from "@mui/material";
 import {
   Dashboard as DashboardIcon,
@@ -24,9 +29,12 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
-const VenueSidebar = () => {
+const drawerWidth = 250;
+
+const VenueSidebar = ({ children }) => {
   const navigate = useNavigate();
   const [notificationCount, setNotificationCount] = useState(0);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchNotificationCount = async () => {
@@ -50,55 +58,107 @@ const VenueSidebar = () => {
   }, []);
 
   const handleLogout = () => {
-    const confirmLogout = window.confirm("Do you want to logout?");
-    if (confirmLogout) {
-      localStorage.removeItem("access_token");
-      navigate("/login");
-    }
+    localStorage.removeItem("access_token");
+    navigate("/login");
   };
 
+  const openLogoutDialog = () => setLogoutDialogOpen(true);
+  const closeLogoutDialog = () => setLogoutDialogOpen(false);
+
   return (
-    <Box sx={{ display: "flex" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", backgroundColor: "#f4f6f8" }}>
+      {/* Drawer (Sidebar) */}
       <Drawer
         sx={{
-          width: 250,
+          width: drawerWidth,
           flexShrink: 0,
           "& .MuiDrawer-paper": {
-            width: 250,
+            width: drawerWidth,
             boxSizing: "border-box",
-            backgroundColor: "#2C3E50", // Dark background
-            color: "#ECF0F1", // Light text color
+            backgroundColor: "#2C3E50", // Dark sidebar background
+            color: "#ECF0F1", // Light text
           },
         }}
         variant="permanent"
         anchor="left"
       >
         {/* Sidebar Header */}
-        <Box className="text-center p-4 bg-gay font-extrabold rounded-lg mb-4">
-          <Typography variant="h6">EasyEvent</Typography>
+        <Box
+          sx={{
+            textAlign: "center",
+            p: 3,
+            // Subtle gradient
+            background: "linear-gradient(135deg, #34495E 20%, #2C3E50 80%)",
+            mb: 3,
+            borderRadius: 1,
+            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.3)",
+          }}
+        >
+          <Typography variant="h5" sx={{ color: "#ECF0F1", fontWeight: "bold" }}>
+            EasyEvent
+          </Typography>
         </Box>
 
         {/* Navigation Links */}
         <List>
-          <ListItem button component={Link} to="/venue-owner-dashboard">
+          <ListItem
+            button
+            component={Link}
+            to="/venue-owner-dashboard"
+            sx={{
+              "&:hover": {
+                backgroundColor: "rgba(255, 255, 255, 0.1)",
+              },
+            }}
+          >
             <ListItemIcon>
               <DashboardIcon sx={{ color: "#ECF0F1" }} />
             </ListItemIcon>
             <ListItemText primary="Dashboard" />
           </ListItem>
-          <ListItem button component={Link} to="/user-request">
+
+          <ListItem
+            button
+            component={Link}
+            to="/user-request"
+            sx={{
+              "&:hover": {
+                backgroundColor: "rgba(255, 255, 255, 0.1)",
+              },
+            }}
+          >
             <ListItemIcon>
               <RequestQuoteIcon sx={{ color: "#ECF0F1" }} />
             </ListItemIcon>
             <ListItemText primary="Request" />
           </ListItem>
-          <ListItem button component={Link} to="/halls">
+
+          <ListItem
+            button
+            component={Link}
+            to="/halls"
+            sx={{
+              "&:hover": {
+                backgroundColor: "rgba(255, 255, 255, 0.1)",
+              },
+            }}
+          >
             <ListItemIcon>
               <StoreIcon sx={{ color: "#ECF0F1" }} />
             </ListItemIcon>
             <ListItemText primary="Halls" />
           </ListItem>
-          <ListItem button component={Link} to="/notification">
+
+          <ListItem
+            button
+            component={Link}
+            to="/notification"
+            sx={{
+              "&:hover": {
+                backgroundColor: "rgba(255, 255, 255, 0.1)",
+              },
+            }}
+          >
             <ListItemIcon>
               <Badge badgeContent={notificationCount} color="error">
                 <NotificationsIcon sx={{ color: "#ECF0F1" }} />
@@ -106,31 +166,81 @@ const VenueSidebar = () => {
             </ListItemIcon>
             <ListItemText primary="Notifications" />
           </ListItem>
-          <ListItem button component={Link} to="/payments">
+
+          <ListItem
+            button
+            component={Link}
+            to="/transaction"
+            sx={{
+              "&:hover": {
+                backgroundColor: "rgba(255, 255, 255, 0.1)",
+              },
+            }}
+          >
             <ListItemIcon>
               <PaymentsIcon sx={{ color: "#ECF0F1" }} />
             </ListItemIcon>
             <ListItemText primary="Payments" />
           </ListItem>
-          <ListItem button component={Link} to="/agreement">
+
+          <ListItem
+            button
+            component={Link}
+            to="/agreement"
+            sx={{
+              "&:hover": {
+                backgroundColor: "rgba(255, 255, 255, 0.1)",
+              },
+            }}
+          >
             <ListItemIcon>
               <AccountBalanceIcon sx={{ color: "#ECF0F1" }} />
             </ListItemIcon>
             <ListItemText primary="Agreement" />
           </ListItem>
-          <ListItem button component={Link} to="/Create-venue">
+
+          <ListItem
+            button
+            component={Link}
+            to="/Create-venue"
+            sx={{
+              "&:hover": {
+                backgroundColor: "rgba(255, 255, 255, 0.1)",
+              },
+            }}
+          >
             <ListItemIcon>
               <EventIcon sx={{ color: "#ECF0F1" }} />
             </ListItemIcon>
             <ListItemText primary="Event" />
           </ListItem>
-          <ListItem button component={Link} to="/Venue-profile">
+
+          <ListItem
+            button
+            component={Link}
+            to="/Venue-profile"
+            sx={{
+              "&:hover": {
+                backgroundColor: "rgba(255, 255, 255, 0.1)",
+              },
+            }}
+          >
             <ListItemIcon>
               <StoreIcon sx={{ color: "#ECF0F1" }} />
             </ListItemIcon>
             <ListItemText primary="Venue Profile" />
           </ListItem>
-          <ListItem button component={Link} to="/venueOwnerKyc">
+
+          <ListItem
+            button
+            component={Link}
+            to="/venueOwnerKyc"
+            sx={{
+              "&:hover": {
+                backgroundColor: "rgba(255, 255, 255, 0.1)",
+              },
+            }}
+          >
             <ListItemIcon>
               <ProfileIcon sx={{ color: "#ECF0F1" }} />
             </ListItemIcon>
@@ -138,11 +248,19 @@ const VenueSidebar = () => {
           </ListItem>
         </List>
 
-        <Divider sx={{ borderColor: "#7F8C8D" }} />
+        <Divider sx={{ borderColor: "#7F8C8D", my: 2 }} />
 
         {/* Logout Button */}
         <List>
-          <ListItem button onClick={handleLogout}>
+          <ListItem
+            button
+            onClick={openLogoutDialog}
+            sx={{
+              "&:hover": {
+                backgroundColor: "rgba(255, 255, 255, 0.1)",
+              },
+            }}
+          >
             <ListItemIcon>
               <LogoutIcon sx={{ color: "#ECF0F1" }} />
             </ListItemIcon>
@@ -150,6 +268,34 @@ const VenueSidebar = () => {
           </ListItem>
         </List>
       </Drawer>
+
+      {/* Main Content Area */}
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 3,
+        }}
+      >
+        {/* You can add a Top Bar or Page Title here if desired */}
+        {children}
+      </Box>
+
+      {/* Logout Confirmation Dialog */}
+      <Dialog open={logoutDialogOpen} onClose={closeLogoutDialog}>
+        <DialogTitle>Confirm Logout</DialogTitle>
+        <DialogContent>
+          <Typography>Are you sure you want to logout?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeLogoutDialog} color="inherit">
+            Cancel
+          </Button>
+          <Button onClick={handleLogout} color="error">
+            Logout
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

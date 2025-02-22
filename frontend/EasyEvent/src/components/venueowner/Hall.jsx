@@ -25,6 +25,7 @@ import {
   Checkbox,
   Avatar,
   Fab,
+  Container,
 } from "@mui/material";
 import {
   AddPhotoAlternate,
@@ -38,11 +39,16 @@ import {
 } from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
 import VenueSidebar from "./VenueSidebar";
+import "react-toastify/dist/ReactToastify.css";
 
 const StyledCard = styled(Card)(({ theme }) => ({
-  borderRadius: theme.spacing(1),
-  boxShadow: theme.shadows[3],
-  overflow: "hidden",
+  borderRadius: theme.spacing(2),
+  boxShadow: theme.shadows[2],
+  transition: "transform 0.2s ease-in-out",
+  "&:hover": {
+    transform: "translateY(-2px)",
+    boxShadow: theme.shadows[4],
+  },
 }));
 
 const ImagePreview = styled("div")(({ theme }) => ({
@@ -51,18 +57,37 @@ const ImagePreview = styled("div")(({ theme }) => ({
   display: "inline-block",
 }));
 
+const HeaderBox = styled(Box)(({ theme }) => ({
+  borderRadius: theme.spacing(2),
+  padding: theme.spacing(3),
+  boxShadow: theme.shadows[3],
+  background: "linear-gradient(45deg, #4F46E5 0%, #3B82F6 100%)",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: theme.spacing(4),
+  [theme.breakpoints.down("sm")]: {
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: theme.spacing(2),
+  },
+}));
+
 const Hall = () => {
   const [venue, setVenue] = useState(null);
   const [halls, setHalls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // Create Hall Modal (for adding new hall)
+
+  // Create Hall Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // States for editing and deleting a hall
+  // Edit / Delete states
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedHall, setSelectedHall] = useState(null);
+
+  // Hall data for editing
   const [editHall, setEditHall] = useState({
     name: "",
     capacity: "",
@@ -72,6 +97,7 @@ const Hall = () => {
     description: "",
   });
 
+  // New Hall data
   const [newHall, setNewHall] = useState({
     name: "",
     capacity: "",
@@ -83,11 +109,12 @@ const Hall = () => {
     address: "",
   });
 
-  // For custom features
+  // Custom feature input
   const [customFeature, setCustomFeature] = useState("");
 
   const accessToken = localStorage.getItem("access_token");
 
+  // Fetch Venue Profile
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
@@ -111,6 +138,7 @@ const Hall = () => {
     fetchUserProfile();
   }, [accessToken]);
 
+  // Fetch Halls
   useEffect(() => {
     const venueId = localStorage.getItem("venueID");
     if (!venueId) return;
@@ -130,6 +158,7 @@ const Hall = () => {
     fetchHalls();
   }, [venue, accessToken]);
 
+  // Add Hall
   const handleAddHall = async () => {
     try {
       const venueId = localStorage.getItem("venueID");
@@ -173,6 +202,7 @@ const Hall = () => {
     }
   };
 
+  // Handle Image Upload
   const handleImageUpload = (e) => {
     if (newHall.images.length + e.target.files.length > 5) {
       toast.error("You can upload a maximum of 5 images.");
@@ -184,6 +214,7 @@ const Hall = () => {
     });
   };
 
+  // Remove single image
   const removeImage = (index) => {
     setNewHall({
       ...newHall,
@@ -191,7 +222,7 @@ const Hall = () => {
     });
   };
 
-  // PATCH request to update a hall's details
+  // Edit Hall (PATCH)
   const handleEditHall = async (hallId, updatedData) => {
     try {
       const response = await axios.patch(
@@ -204,19 +235,16 @@ const Hall = () => {
           },
         }
       );
-
-      // Update the halls list with the edited hall
       setHalls(
         halls.map((hall) => (hall._id === hallId ? response.data.hall : hall))
       );
-
       toast.success("Hall updated successfully!");
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to update hall.");
     }
   };
 
-  // DELETE request to remove a hall
+  // Delete Hall
   const handleDeleteHall = async (hallId) => {
     try {
       await axios.delete(`http://localhost:8000/api/halls/${hallId}`, {
@@ -224,17 +252,14 @@ const Hall = () => {
           Authorization: `Bearer ${accessToken}`,
         },
       });
-
-      // Remove the deleted hall from the state
       setHalls(halls.filter((hall) => hall._id !== hallId));
-
       toast.success("Hall deleted successfully!");
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to delete hall.");
     }
   };
 
-  // Add custom feature for creating a hall
+  // Add custom feature to new hall
   const handleAddCustomFeature = () => {
     if (!customFeature.trim()) return;
     setNewHall({
@@ -245,144 +270,174 @@ const Hall = () => {
   };
 
   return (
-    <Box display="flex" minHeight="100vh">
+    <Box display="flex" minHeight="100vh" bgcolor="#f8f9fa">
       <ToastContainer position="top-center" autoClose={3000} />
       <VenueSidebar />
-      <Box flexGrow={1} p={4} bgcolor="grey.100">
-        {/* Header */}
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={4}
-        >
-          <Box>
-            <Typography
-              variant="h4"
-              sx={{ fontWeight: "bold", color: "grey.900" }}
-            >
-              Hall Management
-            </Typography>
-            <Typography variant="subtitle1" sx={{ color: "grey.700" }}>
-              {venue?.name || "Your Venue"}
-            </Typography>
-          </Box>
-          <Fab
-            variant="extended"
-            color="primary"
-            onClick={() => setIsModalOpen(true)}
-          >
-            <MeetingRoom sx={{ mr: 1 }} />
-            Add New Hall
-          </Fab>
-        </Box>
 
-        {/* Content */}
-        {loading ? (
-          <LinearProgress color="secondary" />
-        ) : error ? (
-          <Box
-            p={2}
-            bgcolor="error.light"
-            color="error.contrastText"
-            borderRadius={1}
-          >
-            {error}
-          </Box>
-        ) : !venue ? (
-          <Box textAlign="center" p={4} color="grey.600">
-            No venue created yet
-          </Box>
-        ) : (
-          <Grid container spacing={4}>
-            {halls.map((hall) => (
-              <Grid item xs={12} sm={6} lg={4} key={hall._id}>
-                <StyledCard>
-                  {hall.images?.length > 0 && (
-                    <CardMedia
-                      component="img"
-                      height="200"
-                      image={hall.images[0]}
-                      alt={hall.name}
-                      sx={{ objectFit: "cover" }}
-                    />
-                  )}
-                  <CardContent>
-                    <Box
-                      display="flex"
-                      justifyContent="space-between"
-                      alignItems="flex-start"
-                      mb={1}
-                    >
-                      <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                        {hall.name}
-                      </Typography>
-                      <Box>
-                        <IconButton
-                          color="primary"
-                          onClick={() => {
-                            setSelectedHall(hall);
-                            // Preload the edit state with current hall data
-                            setEditHall({
-                              name: hall.name,
-                              capacity: hall.capacity,
-                              pricePerPlate: hall.pricePerPlate,
-                              features: hall.features || [],
-                              availability: hall.availability,
-                              description: hall.description || "",
-                            });
-                            setEditModalOpen(true);
-                          }}
-                        >
-                          <Edit fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          color="error"
-                          onClick={() => {
-                            setSelectedHall(hall);
-                            setDeleteModalOpen(true);
-                          }}
-                        >
-                          <Delete fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    </Box>
-                    <Box display="flex" gap={1} mb={1}>
-                      <Chip
-                        icon={<People />}
-                        label={`Capacity: ${hall.capacity}`}
-                        size="small"
-                        variant="outlined"
+      <Box flexGrow={1} p={2}>
+        <Container maxWidth="xl">
+          {/* Header */}
+          <HeaderBox>
+            <Box>
+              <Typography variant="h4" sx={{ fontWeight: "bold", color: "#fff" }}>
+                Hall Management
+              </Typography>
+              <Typography variant="subtitle1" sx={{ color: "orange" , fontSize: "1.5rem" }}>
+                {venue?.name || "Your Venue"}
+              </Typography>
+            </Box>
+            <Fab
+              variant="extended"
+              color="primary"
+              onClick={() => setIsModalOpen(true)}
+            >
+              <MeetingRoom sx={{ mr: 1 }} />
+              Add New Hall
+            </Fab>
+          </HeaderBox>
+
+          {/* Content */}
+          {loading ? (
+            <LinearProgress color="secondary" />
+          ) : error ? (
+            <Box
+              p={2}
+              bgcolor="error.light"
+              color="error.contrastText"
+              borderRadius={1}
+            >
+              {error}
+            </Box>
+          ) : !venue ? (
+            <Box textAlign="center" p={4} color="grey.600">
+              No venue created yet
+            </Box>
+          ) : (
+            <Grid container spacing={3}>
+              {halls.map((hall) => (
+                <Grid item xs={12} sm={6} md={4} key={hall._id}>
+                  <StyledCard>
+                    {hall.images?.length > 0 && (
+                      <CardMedia
+                        component="img"
+                        height="180"
+                        image={hall.images[0]}
+                        alt={hall.name}
+                        sx={{ objectFit: "cover" }}
                       />
-                      <Chip
-                        icon={<LocalDining />}
-                        label={`$${hall.pricePerPlate}/plate`}
-                        size="small"
-                        color="success"
-                        variant="outlined"
-                      />
-                    </Box>
-                    {hall.features?.length > 0 && (
-                      <Box mb={1}>
+                    )}
+                    <CardContent>
+                      <Box
+                        display="flex"
+                        justifyContent="space-between"
+                        alignItems="flex-start"
+                        mb={1}
+                      >
                         <Typography
-                          variant="caption"
-                          sx={{ color: "grey.600" }}
+                          variant="h6"
+                          sx={{ fontWeight: "bold", color: "text.primary" }}
                         >
-                          Features:
+                          {hall.name}
                         </Typography>
-                        <Box display="flex" flexWrap="wrap" gap={0.5} mt={0.5}>
-                          {hall.features.map((feature, index) => (
-                            <Chip key={index} label={feature} size="small" />
-                          ))}
+                        <Box>
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => {
+                              setSelectedHall(hall);
+                              setEditHall({
+                                name: hall.name,
+                                capacity: hall.capacity,
+                                pricePerPlate: hall.pricePerPlate,
+                                features: hall.features || [],
+                                availability: hall.availability,
+                                description: hall.description || "",
+                              });
+                              setEditModalOpen(true);
+                            }}
+                          >
+                            <Edit fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => {
+                              setSelectedHall(hall);
+                              setDeleteModalOpen(true);
+                            }}
+                          >
+                            <Delete fontSize="small" />
+                          </IconButton>
                         </Box>
                       </Box>
-                    )}
-                  </CardContent>
-                </StyledCard>
-              </Grid>
-            ))}
-          </Grid>
-        )}
+
+                      <Box display="flex" gap={1} mb={1} flexWrap="wrap">
+                        <Chip
+                          icon={<People />}
+                          label={`Capacity: ${hall.capacity}`}
+                          size="small"
+                          variant="outlined"
+                        />
+                        <Chip
+                          icon={<LocalDining />}
+                          label={`$${hall.pricePerPlate}/plate`}
+                          size="small"
+                          color="success"
+                          variant="outlined"
+                        />
+                        {hall.availability ? (
+                          <Chip
+                            label="Available"
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                          />
+                        ) : (
+                          <Chip
+                            label="Unavailable"
+                            size="small"
+                            variant="outlined"
+                            color="warning"
+                          />
+                        )}
+                      </Box>
+
+                      {hall.features?.length > 0 && (
+                        <Box mb={1}>
+                          <Typography
+                            variant="caption"
+                            sx={{ color: "text.secondary" }}
+                          >
+                            Features:
+                          </Typography>
+                          <Box display="flex" flexWrap="wrap" gap={0.5} mt={0.5}>
+                            {hall.features.map((feature, index) => (
+                              <Chip
+                                key={index}
+                                label={feature}
+                                size="small"
+                                variant="outlined"
+                              />
+                            ))}
+                          </Box>
+                        </Box>
+                      )}
+
+                      {hall.description && (
+                        <Typography
+                          variant="body2"
+                          sx={{ color: "text.secondary", mt: 1 }}
+                        >
+                          {hall.description}
+                        </Typography>
+                      )}
+                    </CardContent>
+                  </StyledCard>
+                </Grid>
+              ))}
+            </Grid>
+          )}
+        </Container>
 
         {/* Create Hall Dialog */}
         <Dialog
@@ -391,23 +446,14 @@ const Hall = () => {
           fullWidth
           maxWidth="md"
           scroll="paper"
-          PaperProps={{
-            sx: {
-              maxHeight: "80vh",
-              mt: 6,
-            },
-          }}
         >
           <DialogTitle
             sx={{
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              background: "linear-gradient(to right, #7e22ce, #2563eb)",
+              background: "linear-gradient(to right, #4F46E5, #3B82F6)",
               color: "#fff",
-              py: 2,
-              px: 3,
-              mb: 4,
             }}
           >
             <span>Create New Hall</span>
@@ -415,8 +461,10 @@ const Hall = () => {
               <Close />
             </IconButton>
           </DialogTitle>
-          <DialogContent sx={{ pt: 3 }}>
-            <Grid container spacing={3}>
+
+          <DialogContent>
+            <Grid container spacing={2} mt={1}>
+              {/* Left side */}
               <Grid item xs={12} md={6}>
                 <TextField
                   label="Hall Name"
@@ -498,7 +546,7 @@ const Hall = () => {
                 <FormControl component="fieldset" sx={{ mt: 3 }}>
                   <Typography
                     variant="subtitle2"
-                    sx={{ color: "grey.600", mb: 1 }}
+                    sx={{ color: "text.secondary", mb: 1 }}
                   >
                     Features
                   </Typography>
@@ -537,16 +585,25 @@ const Hall = () => {
                       onChange={(e) => setCustomFeature(e.target.value)}
                       sx={{ mr: 1 }}
                     />
-                    <Button
-                      variant="contained"
-                      onClick={handleAddCustomFeature}
-                    >
+                    <Button variant="contained" onClick={handleAddCustomFeature}>
                       Add
                     </Button>
                   </Box>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} md={6} mt={1}>
+
+              {/* Right side */}
+              <Grid item xs={12} md={6}>
+                <TextField
+                  label="Address"
+                  fullWidth
+                  variant="outlined"
+                  value={newHall.address}
+                  onChange={(e) =>
+                    setNewHall({ ...newHall, address: e.target.value })
+                  }
+                  sx={{ mb: 2 }}
+                />
                 <FormControl fullWidth sx={{ mb: 2 }}>
                   <OutlinedInput
                     id="image-upload"
@@ -567,10 +624,13 @@ const Hall = () => {
                     borderRadius: 1,
                     p: 2,
                     textAlign: "center",
+                    minHeight: 120,
                   }}
                 >
                   {newHall.images.length === 0 ? (
-                    <Typography color="grey.500">No images selected</Typography>
+                    <Typography color="grey.500">
+                      No images selected
+                    </Typography>
                   ) : (
                     <Box display="flex" flexWrap="wrap" justifyContent="center">
                       {newHall.images.map((image, index) => (
@@ -588,7 +648,6 @@ const Hall = () => {
                               top: 0,
                               right: 0,
                               opacity: 0.8,
-                              transition: "opacity 0.3s",
                             }}
                             onClick={() => removeImage(index)}
                           >
@@ -598,17 +657,18 @@ const Hall = () => {
                       ))}
                     </Box>
                   )}
+                  <Typography
+                    variant="caption"
+                    sx={{ display: "block", mt: 1, color: "grey.500" }}
+                  >
+                    {5 - newHall.images.length} images remaining
+                  </Typography>
                 </Box>
-                <Typography
-                  variant="caption"
-                  sx={{ display: "block", mt: 1, color: "grey.500" }}
-                >
-                  {5 - newHall.images.length} images remaining
-                </Typography>
               </Grid>
             </Grid>
           </DialogContent>
-          <DialogActions sx={{ p: 3, borderTop: 1, borderColor: "grey.300" }}>
+
+          <DialogActions sx={{ p: 2 }}>
             <Button
               onClick={() => setIsModalOpen(false)}
               variant="outlined"
@@ -640,11 +700,8 @@ const Hall = () => {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              background: "linear-gradient(to right, #7e22ce, #2563eb)",
+              background: "linear-gradient(to right, #4F46E5, #3B82F6)",
               color: "#fff",
-              py: 2,
-              px: 3,
-              mb: 4,
             }}
           >
             <span>Edit Hall</span>
@@ -652,9 +709,10 @@ const Hall = () => {
               <Close />
             </IconButton>
           </DialogTitle>
-          <DialogContent sx={{ pt: 3 }}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
+
+          <DialogContent sx={{ pt: 2 }}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6} mt={3}>
                 <TextField
                   label="Hall Name"
                   fullWidth
@@ -735,7 +793,7 @@ const Hall = () => {
                 <FormControl component="fieldset" sx={{ mt: 3 }}>
                   <Typography
                     variant="subtitle2"
-                    sx={{ color: "grey.600", mb: 1 }}
+                    sx={{ color: "text.secondary", mb: 1 }}
                   >
                     Features
                   </Typography>
@@ -767,10 +825,10 @@ const Hall = () => {
                   </FormGroup>
                 </FormControl>
               </Grid>
-              {/* Optionally, add image upload/edit component here */}
             </Grid>
           </DialogContent>
-          <DialogActions sx={{ p: 3, borderTop: 1, borderColor: "grey.300" }}>
+
+          <DialogActions sx={{ p: 2 }}>
             <Button
               onClick={() => setEditModalOpen(false)}
               variant="outlined"
