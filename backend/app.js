@@ -4,7 +4,7 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const path = require("path");
 const socketIo = require("socket.io");
-const http = require("http"); // Added for creating an HTTP server
+const http = require("http"); // For creating an HTTP server
 
 const authRoutes = require("./route/authRoutes");
 const userSelfRoute = require("./route/userSelfRoute");
@@ -18,7 +18,9 @@ const hallRoutes = require("./route/hallRoute");
 const venueBookingRoutes = require("./route/venueBookingRoute");
 const foodRoutes = require("./route/foodRoute");
 const paymentRoute = require("./route/paymentRoute");
-const chatRoutes = require("./route/chatRoute");
+const chatRoute = require("./route/chat");
+
+
 dotenv.config();
 
 const app = express();
@@ -42,7 +44,9 @@ app.use("/api/notification", notificationRoutes);
 app.use("/api/halls", hallRoutes);
 app.use("/api/booking", venueBookingRoutes);
 app.use("/api/food", foodRoutes);
-app.use("/api/chat", chatRoutes); // Added chat routes
+app.use("/api/chat", chatRoute);
+
+
 
 // Connect to MongoDB
 mongoose
@@ -50,26 +54,23 @@ mongoose
   .then(() => console.log("Connected to MongoDB!"))
   .catch((err) => console.error("Failed to connect to MongoDB:", err));
 
-// Create HTTP server and integrate Socket.io without removing existing code
+// Create HTTP server and integrate Socket.io
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: { origin: "*" } // Adjust CORS settings as needed
 });
 
+// **Set the Socket.io instance on the Express app**
+app.set("io", io);
+
 // Socket.io events for real-time messaging
 io.on("connection", (socket) => {
   console.log("New client connected", socket.id);
 
-  // Join a conversation room
+  // When a client joins a conversation room
   socket.on("joinConversation", (conversationId) => {
     socket.join(conversationId);
     console.log(`Socket ${socket.id} joined conversation ${conversationId}`);
-  });
-
-  // When a message is sent via Socket.io
-  socket.on("sendMessage", (data) => {
-    // data should include: { conversationId, message, sender, ... }
-    io.to(data.conversationId).emit("receiveMessage", data);
   });
 
   socket.on("disconnect", () => {

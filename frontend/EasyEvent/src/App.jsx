@@ -49,6 +49,8 @@ import Transaction from "./components/venueowner/Transaction";
 import PaymentPage from "./components/user/PaymentPage";
 import TransactionDetails from "./components/venueowner/TransactionDetails";
 import ContinuePayment from "./components/user/ContinuePayment";
+import AllChat from "./components/venueowner/AllChat";
+import ChatPage from "./components/venueowner/ChatPage";
 
 function App() {
   // useEffect(() => {
@@ -100,6 +102,10 @@ function App() {
         <Route path="/user-request" element={<Request />} />
         <Route path="/transaction" element={<Transaction />} />
         <Route path="/transaction-details" element={<TransactionDetails />} />
+        <Route path="/chat" element={<AllChat />} />
+        <Route path="/chat/user" element={<ChatPage />} />
+
+
         <Route path="/event-details/:id" element={<EventDetails />} />
 
         <Route path="/user-bookings" element={<UserBookings />} />

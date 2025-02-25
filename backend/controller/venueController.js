@@ -302,6 +302,7 @@ const getVenueById = async (req, res) => {
     res.status(200).json({
       message: "Venue profile fetched successfully",
       venueId: venue._id, // Explicitly include the venue ID
+      ownerId: venue.ownerId, // Include the venue owner's ID
       venue, // Return the full venue details
     });
   } catch (error) {
@@ -309,6 +310,7 @@ const getVenueById = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 
 module.exports = {
   createVenue,
