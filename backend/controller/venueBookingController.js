@@ -23,11 +23,9 @@ exports.createBooking = async (req, res) => {
     const venueOwnerExists = await VenueOwner.findById(userId);
 
     if (!userExists && !venueOwnerExists) {
-      return res
-        .status(404)
-        .json({
-          message: "User not found in both User and VenueOwner collections",
-        });
+      return res.status(404).json({
+        message: "User not found in both User and VenueOwner collections",
+      });
     }
 
     // Create new booking instance
@@ -224,7 +222,7 @@ exports.updateRequestStatus = async (req, res) => {
               </ul>
               <p>Thank you for choosing us.</p>
               <div style="text-align: center; margin-top: 30px;">
-                <a href="http://yourwebsite.com/billing" style="display: inline-block; padding: 10px 20px; background-color: #2e7d32; color: #ffffff; text-decoration: none; border-radius: 5px;">Continue Your Payment</a>
+                <a href=${`http://localhost:5173/continue-payment/${booking._id}`} style="display: inline-block; padding: 10px 20px; background-color: #2e7d32; color: #ffffff; text-decoration: none; border-radius: 5px;">Continue Your Payment</a>
               </div>
               <p style="text-align: right; margin-top: 20px;">Best regards,<br>${
                 booking.venue.name
@@ -303,7 +301,7 @@ exports.updateRequestStatus = async (req, res) => {
 // Fetch all booking details for a specific user (User or VenueOwner)
 exports.getBookingByRequestId = async (req, res) => {
   try {
-    const { requestId } = req.params; 
+    const { requestId } = req.params;
 
     // Find the booking request by its ID and populate all relevant fields
     let booking = await BookingRequest.findById(requestId)
@@ -322,17 +320,24 @@ exports.getBookingByRequestId = async (req, res) => {
     let userId = null;
     if (booking.user) {
       // If booking.user is an object with _id, use that; otherwise, use booking.user as the ID.
-      userId = typeof booking.user === "object" ? (booking.user._id || booking.user) : booking.user;
+      userId =
+        typeof booking.user === "object"
+          ? booking.user._id || booking.user
+          : booking.user;
     } else {
       // If booking.user is null (populate didn't find a match), get the stored user ID.
       userId = booking._doc.user;
     }
 
     // Try to fetch from the User collection first.
-    let user = await User.findById(userId).select("name email contact profile_image");
+    let user = await User.findById(userId).select(
+      "name email contact profile_image"
+    );
     // If not found in User, try the VenueOwner collection.
     if (!user) {
-      user = await VenueOwner.findById(userId).select("name email contact_number profile_image");
+      user = await VenueOwner.findById(userId).select(
+        "name email contact_number profile_image"
+      );
     }
     // Replace the booking.user field with the found user details.
     booking.user = user;

@@ -48,6 +48,7 @@ import Booking from "./components/user/bookings/Booking";
 import Transaction from "./components/venueowner/Transaction";
 import PaymentPage from "./components/user/PaymentPage";
 import TransactionDetails from "./components/venueowner/TransactionDetails";
+import ContinuePayment from "./components/user/ContinuePayment";
 
 function App() {
   // useEffect(() => {
@@ -101,13 +102,8 @@ function App() {
         <Route path="/transaction-details" element={<TransactionDetails />} />
         <Route path="/event-details/:id" element={<EventDetails />} />
 
-
-
-
-
         <Route path="/user-bookings" element={<UserBookings />} />
         <Route path="/user-book/:id" element={<Booking />} />
-
 
         {/* Landing Page */}
         <Route path="/" element={<LandingPage />} />
@@ -159,6 +155,10 @@ function App() {
         <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/payment-details" element={<PaymentDetails />} />
         <Route path="/user-payment" element={<PaymentPage />} />
+        <Route
+          path="/continue-payment/:bookingId"
+          element={<ContinuePayment />}
+        />
         <Route path="/delete-account" element={<DeleteAccount />} />
         {/* Redirect to Home if no match */}
         <Route path="*" element={<Navigate to="/" />} />
