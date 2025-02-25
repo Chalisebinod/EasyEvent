@@ -1,5 +1,7 @@
 const Payment = require("../model/payment");
 const axios = require("axios");
+const BookingRequest = require("../model/request");
+
 require('dotenv').config();
 
 const Khalti_secret_key = process.env.Khalti_secret_key;
@@ -22,6 +24,17 @@ const initiatePayment = async (req, res) => {
       userId,
     } = req.body;
     const roundedAmount = Math.round(amount); // Ensure proper amount format
+
+    // Find the related booking
+    const booking = await BookingRequest.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({ success: false, message: "Booking not found." });
+    }
+
+    if(amount<500){
+      return res.status(404).json({ success: false, message: "Payment must be a minimum of 50%." });
+
+    }
 
     const payload = {
       return_url,
@@ -98,6 +111,24 @@ const verifyPayment = async (req, res) => {
     // Update payment status
     payment.payment_status = "Completed";
     await payment.save();
+
+    // Find the related booking
+    const booking = await BookingRequest.findById(payment.booking);
+    if (!booking) {
+      return res.status(404).json({ success: false, message: "Booking not found." });
+    }
+
+    // Update payment status in BookingRequest
+    if (payment.amount=1000){
+      booking.payment_status = "Paid";
+    }else if (payment.amount=500){
+      booking.payment_status = "Partially Paid";
+    }else{
+      booking.payment_status = "Unpaid";
+
+    }
+
+    await booking.save();
 
     res.json(response.data);
   } catch (error) {
