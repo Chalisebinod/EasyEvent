@@ -1,8 +1,11 @@
+// PartyPalace.jsx
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FaUserCircle, FaComments } from "react-icons/fa";
 import Navbar from "./Navbar";
 import BottomNavbar from "./BottomNavbar";
+import ChatWidget from "./chat/ChatWidget";
+
 
 // ProfileIcon remains the same for navigation purposes
 const ProfileIcon = ({ ownerId }) => {
@@ -21,17 +24,6 @@ const ProfileIcon = ({ ownerId }) => {
   );
 };
 
-const ChatIcon = ({ openChat }) => {
-  return (
-    <div
-      className="fixed bottom-20 right-6 bg-orange-500 p-4 rounded-full cursor-pointer text-white shadow-2xl hover:scale-110 transition transform duration-300"
-      onClick={openChat}
-      title="Chat with Venue Owner"
-    >
-      <FaComments size={28} />
-    </div>
-  );
-};
 
 const PartyPalace = () => {
   const { id } = useParams();
@@ -48,21 +40,6 @@ const PartyPalace = () => {
   const [userOfferedFee, setUserOfferedFee] = useState(0);
   const [totalFare, setTotalFare] = useState(0);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [chatMessages, setChatMessages] = useState([]);
-  const [chatInput, setChatInput] = useState("");
-
-  const sendChatMessage = () => {
-    if (chatInput.trim() !== "") {
-      setChatMessages([...chatMessages, { text: chatInput, sender: "user" }]);
-      setChatInput("");
-      setTimeout(() => {
-        setChatMessages((prev) => [
-          ...prev,
-          { text: "Hello from the other side!", sender: "owner" },
-        ]);
-      }, 1000);
-    }
-  };
 
   // Mock data for completed events
   const mockCompletedEvents = [
@@ -135,6 +112,7 @@ const PartyPalace = () => {
       setGuestCount(value);
     }
   };
+// console.log("User venue", venue.owner)
 
   const getImageUrl = (imgPath) =>
     `http://localhost:8000/${imgPath.replace(/\\/g, "/")}`;
@@ -150,9 +128,15 @@ const PartyPalace = () => {
     setIsMinimized(false);
   };
 
-  const handleBookNow = () => {
-    navigate(`/user-book/${id}`);
+  const closeChat = () => {
+    setChatOpen(false);
   };
+
+  // console.log("user id in party palace", venue.owner)
+  const handleBookNow = () => {
+    navigate(`/user-book/${id}`, { state: { partnerId: venue.owner } });
+  };
+  
 
   return (
     <div className="bg-gray-50 min-h-screen relative">
@@ -225,27 +209,25 @@ const PartyPalace = () => {
                   A premier venue for unforgettable events
                 </p>
               </div>
-        
-<div className="mt-4 flex-col items-center">
-  <div className="w-24 h-24 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
-    <img
-      src={
-        venue.owner?.image
-          ? getImageUrl(venue.owner.image)
-          : "https://via.placeholder.com/80"
-      }
-      alt="Owner Profile"
-      className="w-20 h-20 rounded-full object-cover"
-    />
-  </div>
-  <p className="mt-2 text-lg font-semibold text-gray-800">
-    {venue.owner?.phone || "N/A"}
-  </p>
-  <p className="mt-1 text-gray-600">
-    {venue.owner?.email || "owner@example.com"}
-  </p>
-</div>
-
+              <div className="mt-4 flex-col items-center">
+                <div className="w-24 h-24 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
+                  <img
+                    src={
+                      venue.owner?.image
+                        ? getImageUrl(venue.owner.image)
+                        : "https://via.placeholder.com/80"
+                    }
+                    alt="Owner Profile"
+                    className="w-20 h-20 rounded-full object-cover"
+                  />
+                </div>
+                <p className="mt-2 text-lg font-semibold text-gray-800">
+                  {venue.owner?.phone || "N/A"}
+                </p>
+                <p className="mt-1 text-gray-600">
+                  {venue.owner?.email || "owner@example.com"}
+                </p>
+              </div>
             </div>
 
             {/* Description */}
@@ -343,6 +325,20 @@ const PartyPalace = () => {
           </div>
         )}
       </section>
+
+      {/* Messaging Feature */}
+      {!chatOpen && (
+        <div
+          className="fixed bottom-20 right-6 bg-orange-500 p-4 rounded-full cursor-pointer text-white shadow-2xl hover:scale-110 transition transform duration-300"
+          onClick={openChat}
+          title="Chat with Venue Owner"
+        >
+          <FaComments size={28} />
+        </div>
+      )}
+      {chatOpen && (
+        <ChatWidget partnerId={venue.owner} onClose={closeChat} />
+      )}
 
       <BottomNavbar />
     </div>

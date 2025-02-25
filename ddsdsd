@@ -1,0 +1,59 @@
+[33mcommit 856fdaa82af4d2d5754828fdb53f15dd3d0f0c4d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmy-local-changes[m[33m)[m
+Author: ganeshparajuli11 <ganeshparajuli2059@gmail.com>
+Date:   Tue Feb 25 18:49:35 2025 +0545
+
+    User can and venue owner can chat now
+
+[33mcommit 80684adcb7a31010ac94649f90f966306e46f50e[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m
+Author: Chalisebinod <chalisebinod40@gmail.com>
+Date:   Tue Feb 25 08:01:29 2025 +0545
+
+     chatting feature
+
+[33mcommit fd47f1ea9873f3b91d6fbbe1c2ab47fe82013273[m
+Author: Chalisebinod <chalisebinod40@gmail.com>
+Date:   Sat Feb 22 19:51:06 2025 +0545
+
+     update frontend(venueowner and user
+
+[33mcommit d641cd73af1953fcfa402fe7105d6a222bba22c9[m
+Author: Chalisebinod <chalisebinod40@gmail.com>
+Date:   Thu Feb 20 13:49:59 2025 +0545
+
+     hall and booking management
+
+[33mcommit 86047f717c94c8f022d3b3e80ffc5387c50387aa[m
+Author: Chalisebinod <chalisebinod40@gmail.com>
+Date:   Sun Feb 16 10:12:54 2025 +0545
+
+     Frotend for Admin Dashboard
+
+[33mcommit 59664da575a77116cca5f133abd304e71aefe831[m
+Author: Chalisebinod <chalisebinod40@gmail.com>
+Date:   Thu Feb 13 20:29:05 2025 +0545
+
+    kyc verification
+
+[33mcommit 3a6c85fa10235b82871c6113a0872f1044084aa3[m
+Author: Chalisebinod <chalisebinod40@gmail.com>
+Date:   Sun Feb 9 12:49:11 2025 +0545
+
+    add notification feature
+
+[33mcommit 06df4e14673ca8b8d0cc938309574dbea6057ae0[m
+Author: Chalisebinod <chalisebinod40@gmail.com>
+Date:   Thu Feb 6 15:07:23 2025 +0545
+
+    KYC Verification
+
+[33mcommit 10086637f6a61746f65074162d613b1f58b60e56[m
+Author: Chalisebinod <chalisebinod40@gmail.com>
+Date:   Tue Jan 28 22:46:40 2025 +0545
+
+     forget password
+
+[33mcommit 85ea2cac8c624f9d6b9488fcb7dfd34e93f1d37b[m
+Author: Chalisebinod <chalisebinod40@gmail.com>
+Date:   Sun Jan 19 20:49:15 2025 +0545
+
+    added backend and frontend

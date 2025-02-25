@@ -1,13 +1,23 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+
 import { toast, ToastContainer } from "react-toastify";
 import Navbar from "../Navbar";
-import { FaCommentAlt, FaTimes } from "react-icons/fa";
 import BottomNavbar from "../BottomNavbar";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { FaUserCircle, FaComments } from "react-icons/fa";
+import ChatWidget from "../chat/ChatWidget";
 
 const Booking = () => {
   const { id: venueId } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
   const accessToken = localStorage.getItem("access_token");
+  const [chatOpen, setChatOpen] = useState(false);
+
+  // Receive partnerId from navigation state (if passed)
+  const partnerIdFromState = location.state?.partnerId;
+  console.log("partner Id", partnerIdFromState);
+  
 
   // API data for halls and food
   const [halls, setHalls] = useState([]);
@@ -123,6 +133,15 @@ const Booking = () => {
     setGuestCount(value);
   };
 
+  const openChat = () => {
+    setChatOpen(true);
+    setIsMinimized(false);
+  };
+
+  const closeChat = () => {
+    setChatOpen(false);
+  };
+
   // Validate user offer
   const handleUserOfferedValueChange = (e) => {
     const value = e.target.value;
@@ -135,8 +154,7 @@ const Booking = () => {
     }
     if (numValue < minOffer) {
       setOfferError(
-        `Minimum allowed offer is ${minOffer.toFixed(2)} (${
-          offerMode === "perPlate" ? "per plate" : "total"
+        `Minimum allowed offer is ${minOffer.toFixed(2)} (${offerMode === "perPlate" ? "per plate" : "total"
         }).`
       );
     } else {
@@ -262,11 +280,10 @@ const Booking = () => {
                 {halls.map((hall) => (
                   <div
                     key={hall._id}
-                    className={`border rounded-xl p-4 cursor-pointer transition transform hover:scale-105 ${
-                      selectedHall && selectedHall._id === hall._id
-                        ? "border-orange-500 shadow-2xl"
-                        : "border-gray-300"
-                    }`}
+                    className={`border rounded-xl p-4 cursor-pointer transition transform hover:scale-105 ${selectedHall && selectedHall._id === hall._id
+                      ? "border-orange-500 shadow-2xl"
+                      : "border-gray-300"
+                      }`}
                     onClick={() => {
                       setSelectedHall(hall);
                       setOriginalPrice(hall.pricePerPlate);
@@ -362,11 +379,10 @@ const Booking = () => {
                     key={type}
                     type="button"
                     onClick={() => setSelectedFoodType(type)}
-                    className={`px-4 py-2 rounded-full transition ${
-                      selectedFoodType === type
-                        ? "bg-orange-500 text-white"
-                        : "bg-gray-200 text-gray-800"
-                    }`}
+                    className={`px-4 py-2 rounded-full transition ${selectedFoodType === type
+                      ? "bg-orange-500 text-white"
+                      : "bg-gray-200 text-gray-800"
+                      }`}
                   >
                     {type}
                   </button>
@@ -376,11 +392,10 @@ const Booking = () => {
                 {filteredFoods.map((food) => (
                   <div
                     key={food._id}
-                    className={`border rounded-xl p-3 cursor-pointer transition transform hover:scale-105 ${
-                      selectedFoods.includes(food._id)
-                        ? "border-orange-500 shadow-xl"
-                        : "border-gray-300"
-                    }`}
+                    className={`border rounded-xl p-3 cursor-pointer transition transform hover:scale-105 ${selectedFoods.includes(food._id)
+                      ? "border-orange-500 shadow-xl"
+                      : "border-gray-300"
+                      }`}
                     onClick={() => toggleFoodSelection(food._id)}
                   >
                     <p className="text-center text-sm font-medium">
@@ -506,11 +521,10 @@ const Booking = () => {
                           setUserOfferedValue("");
                           setOfferError("");
                         }}
-                        className={`px-4 py-2 rounded-full transition ${
-                          offerMode === "perPlate"
-                            ? "bg-orange-500 text-white"
-                            : "bg-gray-200 text-gray-800"
-                        }`}
+                        className={`px-4 py-2 rounded-full transition ${offerMode === "perPlate"
+                          ? "bg-orange-500 text-white"
+                          : "bg-gray-200 text-gray-800"
+                          }`}
                       >
                         Per Plate
                       </button>
@@ -521,11 +535,10 @@ const Booking = () => {
                           setUserOfferedValue("");
                           setOfferError("");
                         }}
-                        className={`px-4 py-2 rounded-full transition ${
-                          offerMode === "total"
-                            ? "bg-orange-500 text-white"
-                            : "bg-gray-200 text-gray-800"
-                        }`}
+                        className={`px-4 py-2 rounded-full transition ${offerMode === "total"
+                          ? "bg-orange-500 text-white"
+                          : "bg-gray-200 text-gray-800"
+                          }`}
                       >
                         Total
                       </button>
@@ -622,76 +635,20 @@ const Booking = () => {
           </form>
         </div>
 
-        {/* MESSAGING FEATURE */}
-        <div className="fixed bottom-6 right-6 z-50">
-          {showChat ? (
-            <div className="bg-white/95 backdrop-blur-md w-80 h-96 shadow-2xl rounded-2xl p-6 flex flex-col">
-              {/* Chat Header */}
-              <div className="flex justify-between items-center border-b pb-3 mb-5">
-                <h2 className="text-2xl font-bold text-gray-800">
-                  Messenger
-                </h2>
-                <button
-                  onClick={() => setShowChat(false)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <FaTimes size={22} />
-                </button>
-              </div>
-              {/* Chat Messages Area */}
-              <div className="flex-1 overflow-y-auto space-y-4">
-                {chatMessages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex flex-col text-xs ${
-                      msg.sender === "user" ? "items-end" : "items-start"
-                    }`}
-                  >
-                    <div
-                      className={`px-4 py-2 rounded-lg max-w-xs ${
-                        msg.sender === "user"
-                          ? "bg-blue-500 text-white rounded-br-none"
-                          : "bg-gray-300 text-gray-800 rounded-bl-none"
-                      }`}
-                    >
-                      {msg.text}
-                    </div>
-                    <span className="mt-1 text-gray-500">{msg.time}</span>
-                  </div>
-                ))}
-                {chatMessages.length === 0 && (
-                  <p className="text-center text-gray-500">
-                    No messages yet...
-                  </p>
-                )}
-              </div>
-              {/* Chat Input Area */}
-              <div className="flex items-center border-t pt-3">
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Type a message..."
-                  className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                />
-                <button
-                  onClick={handleSendMessage}
-                  className="bg-blue-500 text-white ml-2 px-4 py-2 rounded-md hover:bg-blue-600"
-                >
-                  Send
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={() => setShowChat(true)}
-              className="bg-blue-600 text-white p-4 rounded-full shadow-2xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
-            >
-              <FaCommentAlt size={24} />
-            </button>
-          )}
-        </div>
-        {/* END OF MESSAGING FEATURE */}
+        {/* Messaging Feature */}
+        {!chatOpen && (
+          <div
+            className="fixed bottom-20 right-6 bg-orange-500 p-4 rounded-full cursor-pointer text-white shadow-2xl hover:scale-110 transition transform duration-300"
+            onClick={openChat}
+            title="Chat with Venue Owner"
+          >
+            <FaComments size={28} />
+          </div>
+        )}
+        {chatOpen && (
+          <ChatWidget partnerId={partnerIdFromState} onClose={closeChat} />
+        )}
+
       </div>
 
       {/* Bottom Navbar always at the bottom */}

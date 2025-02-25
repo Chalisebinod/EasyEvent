@@ -202,7 +202,7 @@ const VenueSidebar = ({ children }) => {
           <ListItem
             button
             component={Link}
-            to="/Create-venue"
+            to="/chat"
             sx={{
               "&:hover": {
                 backgroundColor: "rgba(255, 255, 255, 0.1)",
@@ -212,7 +212,7 @@ const VenueSidebar = ({ children }) => {
             <ListItemIcon>
               <EventIcon sx={{ color: "#ECF0F1" }} />
             </ListItemIcon>
-            <ListItemText primary="Event" />
+            <ListItemText primary="chat" />
           </ListItem>
 
           <ListItem
