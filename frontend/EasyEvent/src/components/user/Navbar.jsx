@@ -42,6 +42,13 @@ const Navbar = () => {
           >
             My Bookings
           </a>
+          <a
+              href="/user-chat"
+              className="text-lg font-medium hover:text-yellow-200 transition"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Chat
+            </a>
         </nav>
 
         {/* Search & Icons */}
@@ -87,7 +94,6 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile Menu */}
       {isMobileMenuOpen && (
         <nav className="md:hidden bg-orange-600">
           <div className="container mx-auto px-6 py-2 flex flex-col space-y-2">
@@ -104,6 +110,13 @@ const Navbar = () => {
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Send Proposal
+            </a>
+            <a
+              href="/user-chat"
+              className="text-lg font-medium hover:text-yellow-200 transition"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Chat
             </a>
             <a
               href="/user-bookings"

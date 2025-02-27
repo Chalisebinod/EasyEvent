@@ -51,6 +51,7 @@ import TransactionDetails from "./components/venueowner/TransactionDetails";
 import ContinuePayment from "./components/user/ContinuePayment";
 import AllChat from "./components/venueowner/AllChat";
 import ChatPage from "./components/venueowner/ChatPage";
+import UserChat from "./components/user/chat/UserChat";
 
 function App() {
   // useEffect(() => {
@@ -104,6 +105,7 @@ function App() {
         <Route path="/transaction-details" element={<TransactionDetails />} />
         <Route path="/chat" element={<AllChat />} />
         <Route path="/chat/user" element={<ChatPage />} />
+        <Route path="/user-chat" element={<UserChat />} />
 
 
         <Route path="/event-details/:id" element={<EventDetails />} />
