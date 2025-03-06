@@ -26,6 +26,8 @@ import {
   Logout as LogoutIcon,
   Notifications as NotificationsIcon,
 } from "@mui/icons-material";
+import PersonIcon from "@mui/icons-material/Person";
+import BookOnlineIcon from "@mui/icons-material/BookOnline";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -87,7 +89,6 @@ const VenueSidebar = ({ children }) => {
           sx={{
             textAlign: "center",
             p: 3,
-            // Subtle gradient
             background: "linear-gradient(135deg, #34495E 20%, #2C3E50 80%)",
             mb: 3,
             borderRadius: 1,
@@ -105,11 +106,7 @@ const VenueSidebar = ({ children }) => {
             button
             component={Link}
             to="/venue-owner-dashboard"
-            sx={{
-              "&:hover": {
-                backgroundColor: "rgba(255, 255, 255, 0.1)",
-              },
-            }}
+            sx={{ "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.1)" } }}
           >
             <ListItemIcon>
               <DashboardIcon sx={{ color: "#ECF0F1" }} />
@@ -121,11 +118,7 @@ const VenueSidebar = ({ children }) => {
             button
             component={Link}
             to="/user-request"
-            sx={{
-              "&:hover": {
-                backgroundColor: "rgba(255, 255, 255, 0.1)",
-              },
-            }}
+            sx={{ "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.1)" } }}
           >
             <ListItemIcon>
               <RequestQuoteIcon sx={{ color: "#ECF0F1" }} />
@@ -137,11 +130,7 @@ const VenueSidebar = ({ children }) => {
             button
             component={Link}
             to="/halls"
-            sx={{
-              "&:hover": {
-                backgroundColor: "rgba(255, 255, 255, 0.1)",
-              },
-            }}
+            sx={{ "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.1)" } }}
           >
             <ListItemIcon>
               <StoreIcon sx={{ color: "#ECF0F1" }} />
@@ -153,11 +142,7 @@ const VenueSidebar = ({ children }) => {
             button
             component={Link}
             to="/notification"
-            sx={{
-              "&:hover": {
-                backgroundColor: "rgba(255, 255, 255, 0.1)",
-              },
-            }}
+            sx={{ "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.1)" } }}
           >
             <ListItemIcon>
               <Badge badgeContent={notificationCount} color="error">
@@ -171,11 +156,7 @@ const VenueSidebar = ({ children }) => {
             button
             component={Link}
             to="/transaction"
-            sx={{
-              "&:hover": {
-                backgroundColor: "rgba(255, 255, 255, 0.1)",
-              },
-            }}
+            sx={{ "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.1)" } }}
           >
             <ListItemIcon>
               <PaymentsIcon sx={{ color: "#ECF0F1" }} />
@@ -187,11 +168,7 @@ const VenueSidebar = ({ children }) => {
             button
             component={Link}
             to="/agreement"
-            sx={{
-              "&:hover": {
-                backgroundColor: "rgba(255, 255, 255, 0.1)",
-              },
-            }}
+            sx={{ "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.1)" } }}
           >
             <ListItemIcon>
               <AccountBalanceIcon sx={{ color: "#ECF0F1" }} />
@@ -202,28 +179,32 @@ const VenueSidebar = ({ children }) => {
           <ListItem
             button
             component={Link}
+            to="/foodManagement"
+            sx={{ "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.1)" } }}
+          >
+            <ListItemIcon>
+              <AccountBalanceIcon sx={{ color: "#ECF0F1" }} />
+            </ListItemIcon>
+            <ListItemText primary="Food Management" />
+          </ListItem>
+
+          <ListItem
+            button
+            component={Link}
             to="/chat"
-            sx={{
-              "&:hover": {
-                backgroundColor: "rgba(255, 255, 255, 0.1)",
-              },
-            }}
+            sx={{ "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.1)" } }}
           >
             <ListItemIcon>
               <EventIcon sx={{ color: "#ECF0F1" }} />
             </ListItemIcon>
-            <ListItemText primary="chat" />
+            <ListItemText primary="Chat" />
           </ListItem>
 
           <ListItem
             button
             component={Link}
             to="/Venue-profile"
-            sx={{
-              "&:hover": {
-                backgroundColor: "rgba(255, 255, 255, 0.1)",
-              },
-            }}
+            sx={{ "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.1)" } }}
           >
             <ListItemIcon>
               <StoreIcon sx={{ color: "#ECF0F1" }} />
@@ -235,16 +216,37 @@ const VenueSidebar = ({ children }) => {
             button
             component={Link}
             to="/venueOwnerKyc"
-            sx={{
-              "&:hover": {
-                backgroundColor: "rgba(255, 255, 255, 0.1)",
-              },
-            }}
+            sx={{ "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.1)" } }}
           >
             <ListItemIcon>
               <ProfileIcon sx={{ color: "#ECF0F1" }} />
             </ListItemIcon>
             <ListItemText primary="KYC" />
+          </ListItem>
+
+          {/* New Options */}
+          <ListItem
+            button
+            component={Link}
+            to="/venue-owner-self-profile"
+            sx={{ "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.1)" } }}
+          >
+            <ListItemIcon>
+              <PersonIcon sx={{ color: "#ECF0F1" }} />
+            </ListItemIcon>
+            <ListItemText primary="User Profile" />
+          </ListItem>
+
+          <ListItem
+            button
+            component={Link}
+            to="/bookings-owner"
+            sx={{ "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.1)" } }}
+          >
+            <ListItemIcon>
+              <BookOnlineIcon sx={{ color: "#ECF0F1" }} />
+            </ListItemIcon>
+            <ListItemText primary="Bookings" />
           </ListItem>
         </List>
 
@@ -255,11 +257,7 @@ const VenueSidebar = ({ children }) => {
           <ListItem
             button
             onClick={openLogoutDialog}
-            sx={{
-              "&:hover": {
-                backgroundColor: "rgba(255, 255, 255, 0.1)",
-              },
-            }}
+            sx={{ "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.1)" } }}
           >
             <ListItemIcon>
               <LogoutIcon sx={{ color: "#ECF0F1" }} />
@@ -270,14 +268,7 @@ const VenueSidebar = ({ children }) => {
       </Drawer>
 
       {/* Main Content Area */}
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-        }}
-      >
-        {/* You can add a Top Bar or Page Title here if desired */}
+      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         {children}
       </Box>
 
