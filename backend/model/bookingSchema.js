@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const bookingRequestSchema = new mongoose.Schema({
+const bookingSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   venue: { type: mongoose.Schema.Types.ObjectId, ref: "Venue", required: true },
   hall: { type: mongoose.Schema.Types.ObjectId, ref: "Hall", required: true },
@@ -25,18 +25,24 @@ const bookingRequestSchema = new mongoose.Schema({
   ],
 
   pricing: {
+    // Per plate pricing details
     original_per_plate_price: { type: Number, required: true },
     user_offered_per_plate_price: { type: Number, required: true },
     final_per_plate_price: { type: Number, required: true },
+    
+    // Cost breakdown
     food_cost: { type: Number, required: true }, // final_per_plate_price * guest_count
     additional_services_cost: { type: Number, default: 0 },
     total_cost: { type: Number, required: true },
     
-    // Optional fields for request
+    // Discounts if any
     discount_amount: { type: Number, default: 0 },
     discount_reason: { type: String },
+
+    // Payment tracking
     amount_paid: { type: Number, default: 0 },
-    balance_amount: { type: Number }
+    balance_amount: { type: Number },
+    last_payment_date: { type: Date }
   },
 
   cancellation_policy: {
@@ -44,12 +50,28 @@ const bookingRequestSchema = new mongoose.Schema({
     cancellation_fee: { type: Number, default: 0 },
   },
 
+  // Extended status to include additional states like Running and Completed.
   status: {
     type: String,
-    enum: ["Pending", "Accepted", "Rejected", "Cancelled"],
+    enum: ["Pending", "Accepted", "Rejected", "Cancelled", "Running", "Completed"],
     default: "Pending",
   },
+
+  // Owner notes and extended information
+  owner_notes: { type: String, default: "" },
+
+  // Soft delete flag – not actually removing documents from the DB.
+  isDeleted: { type: Boolean, default: false },
+
+  // Booking period to easily sort (can be computed based on event date, but stored here for convenience)
+  booking_period: {
+    type: String,
+    enum: ["Past", "Current", "Future"],
+    default: "Future",
+  },
+
   reason: { type: String, default: "no status has been added" },
+
   payment_status: {
     type: String,
     enum: ["Unpaid", "Partially Paid", "Paid"],
@@ -60,27 +82,34 @@ const bookingRequestSchema = new mongoose.Schema({
   updated_at: { type: Date, default: Date.now },
 });
 
-// Middleware to auto-update `updated_at` and calculate pricing fields
-bookingRequestSchema.pre("save", function (next) {
+// Middleware to update updated_at before saving
+bookingSchema.pre("save", function (next) {
   this.updated_at = Date.now();
 
-  // Calculate food cost and total cost if necessary fields are present
-  if (this.pricing.final_per_plate_price && this.event_details.guest_count) {
+  // Calculate and update pricing fields
+  if (this.isModified('event_details.guest_count') || 
+      this.isModified('pricing.final_per_plate_price') || 
+      this.isModified('additional_services')) {
+    
     // Calculate food cost
     this.pricing.food_cost = this.pricing.final_per_plate_price * this.event_details.guest_count;
     
-    // Calculate total cost (food cost + additional services cost - discounts)
+    // Calculate additional services cost
+    this.pricing.additional_services_cost = this.additional_services.reduce(
+      (sum, service) => sum + (service.price || 0), 
+      0
+    );
+    
+    // Calculate total cost
     this.pricing.total_cost = this.pricing.food_cost + 
-                             (this.pricing.additional_services_cost || 0) - 
-                             (this.pricing.discount_amount || 0);
+                             this.pricing.additional_services_cost - 
+                             this.pricing.discount_amount;
     
     // Calculate balance amount
-    if (typeof this.pricing.amount_paid === 'number') {
-      this.pricing.balance_amount = this.pricing.total_cost - this.pricing.amount_paid;
-    }
+    this.pricing.balance_amount = this.pricing.total_cost - this.pricing.amount_paid;
   }
 
   next();
 });
 
-module.exports = mongoose.model("BookingRequest", bookingRequestSchema);
+module.exports = mongoose.model("Booking", bookingSchema);
