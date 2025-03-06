@@ -20,7 +20,6 @@ const foodRoutes = require("./route/foodRoute");
 const paymentRoute = require("./route/paymentRoute");
 const chatRoute = require("./route/chat");
 
-
 dotenv.config();
 
 const app = express();
@@ -39,11 +38,11 @@ app.use("/api", adminRoute);
 app.use("/api", venueOwnerRoute);
 app.use("/api/kyc", kycRoute);
 app.use("/api", venueRoutes);
-app.use("/api/book", bookingRoutes);
+app.use("/api/booking", bookingRoutes);
 app.use("/api/notification", notificationRoutes);
 app.use("/api/halls", hallRoutes);
 app.use("/api/booking", venueBookingRoutes);
-app.use("/api/food", foodRoutes);
+app.use("/api", foodRoutes);
 app.use("/api/chat", chatRoute);
 
 
