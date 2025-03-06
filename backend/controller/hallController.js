@@ -1,61 +1,80 @@
 const Hall = require("../model/hallSchema");
-
+const Food = require("../model/FoodCategorySchema")
 
 exports.addHall = async (req, res) => {
   try {
-      const { venue, name, capacity, pricePerPlate, features, seating_arrangements } = req.body;
+    const { 
+      venue, 
+      name, 
+      capacity, 
+      basePricePerPlate, 
+      features, 
+      seating_arrangements,
+      includedFood // array of Food IDs
+    } = req.body;
 
-      // Validate that venueId is present
-      if (!venue) {
-          return res.status(400).json({ message: "Venue ID is required." });
-      }
+    // Validate that venueId is present
+    if (!venue) {
+      return res.status(400).json({ message: "Venue ID is required." });
+    }
 
-      // If images are uploaded, add their file paths to images array
-      let images = [];
-      if (req.files && req.files.length > 0) {
-          images = req.files.map(file => file.path);
-      }
+    // If images are uploaded, add their file paths to images array
+    let images = [];
+    if (req.files && req.files.length > 0) {
+      images = req.files.map(file => file.path);
+    }
 
-      // Create the hall with default availability set to false
-      const hall = await Hall.create({
-          venue,
-          name,
-          capacity,
-          pricePerPlate,
-          features,
-          images,
-          availability: false, // Set availability to false by default
-          seating_arrangements
-      });
+    // Create the hall with default isAvailable set to false
+    const hall = await Hall.create({
+      venue,
+      name,
+      capacity,
+      basePricePerPlate,
+      includedFood: includedFood || [],
+      features,
+      images,
+      isAvailable: false, // Default to false until manually enabled
+      seating_arrangements
+    });
 
-      return res.status(201).json({ hall });
-
+    return res.status(201).json({ hall });
   } catch (error) {
-      return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message });
   }
 };
 
+exports.editHall = async (req, res) => {
+  try {
+    const hallId = req.params.id;
+    const updatedData = req.body;
 
-  
-
-  exports.editHall = async (req, res) => {
-    try {
-      const hallId = req.params.id;
-      const updatedData = req.body;
-    
-      if (req.files && req.files.length > 0) {
-        updatedData.images = req.files.map(file => file.path);
-      }
-      const hall = await Hall.findByIdAndUpdate(hallId, updatedData, { new: true });
-      if (!hall) {
-        return res.status(404).json({ message: "Hall not found" });
-      }
-      return res.status(200).json({ hall });
-    } catch (error) {
-      return res.status(500).json({ message: error.message });
+    // If images are uploaded, update the images field
+    if (req.files && req.files.length > 0) {
+      updatedData.images = req.files.map(file => file.path);
     }
-  };
-  
+
+    // If client still sends "pricePerPlate", rename it to basePricePerPlate
+    if (updatedData.pricePerPlate) {
+      updatedData.basePricePerPlate = updatedData.pricePerPlate;
+      delete updatedData.pricePerPlate;
+    }
+
+    // If client sends "availability", rename it to isAvailable
+    if (updatedData.availability !== undefined) {
+      updatedData.isAvailable = updatedData.availability;
+      delete updatedData.availability;
+    }
+
+    // Update hall document with any changes, including includedFood and features
+    const hall = await Hall.findByIdAndUpdate(hallId, updatedData, { new: true });
+    if (!hall) {
+      return res.status(404).json({ message: "Hall not found" });
+    }
+    return res.status(200).json({ hall });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
 /**
  * Book a hall by adding dates to the hall's blocked_dates array.
  * Example usage: booking a hall for a wedding on a certain date.
@@ -183,20 +202,21 @@ exports.updateHallAvailability = async (req, res) => {
 
   exports.getHallsByVenue = async (req, res) => {
     try {
-        const venueId = req.params.venueId; // Assuming venueId is passed as a route parameter
-
-        if (!venueId) {
-            return res.status(400).json({ message: "Venue ID is required" });
-        }
-
-        const halls = await Hall.find({ venue: venueId });
-
-        if (!halls.length) {
-            return res.status(404).json({ message: "No halls found for this venue" });
-        }
-
-        return res.status(200).json({ halls });
+      const venueId = req.params.venueId; // Assuming venueId is passed as a route parameter
+  
+      if (!venueId) {
+        return res.status(400).json({ message: "Venue ID is required" });
+      }
+  
+      // Populate the includedFood field with only the 'name' field from Food
+      const halls = await Hall.find({ venue: venueId }).populate("includedFood", "name");
+  
+      if (!halls.length) {
+        return res.status(404).json({ message: "No halls found for this venue" });
+      }
+  
+      return res.status(200).json({ halls });
     } catch (error) {
-        return res.status(500).json({ message: error.message });
+      return res.status(500).json({ message: error.message });
     }
-};
+  };

@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../model/user");
 const VenueOwner = require("../model/venueOwner");
+const Venue = require("../model/venue");
 
 // Secret key for JWT (check environment variable JWT_SECRET, fallback to default if not set)
 const JWT_SECRET = process.env.JWT_SECRET || "default_secret"; // Ensure this is set in the .env file
@@ -155,12 +156,9 @@ const signupVenueOwner = async (req, res) => {
   }
 };
 
-
-
-
 // Login Controller
 const login = async (req, res) => {
-  console.log("User login details:", req.body); // Log the request body for debugging
+  console.log("User login details:", req.body);
 
   const { email, password } = req.body;
 
@@ -171,39 +169,56 @@ const login = async (req, res) => {
   try {
     // Try to find as a regular user first
     let user = await User.findOne({ email });
+    let isVenueOwner = false;
+    
     // If not found, try to find as a venueOwner
     if (!user) {
       user = await VenueOwner.findOne({ email });
+      if (user) {
+        isVenueOwner = true;
+      }
     }
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    console.log("User found:", user);
-
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-    console.log("Password match:", isMatch);
 
-    const token = generateToken(user);
+    // If the user is a venue owner, get their venue details
+    let venueId = null;
+    if (isVenueOwner) {
+      const venue = await Venue.findOne({ owner: user._id });
+      if (venue) {
+        venueId = venue._id;
+      }
+    }
 
-    // If the user is a venueOwner, check for venues.
-    let responseData = {
+    // Generate token with additional venue information for venue owners
+    const tokenData = {
+      id: user._id,
+      role: user.role,
+      email: user.email,
+      name: user.name,
+      venueId: venueId // Include venueId in token for venue owners
+    };
+
+    const token = jwt.sign(tokenData, JWT_SECRET, { expiresIn: '24h' });
+
+    // Construct response data
+    const responseData = {
       message: "Login successful",
       token,
       role: user.role,
+      venueId: venueId
     };
-
-    if (user.role === "venueOwner") {
-      responseData.venueId =
-        user.venues && user.venues.length > 0 ? user.venues : "no venue";
-    }
 
     res.status(200).json(responseData);
   } catch (error) {
+    console.error("Login error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
