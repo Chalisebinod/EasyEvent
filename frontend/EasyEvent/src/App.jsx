@@ -40,7 +40,7 @@ import KycProfile from "./components/admin/KycProfile";
 import Notification from "./components/venueowner/Notification";
 import Hall from "./components/venueowner/Hall";
 import PartyPalace from "./components/user/PartyPalace";
-import AgreementPage from "./components/venueowner/AgreementPage";
+
 import Request from "./components/venueowner/Request";
 import EventDetails from "./components/venueowner/EventDetails";
 import UserBookings from "./components/user/UserBookings";
@@ -51,7 +51,10 @@ import TransactionDetails from "./components/venueowner/TransactionDetails";
 import ContinuePayment from "./components/user/ContinuePayment";
 import AllChat from "./components/venueowner/AllChat";
 import ChatPage from "./components/venueowner/ChatPage";
-import UserChat from "./components/user/chat/UserChat";
+import AgreementMaker from "./components/venueowner/AgreementMaker";
+import FoodManagement from "./components/venueowner/food/FoodManagement";
+import OwnerBooking from "./components/venueowner/OwnerBooking";
+import ApprovedBookingDetails from './components/venueowner/ApprovedBookingDetails';
 
 function App() {
   // useEffect(() => {
@@ -99,13 +102,14 @@ function App() {
 
         <Route path="/venueOwnerKyc" element={<KYCPage />} />
         <Route path="/notification" element={<Notification />} />
-        <Route path="/agreement" element={<AgreementPage />} />
+        <Route path="/agreement" element={<AgreementMaker />} />
         <Route path="/user-request" element={<Request />} />
         <Route path="/transaction" element={<Transaction />} />
         <Route path="/transaction-details" element={<TransactionDetails />} />
         <Route path="/chat" element={<AllChat />} />
         <Route path="/chat/user" element={<ChatPage />} />
-        <Route path="/user-chat" element={<UserChat />} />
+        <Route path="/foodManagement" element={<FoodManagement />} />
+
 
 
         <Route path="/event-details/:id" element={<EventDetails />} />
@@ -155,6 +159,10 @@ function App() {
           path="/venue-owner-self-profile"
           element={<VenueOwnerProfile />}
         />
+                <Route
+          path="/bookings-owner"
+          element={<OwnerBooking />}
+        />
 
         <Route path="/user-dashboard-before" element={<DashboardBefore />} />
 
@@ -168,6 +176,7 @@ function App() {
           element={<ContinuePayment />}
         />
         <Route path="/delete-account" element={<DeleteAccount />} />
+        <Route path="/venue-owner/approved-booking/:id" element={<ApprovedBookingDetails />} />
         {/* Redirect to Home if no match */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
