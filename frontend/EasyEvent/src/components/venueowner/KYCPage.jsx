@@ -379,7 +379,7 @@ const KYCPage = () => {
                       <label className="mb-2 text-gray-700 font-medium capitalize">
                         {field.replace(/([A-Z])/g, " $1")}
                       </label>
-                      <div className="w-32 h-32 border border-dashed border-gray-300 flex items-center justify-center mb-2 rounded-md bg-gray-100">
+                      <div className="w-56 h-56 border border-dashed border-gray-300 flex items-center justify-center mb-2 rounded-md bg-gray-100">
                         {docPreviewUrls[field] ? (
                           <img
                             src={docPreviewUrls[field]}
@@ -431,7 +431,7 @@ const KYCPage = () => {
                         <img
                           src={venueImagesUrls[index]}
                           alt={`Venue Image ${index + 1}`}
-                          className="w-32 h-32 object-cover rounded-md"
+                          className="w-48 h-48 object-cover rounded-md"
                         />
                       ) : (
                         <span className="text-gray-400 text-sm">No file</span>

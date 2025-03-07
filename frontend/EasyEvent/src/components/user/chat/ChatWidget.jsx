@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { FaCommentAlt, FaTimes } from "react-icons/fa";
+import io from "socket.io-client";
 
 const ChatWidget = ({ partnerId, onClose }) => {
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState("");
-
   const token = localStorage.getItem("access_token");
+  // Assuming your app stores the current user's id in localStorage
+  const selfId = localStorage.getItem("user_id");
 
   const axiosInstance = axios.create({
     baseURL: "http://localhost:8000",
@@ -16,17 +18,58 @@ const ChatWidget = ({ partnerId, onClose }) => {
     },
   });
 
-  // Function to send a chat message using Axios
+  // Compute a unique room ID based on the two user IDs.
+  const roomId =
+    selfId && partnerId
+      ? selfId < partnerId
+        ? `${selfId}_${partnerId}`
+        : `${partnerId}_${selfId}`
+      : null;
+
+  const socketRef = useRef(null);
+
+  // Setup socket connection and join the room.
+  useEffect(() => {
+    socketRef.current = io("http://localhost:8000");
+    socketRef.current.on("connect", () => {
+      console.log("Connected to realtime chat via socket");
+      if (roomId) {
+        socketRef.current.emit("join_room", roomId);
+      }
+    });
+    socketRef.current.on("receive_message", (message) => {
+      // Optionally, add a sender label if it's not present.
+      if (!message.senderLabel) {
+        message.senderLabel = message.sender === selfId ? "You" : "";
+      }
+      setChatMessages((prev) => [...prev, message]);
+    });
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
+  }, [partnerId, roomId, selfId]);
+
+  // Function to send a chat message using Axios and socket.
   const handleSendMessage = async () => {
     if (chatInput.trim() === "") return;
+    const payload = {
+      receiver: partnerId,
+      message: chatInput,
+      sender: selfId,
+      room: roomId,
+    };
     try {
-      const { data } = await axiosInstance.post("/api/chat/send", {
-        receiver: partnerId,
-        message: chatInput,
-      });
+      const { data } = await axiosInstance.post("/api/chat/send", payload);
       if (data.success) {
         // Append the new message returned from the API to the state.
         setChatMessages((prev) => [...prev, data.data]);
+        // Emit the message through socket for realtime update.
+        if (socketRef.current) {
+          socketRef.current.emit("send_message", payload);
+        }
         setChatInput("");
       } else {
         console.error("Error sending message:", data.error);
@@ -36,7 +79,7 @@ const ChatWidget = ({ partnerId, onClose }) => {
     }
   };
 
-  // Function to fetch messages by sending the partnerId in the request body.
+  // (Optional) Poll for messages as a fallback.
   const fetchMessages = async () => {
     try {
       const { data } = await axiosInstance.post("/api/chat/recieve", {
@@ -52,7 +95,6 @@ const ChatWidget = ({ partnerId, onClose }) => {
     }
   };
 
-  // Poll for new messages every 5 seconds while the widget is open.
   useEffect(() => {
     fetchMessages();
     const intervalId = setInterval(fetchMessages, 5000);
@@ -76,7 +118,9 @@ const ChatWidget = ({ partnerId, onClose }) => {
             return (
               <div
                 key={msg._id || msg.id}
-                className={`flex flex-col text-xs ${isMyMessage ? "items-end" : "items-start"}`}
+                className={`flex flex-col text-xs ${
+                  isMyMessage ? "items-end" : "items-start"
+                }`}
               >
                 <span className="text-xs text-gray-500">{msg.senderLabel}</span>
                 <div
@@ -102,21 +146,28 @@ const ChatWidget = ({ partnerId, onClose }) => {
         )}
       </div>
       {/* Chat Input Area */}
-      <div className="flex items-center border-t pt-3">
-        <input
-          type="text"
-          value={chatInput}
-          onChange={(e) => setChatInput(e.target.value)}
-          placeholder="Type a message..."
-          className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-        />
-        <button
-          onClick={handleSendMessage}
-          className="bg-blue-500 text-white ml-2 px-4 py-2 rounded-md hover:bg-blue-600"
-        >
-          Send
-        </button>
-      </div>
+     
+<div className="flex items-center border-t pt-3">
+  <input
+    type="text"
+    value={chatInput}
+    onChange={(e) => setChatInput(e.target.value)}
+    onKeyDown={(e) => {
+      if (e.key === "Enter") {
+        handleSendMessage();
+      }
+    }}
+    placeholder="Type a message..."
+    className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+  />
+  <button
+    onClick={handleSendMessage}
+    className="bg-blue-500 text-white ml-2 px-4 py-2 rounded-md hover:bg-blue-600"
+  >
+    Send
+  </button>
+</div>
+
     </div>
   );
 };

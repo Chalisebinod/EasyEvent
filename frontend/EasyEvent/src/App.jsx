@@ -54,7 +54,8 @@ import ChatPage from "./components/venueowner/ChatPage";
 import AgreementMaker from "./components/venueowner/AgreementMaker";
 import FoodManagement from "./components/venueowner/food/FoodManagement";
 import OwnerBooking from "./components/venueowner/OwnerBooking";
-import ApprovedBookingDetails from './components/venueowner/ApprovedBookingDetails';
+import ApprovedBookingDetails from "./components/venueowner/ApprovedBookingDetails";
+import UserChat from "./components/user/chat/UserChat";
 
 function App() {
   // useEffect(() => {
@@ -67,7 +68,7 @@ function App() {
   //   if (token) {
   //     axios
   //       .get("http://localhost:8000/api/autoLogin", {
-  //         headers: { Authorization: `Bearer ${token}` },
+  //         headers: { Authorization: Bearer ${token} },
   //       })
   //       .then((response) => {
   //         const { user } = response.data;
@@ -108,9 +109,9 @@ function App() {
         <Route path="/transaction-details" element={<TransactionDetails />} />
         <Route path="/chat" element={<AllChat />} />
         <Route path="/chat/user" element={<ChatPage />} />
+        <Route path="/user-chat" element={<UserChat />} />
+
         <Route path="/foodManagement" element={<FoodManagement />} />
-
-
 
         <Route path="/event-details/:id" element={<EventDetails />} />
 
@@ -159,10 +160,7 @@ function App() {
           path="/venue-owner-self-profile"
           element={<VenueOwnerProfile />}
         />
-                <Route
-          path="/bookings-owner"
-          element={<OwnerBooking />}
-        />
+        <Route path="/bookings-owner" element={<OwnerBooking />} />
 
         <Route path="/user-dashboard-before" element={<DashboardBefore />} />
 
@@ -176,7 +174,10 @@ function App() {
           element={<ContinuePayment />}
         />
         <Route path="/delete-account" element={<DeleteAccount />} />
-        <Route path="/venue-owner/approved-booking/:id" element={<ApprovedBookingDetails />} />
+        <Route
+          path="/venue-owner/approved-booking/:id"
+          element={<ApprovedBookingDetails />}
+        />
         {/* Redirect to Home if no match */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>

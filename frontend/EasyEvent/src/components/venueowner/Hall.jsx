@@ -44,7 +44,7 @@ import {
   Check,
 } from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
-import { ToastContainer } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import VenueSidebar from "./VenueSidebar";
 import FoodPicker from "./food/FoodPicker";
 import "react-toastify/dist/ReactToastify.css";

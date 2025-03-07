@@ -271,7 +271,7 @@ function ApprovedBookingDetails() {
       if (response.data.success) {
         toast.success('Process completed! Final confirmation email sent to user');
         setShowSignatureModal(false);
-        setTimeout(() => navigate('/venue-owner/bookings'), 2000);
+        setTimeout(() => navigate('/venue-owner-dashboard'), 2000);
       } else {
         throw new Error(response.data.message || 'Failed to complete the process');
       }

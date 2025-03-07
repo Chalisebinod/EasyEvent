@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import VenueSidebar from "./VenueSideBar";
+
 import { toast, ToastContainer } from "react-toastify";
+import VenueSidebar from "./VenueSidebar";
 
 const VenueProfile = () => {
   const [venue, setVenue] = useState(null);
