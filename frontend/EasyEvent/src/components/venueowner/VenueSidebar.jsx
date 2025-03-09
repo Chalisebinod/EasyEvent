@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, forwardRef } from "react";
 import {
   Box,
   List,
@@ -14,6 +14,7 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  Slide
 } from "@mui/material";
 import {
   Dashboard as DashboardIcon,
@@ -31,6 +32,11 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 
 const drawerWidth = 250;
+
+// Optional: use a Slide transition for the Logout dialog
+const Transition = forwardRef(function Transition(props, ref) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});
 
 const VenueSidebar = ({ children }) => {
   const navigate = useNavigate();
@@ -53,6 +59,8 @@ const VenueSidebar = ({ children }) => {
     };
 
     fetchNotificationCount();
+
+    // Refresh notification count every 30 seconds
     const interval = setInterval(fetchNotificationCount, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -65,20 +73,23 @@ const VenueSidebar = ({ children }) => {
   const openLogoutDialog = () => setLogoutDialogOpen(true);
   const closeLogoutDialog = () => setLogoutDialogOpen(false);
 
-  // Helper: if the current route matches the link, set it as active.
-  // Active item: white background, dark-blue text.
+  // Highlight the active menu item based on the current path
   const getNavItemStyle = (path) => {
     const isActive = location.pathname === path;
+
     return {
       margin: "6px 8px",
-      borderRadius: "8px",
-      backgroundColor: isActive ? "#ffffff" : "transparent",
-      transition: "all 0.2s ease",
+      borderRadius: "4px",
+      // Use a subtle background for the active item
+      backgroundColor: isActive ? "#e0e0e0" : "transparent",
+      transition: "background-color 0.2s ease",
       "& .MuiListItemIcon-root, & .MuiListItemText-primary": {
-        color: isActive ? "#0D47A1" : "#ffffff",
+        // Use a consistent, darker text color
+        color: "#333",
       },
+      // Subtle hover effect
       "&:hover": {
-        backgroundColor: isActive ? "#ffffff" : "rgba(255,255,255,0.2)",
+        backgroundColor: "#f5f5f5",
       },
     };
   };
@@ -93,10 +104,10 @@ const VenueSidebar = ({ children }) => {
           "& .MuiDrawer-paper": {
             width: drawerWidth,
             boxSizing: "border-box",
-            // Using a modern gradient from deep blue to green
-            background: "linear-gradient(45deg, #0D47A1, #1B5E20)",
-            color: "#ffffff",
-            borderRight: "none",
+            // Simple white background for a professional look
+            backgroundColor: "#fff",
+            color: "#333",
+            borderRight: "1px solid #ddd",
           },
         }}
         variant="permanent"
@@ -107,13 +118,13 @@ const VenueSidebar = ({ children }) => {
           sx={{
             textAlign: "center",
             p: 3,
-            background: "linear-gradient(45deg, #0D47A1, #1B5E20)",
+            backgroundColor: "#fff",
             mb: 2,
+            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
             borderRadius: 1,
-            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.3)",
           }}
         >
-          <Typography variant="h5" sx={{ color: "#ffffff", fontWeight: "bold" }}>
+          <Typography variant="h5" sx={{ color: "orange", fontWeight: "bold" }}>
             EasyEvent
           </Typography>
         </Box>
@@ -255,7 +266,7 @@ const VenueSidebar = ({ children }) => {
           </ListItem>
         </List>
 
-        <Divider sx={{ borderColor: "#ffffff", my: 2 }} />
+        <Divider sx={{ borderColor: "#ddd", my: 2 }} />
 
         {/* Logout Button */}
         <List>
@@ -264,14 +275,14 @@ const VenueSidebar = ({ children }) => {
             onClick={openLogoutDialog}
             sx={{
               margin: "6px 8px",
-              borderRadius: "8px",
-              "&:hover": { backgroundColor: "rgba(255,255,255,0.25)" },
+              borderRadius: "4px",
+              "&:hover": { backgroundColor: "#f5f5f5" },
             }}
           >
             <ListItemIcon>
-              <LogoutIcon sx={{ color: "#ffffff" }} />
+              <LogoutIcon sx={{ color: "#333" }} />
             </ListItemIcon>
-            <ListItemText primary="Logout" sx={{ color: "#ffffff" }} />
+            <ListItemText primary="Logout" sx={{ color: "#333" }} />
           </ListItem>
         </List>
       </Drawer>
@@ -282,16 +293,44 @@ const VenueSidebar = ({ children }) => {
       </Box>
 
       {/* Logout Confirmation Dialog */}
-      <Dialog open={logoutDialogOpen} onClose={closeLogoutDialog}>
-        <DialogTitle>Confirm Logout</DialogTitle>
+      <Dialog
+        open={logoutDialogOpen}
+        onClose={closeLogoutDialog}
+        TransitionComponent={Transition} 
+        BackdropProps={{
+          sx: { backgroundColor: "rgba(0, 0, 0, 0.7)" },
+        }}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            p: 2,
+            minWidth: "320px",
+          },
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: "bold", fontSize: "1.25rem" }}>
+          Confirm Logout
+        </DialogTitle>
         <DialogContent>
-          <Typography>Are you sure you want to logout?</Typography>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            Are you sure you want to log out?
+          </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={closeLogoutDialog} color="inherit">
+          <Button onClick={closeLogoutDialog} variant="outlined">
             Cancel
           </Button>
-          <Button onClick={handleLogout} color="error">
+          <Button
+            onClick={handleLogout}
+            variant="contained"
+            sx={{
+              backgroundColor: "#e53935",
+              color: "#fff",
+              "&:hover": {
+                backgroundColor: "#d32f2f",
+              },
+            }}
+          >
             Logout
           </Button>
         </DialogActions>

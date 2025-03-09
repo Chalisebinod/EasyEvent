@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { FaUserEdit, FaKey, FaCreditCard, FaSignOutAlt, FaTrash } from "react-icons/fa";
+import React, { useState, useEffect, useRef } from "react";
+import { FaUserEdit, FaSignOutAlt, FaCamera } from "react-icons/fa";
 import Navbar from "./Navbar";
 import BottomNavbar from "./BottomNavbar";
 import axios from "axios";
@@ -15,14 +15,18 @@ const Profile = () => {
     contact_number: "",
     profile_image: null,
   });
+  const fileInputRef = useRef(null);
+
   const accessToken = localStorage.getItem("access_token");
   const navigate = useNavigate();
 
+  // Logout handler
   const handleLogout = () => {
     localStorage.removeItem("access_token");
     navigate("/login");
   };
 
+  // Fetch profile on mount
   useEffect(() => {
     const fetchProfile = async () => {
       if (!accessToken) {
@@ -37,11 +41,14 @@ const Profile = () => {
             Authorization: `Bearer ${accessToken}`,
           },
         });
+
         setProfile(response.data);
+
+        // Prepare form data for editing
         setUpdatedProfile({
-          name: response.data.name,
-          email: response.data.email,
-          contact_number: response.data.contact_number,
+          name: response.data.name || "",
+          email: response.data.email || "",
+          contact_number: response.data.contact_number || "",
           profile_image: null,
         });
       } catch (error) {
@@ -56,27 +63,28 @@ const Profile = () => {
     };
 
     fetchProfile();
-  }, [navigate]);
+  }, [accessToken, navigate]);
 
+  // Switch to edit mode
   const handleEditProfile = () => {
     setIsEditing(true);
   };
 
+  // Handle input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setUpdatedProfile((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
+    setUpdatedProfile((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Handle image selection
   const handleImageChange = (e) => {
-    setUpdatedProfile((prevState) => ({
-      ...prevState,
+    setUpdatedProfile((prev) => ({
+      ...prev,
       profile_image: e.target.files[0],
     }));
   };
 
+  // Save changes
   const handleSaveChanges = async (e) => {
     e.preventDefault();
 
@@ -90,186 +98,273 @@ const Profile = () => {
     }
 
     try {
+      // 1) Update profile on server
       await axios.put("http://localhost:8000/api/profile", formData, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "multipart/form-data",
+          // "Content-Type": "multipart/form-data", // Let axios set this automatically
         },
       });
+
       toast.success("Profile updated successfully!");
+
+      // 2) Fetch updated data from server so we get the real new image path
+      const updatedResponse = await axios.get("http://localhost:8000/api/profile", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      setProfile(updatedResponse.data);
       setIsEditing(false);
-      setProfile((prevState) => ({
-        ...prevState,
-        ...updatedProfile,
-      }));
     } catch (error) {
       console.error("Error updating profile:", error);
-      toast.error("Failed to update profile.");
+      toast.error("Failed to update image:");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Top Navbar */}
       <Navbar />
 
-      
-        <div className="max-w-6xl mx-auto px-6">
-          <h1 className="text-4xl font-bold text-stone-900 pt-8">My Profile</h1>
-          <p className="text-stone-900 mt-2 pt-6 pb-16">Manage your account & settings</p>
-        </div>
-     
+      {/* Main Content */}
+      <div className="max-w-5xl w-full mx-auto p-4 flex-1">
+        {profile ? (
+          <div className="bg-white rounded-lg shadow p-6 relative">
+            {/* Header Section */}
+            <div className="flex flex-col md:flex-row items-center md:items-start md:space-x-8">
+              {/* Profile Image */}
+              <div className="flex-shrink-0 mb-4 md:mb-0 relative">
+                <img
+                  src={
+                    profile.profile_image ||
+                    "https://via.placeholder.com/150"
+                  }
+                  alt="Profile"
+                  className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-gray-200 object-cover shadow-sm"
+                />
+              </div>
+              {/* Name & Basic Info */}
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+                  {profile.name || "User"}
+                </h1>
+                <p className="text-gray-500 text-sm md:text-base">
+                  {profile.email || "user@gmail.com"}
+                </p>
+                {profile.contact_number && (
+                  <p className="mt-2 text-sm text-gray-600">
+                    Contact: {profile.contact_number}
+                  </p>
+                )}
+                {profile.location && (
+                  <p className="text-sm text-gray-600">
+                    Location: {profile.location}
+                  </p>
+                )}
 
-      {/* Main Content Container */}
-      <div className="max-w-6xl mx-auto px-6 pb-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Profile Options (Sidebar) */}
-          <div className="bg-white shadow-xl rounded-lg p-6">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-              Profile Options
-            </h2>
-            <div className="flex flex-col space-y-4">
-              <button
-                className="flex items-center justify-center space-x-2 text-lg text-white bg-gray-600 hover:bg-teal-700 py-2 px-4 rounded-lg shadow-md transition duration-300"
-                onClick={handleEditProfile}
-              >
-                <FaUserEdit />
-                <span>Edit Profile</span>
-              </button>
-              <button
-                className="flex items-center justify-center space-x-2 text-lg text-white bg-gray-600 hover:bg-teal-700 py-2 px-4 rounded-lg shadow-md transition duration-300"
-                onClick={() => navigate("/change-password")}
-              >
-                <FaKey />
-                <span>Change Password</span>
-              </button>
-              <button
-                className="flex items-center justify-center space-x-2 text-lg text-white bg-gray-600 hover:bg-teal-700 py-2 px-4 rounded-lg shadow-md transition duration-300"
-                onClick={() => navigate("/payment-details")}
-              >
-                <FaCreditCard />
-                <span>Payment Details</span>
-              </button>
-              <button
-                className="flex items-center justify-center space-x-2 text-lg text-white bg-gray-600 hover:bg-teal-700 py-2 px-4 rounded-lg shadow-md transition duration-300"
-                onClick={handleLogout}
-              >
-                <FaSignOutAlt />
-                <span>Logout</span>
-              </button>
-              <button
-                className="flex items-center justify-center space-x-2 text-lg text-white bg-gray-600 hover:bg-teal-700 py-2 px-4 rounded-lg shadow-md transition duration-300"
-                onClick={() => navigate("/delete-account")}
-              >
-                <FaTrash />
-                <span>Delete Account</span>
-              </button>
+                {/* Edit & Logout Buttons */}
+                <div className="mt-4 flex space-x-4">
+                  <button
+                    onClick={handleEditProfile}
+                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm rounded shadow hover:bg-blue-700 transition"
+                  >
+                    <FaUserEdit className="mr-2" />
+                    Edit Profile
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm rounded shadow hover:bg-red-700 transition"
+                  >
+                    <FaSignOutAlt className="mr-2" />
+                    Logout
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* 2x2 Grid Info Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+              {/* Box 1: Status Info */}
+              <div className="bg-gray-50 rounded-md shadow-sm p-4">
+                <h2 className="text-lg font-semibold text-gray-700 mb-2">
+                  Status Info
+                </h2>
+                <div className="space-y-1 text-sm text-gray-600">
+                  <p>
+                    <strong>Status:</strong>{" "}
+                    {profile.status || "Not Provided"}
+                  </p>
+                  <p>
+                    <strong>Last Login:</strong>{" "}
+                    {profile.last_login
+                      ? new Date(profile.last_login).toLocaleString()
+                      : "N/A"}
+                  </p>
+                  <p>
+                    <strong>Date Created:</strong>{" "}
+                    {profile.date_created
+                      ? new Date(profile.date_created).toLocaleString()
+                      : "N/A"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Box 2: Bookings */}
+              <div className="bg-gray-50 rounded-md shadow-sm p-4">
+                <h2 className="text-lg font-semibold text-gray-700 mb-2">
+                  Bookings
+                </h2>
+                {profile.bookings && profile.bookings.length > 0 ? (
+                  <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                    {profile.bookings.map((b, idx) => (
+                      <li key={idx}>{JSON.stringify(b)}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-gray-500">No bookings found.</p>
+                )}
+              </div>
+
+              {/* Box 3: Favorites */}
+              <div className="bg-gray-50 rounded-md shadow-sm p-4">
+                <h2 className="text-lg font-semibold text-gray-700 mb-2">
+                  Favorites
+                </h2>
+                {profile.favorites && profile.favorites.length > 0 ? (
+                  <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                    {profile.favorites.map((fav, idx) => (
+                      <li key={idx}>{JSON.stringify(fav)}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-gray-500">No favorites added.</p>
+                )}
+              </div>
+
+              {/* Box 4: Reviews */}
+              <div className="bg-gray-50 rounded-md shadow-sm p-4">
+                <h2 className="text-lg font-semibold text-gray-700 mb-2">
+                  Reviews
+                </h2>
+                {profile.reviews && profile.reviews.length > 0 ? (
+                  <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                    {profile.reviews.map((rev, idx) => (
+                      <li key={idx}>{JSON.stringify(rev)}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-gray-500">No reviews found.</p>
+                )}
+              </div>
             </div>
           </div>
+        ) : (
+          <p className="text-gray-600">Loading profile...</p>
+        )}
 
-          {/* Profile Details / Edit Form */}
-          <div className="col-span-2 bg-white shadow-xl rounded-lg p-8">
-            {profile ? (
-              isEditing ? (
-                <form onSubmit={handleSaveChanges} className="space-y-6">
-                  <div>
-                    <label className="block text-lg font-medium text-gray-700">
-                      Name
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={updatedProfile.name}
-                      onChange={handleInputChange}
-                      className="mt-1 w-full p-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-teal-600 transition duration-300"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-lg font-medium text-gray-700">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={updatedProfile.email}
-                      onChange={handleInputChange}
-                      className="mt-1 w-full p-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-teal-600 transition duration-300"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-lg font-medium text-gray-700">
-                      Phone Number
-                    </label>
-                    <input
-                      type="text"
-                      name="contact_number"
-                      value={updatedProfile.contact_number}
-                      onChange={handleInputChange}
-                      className="mt-1 w-full p-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-teal-600 transition duration-300"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-lg font-medium text-gray-700">
-                      Profile Image
-                    </label>
-                    <input
-                      type="file"
-                      name="profile_image"
-                      onChange={handleImageChange}
-                      className="mt-1 w-full p-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-teal-600 transition duration-300"
-                    />
-                  </div>
-                  <div className="flex space-x-4 pt-4">
-                    <button
-                      type="submit"
-                      className="px-6 py-3 bg-teal-600 text-white rounded-md shadow-md hover:bg-teal-700 transition duration-300"
-                    >
-                      Save Changes
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setIsEditing(false)}
-                      className="px-6 py-3 bg-gray-300 text-gray-700 rounded-md shadow-md hover:bg-gray-400 transition duration-300"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              ) : (
-                <div className="space-y-6">
-                  <div className="flex items-center space-x-6">
-                    <img
-                      src={
-                        profile.profile_image ||
-                        "https://via.placeholder.com/150"
-                      }
-                      alt="Profile"
-                      className="w-32 h-32 rounded-full border-4 border-teal-600 object-cover"
-                    />
-                    <div>
-                      <h2 className="text-3xl font-semibold text-gray-800">
-                        {profile.name}
-                      </h2>
-                      <p className="text-lg text-gray-600">{profile.email}</p>
-                    </div>
-                  </div>
-                  <div className="text-lg text-gray-600 space-y-2">
-                    <p>
-                      <strong>Phone:</strong>{" "}
-                      {profile.contact_number || "Not provided"}
-                    </p>
-                    <p>
-                      <strong>Location:</strong>{" "}
-                      {profile.location || "Not provided"}
-                    </p>
+        {/* EDIT PROFILE MODAL */}
+        {isEditing && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white w-full max-w-md rounded-lg shadow-lg p-6 relative">
+              <h2 className="text-xl font-bold text-gray-700 mb-4">
+                Edit Profile
+              </h2>
+              <form onSubmit={handleSaveChanges} className="space-y-4">
+                {/* Profile Image Preview with upload icon */}
+                <div
+                  className="relative w-32 h-32 mx-auto cursor-pointer"
+                  onClick={() =>
+                    fileInputRef.current && fileInputRef.current.click()
+                  }
+                >
+                  <img
+                    src={
+                      updatedProfile.profile_image &&
+                      updatedProfile.profile_image instanceof File
+                        ? URL.createObjectURL(updatedProfile.profile_image)
+                        : profile && profile.profile_image
+                        ? profile.profile_image
+                        : "https://via.placeholder.com/150"
+                    }
+                    alt="Profile Preview"
+                    className="w-32 h-32 rounded-full border-4 border-gray-200 object-cover shadow-sm"
+                  />
+                  <div className="absolute bottom-0 right-0 bg-blue-600 rounded-full p-2">
+                    <FaCamera className="text-white" />
                   </div>
                 </div>
-              )
-            ) : (
-              <p>Loading profile...</p>
-            )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Profile Image
+                  </label>
+                  <input
+                    type="file"
+                    name="profile_image"
+                    onChange={handleImageChange}
+                    ref={fileInputRef}
+                    className="mt-1 w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={updatedProfile.name}
+                    onChange={handleInputChange}
+                    className="mt-1 w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={updatedProfile.email}
+                    onChange={handleInputChange}
+                    className="mt-1 w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Phone Number
+                  </label>
+                  <input
+                    type="text"
+                    name="contact_number"
+                    value={updatedProfile.contact_number}
+                    onChange={handleInputChange}
+                    className="mt-1 w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                </div>
+
+                {/* Action Buttons */}
+                <div className="mt-4 flex justify-end space-x-3">
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(false)}
+                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Bottom Navbar */}

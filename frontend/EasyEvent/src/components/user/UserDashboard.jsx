@@ -55,13 +55,7 @@ const UserDashboard = () => {
               <option>Jhapa</option>
             </select>
           </div>
-          <input
-            type="text"
-            placeholder="Search venues..."
-            className="mt-4 sm:mt-0 px-4 py-2 border rounded-lg"
-            value={searchTerm}
-            onChange={handleSearch}
-          />
+       
         </div>
 
         {/* Venues Grid */}

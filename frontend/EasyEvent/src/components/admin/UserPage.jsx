@@ -27,6 +27,7 @@ const UserPage = () => {
           },
         }
       );
+      // Our controller returns { success, data, pagination }
       const { data, pagination } = response.data;
       setUsers(data);
       setPages(pagination.totalPages);
@@ -49,7 +50,8 @@ const UserPage = () => {
           },
         }
       );
-      fetchUsers(page); // Refresh the user list after blocking
+      // Refresh the user list after blocking/unblocking
+      fetchUsers(page);
     } catch (error) {
       console.error("Error blocking user:", error);
     }

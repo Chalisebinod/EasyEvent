@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   FaTachometerAlt,
   FaUsers,
@@ -17,9 +17,7 @@ const Sidebar = () => {
   const [showKycDropdown, setShowKycDropdown] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    setShowLogoutDialog(true);
-  };
+  const handleLogout = () => setShowLogoutDialog(true);
 
   const confirmLogout = () => {
     localStorage.removeItem("access_token");
@@ -27,172 +25,215 @@ const Sidebar = () => {
     navigate("/login");
   };
 
-  const cancelLogout = () => {
-    setShowLogoutDialog(false);
-  };
+  const cancelLogout = () => setShowLogoutDialog(false);
 
-  const toggleKycDropdown = () => {
-    setShowKycDropdown(!showKycDropdown);
-  };
+  const toggleKycDropdown = () => setShowKycDropdown((prev) => !prev);
+
+  // Base styling for navigation items
+  const baseLinkClasses =
+    "flex items-center px-6 py-3 transition-colors duration-300 rounded-md focus:outline-none";
+  // Inactive link style with subtle hover effect (same color family)
+  const inactiveLinkClasses =
+    "text-gray-300 hover:bg-gray-800 hover:text-white";
+  // Active link style
+  const activeLinkClasses = "bg-gray-800 text-white";
+
+  // Helper function for rendering navigation links with proper styles
+  const renderNavLink = (to, icon, label) => (
+    <NavLink
+      to={to}
+      className={({ isActive }) =>
+        `${baseLinkClasses} ${isActive ? activeLinkClasses : inactiveLinkClasses}`
+      }
+    >
+      {icon}
+      <span className="ml-4 font-medium">{label}</span>
+    </NavLink>
+  );
 
   return (
-    <aside className="w-64 bg-gray-700 text-white h-screen fixed shadow-lg">
-      <div className="py-6 px-6 text-center text-2xl font-bold border-b border-gray-700">
+    <aside className="w-64 bg-gray-900 text-gray-300 h-screen fixed shadow-xl">
+      {/* Sidebar Title */}
+      <div className="py-6 px-6 text-center text-3xl font-bold border-b border-gray-800">
         EasyEvent
       </div>
+
+      {/* Navigation Menu */}
       <nav className="mt-6">
         <ul>
+          {/* Dashboard */}
           <li>
-            <Link
-              to="/admin-dashboard"
-              className="flex items-center px-6 py-3 hover:bg-gray-500 focus-within:bg-gray-700 transition-all"
-            >
-              <FaTachometerAlt className="mr-4 text-lg" />
-              Dashboard
-            </Link>
+            {renderNavLink(
+              "/admin-dashboard",
+              <FaTachometerAlt className="text-lg" />,
+              "Dashboard"
+            )}
           </li>
 
+          {/* KYC Request with Dropdown */}
           <li className="relative">
             <button
               onClick={toggleKycDropdown}
-              className="flex items-center w-full px-6 py-3 hover:bg-gray-500 focus-within:bg-gray-700 transition-all focus:outline-none"
+              className={`${baseLinkClasses} w-full justify-between ${
+                showKycDropdown ? activeLinkClasses : inactiveLinkClasses
+              }`}
             >
-              <FaBookOpen className="mr-4 text-lg" />
-              KYC Request
-              <span className="ml-auto">
+              <div className="flex items-center">
+                <FaBookOpen className="text-lg" />
+                <span className="ml-4 font-medium">KYC Request</span>
+              </div>
+              <span>
                 {showKycDropdown ? <FaChevronUp /> : <FaChevronDown />}
               </span>
             </button>
             {showKycDropdown && (
-              <ul className="bg-gray-800">
+              <ul className="bg-gray-900">
                 <li>
-                  <Link
+                  <NavLink
                     to="/kyc-request"
-                    className="block px-8 py-2 hover:bg-gray-500 focus-within:bg-gray-700 transition-all"
+                    className={({ isActive }) =>
+                      `block pl-12 pr-6 py-2 transition-colors duration-300 rounded-md ${
+                        isActive ? activeLinkClasses : inactiveLinkClasses
+                      }`
+                    }
                   >
                     All Requests
-                  </Link>
+                  </NavLink>
                 </li>
                 <li>
-                  <Link
+                  <NavLink
                     to="/kyc-request?status=rejected"
-                    className="block px-8 py-2 hover:bg-gray-700 focus-within:bg-gray-700 transition-all"
+                    className={({ isActive }) =>
+                      `block pl-12 pr-6 py-2 transition-colors duration-300 rounded-md ${
+                        isActive ? activeLinkClasses : inactiveLinkClasses
+                      }`
+                    }
                   >
                     Rejected
-                  </Link>
+                  </NavLink>
                 </li>
                 <li>
-                  <Link
+                  <NavLink
                     to="/kyc-request?status=pending"
-                    className="block px-8 py-2 hover:bg-gray-700 focus-within:bg-gray-700 transition-all"
+                    className={({ isActive }) =>
+                      `block pl-12 pr-6 py-2 transition-colors duration-300 rounded-md ${
+                        isActive ? activeLinkClasses : inactiveLinkClasses
+                      }`
+                    }
                   >
                     Pending
-                  </Link>
+                  </NavLink>
                 </li>
                 <li>
-                  <Link
+                  <NavLink
                     to="/kyc-request?status=approved"
-                    className="block px-8 py-2 hover:bg-gray-700 focus-within:bg-gray-700 transition-all"
+                    className={({ isActive }) =>
+                      `block pl-12 pr-6 py-2 transition-colors duration-300 rounded-md ${
+                        isActive ? activeLinkClasses : inactiveLinkClasses
+                      }`
+                    }
                   >
                     Approved
-                  </Link>
+                  </NavLink>
                 </li>
               </ul>
             )}
           </li>
 
+          {/* Users */}
           <li>
-            <Link
-              to="/all-user"
-              className="flex items-center px-6 py-3 hover:bg-gray-500 focus-within:bg-gray-700 transition-all"
-            >
-              <FaUsers className="mr-4 text-lg" />
-              Users
-            </Link>
+            {renderNavLink(
+              "/all-user",
+              <FaUsers className="text-lg" />,
+              "Users"
+            )}
           </li>
+
+          {/* Venue Owner */}
           <li>
-            <Link
-              to="/all-venueUser"
-              className="flex items-center px-6 py-3 hover:bg-gray-500 focus-within:bg-gray-700 transition-all"
-            >
-              <FaUsers className="mr-4 text-lg" />
-              Venue Owner
-            </Link>
+            {renderNavLink(
+              "/all-venueUser",
+              <FaUsers className="text-lg" />,
+              "Venue Owner"
+            )}
           </li>
+
+          {/* Venues */}
           <li>
-            <Link
-              to="/dashboard"
-              className="flex items-center px-6 py-3 hover:bg-gray-500 focus-within:bg-gray-700 transition-all"
-            >
-              <FaTachometerAlt className="mr-4 text-lg" />
-              Venues
-            </Link>
+            {renderNavLink(
+              "/dashboard",
+              <FaTachometerAlt className="text-lg" />,
+              "Venues"
+            )}
           </li>
+
+          {/* Admin */}
           <li>
-            <Link
-              to="/all-admin"
-              className="flex items-center px-6 py-3 hover:bg-gray-500 focus-within:bg-gray-700 transition-all"
-            >
-              <FaUsers className="mr-4 text-lg" />
-              Admin
-            </Link>
+            {renderNavLink(
+              "/all-admin",
+              <FaUsers className="text-lg" />,
+              "Admin"
+            )}
           </li>
+
+          {/* Rating & Reviews */}
           <li>
-            <Link
-              to="/reviews"
-              className="flex items-center px-6 py-3 hover:bg-gray-500 focus-within:bg-gray-700 transition-all"
-            >
-              <FaStar className="mr-4 text-lg" />
-              Rating & Reviews
-            </Link>
+            {renderNavLink(
+              "/reviews",
+              <FaStar className="text-lg" />,
+              "Rating & Reviews"
+            )}
           </li>
+
+          {/* Payment */}
           <li>
-            <Link
-              to="/payments"
-              className="flex items-center px-6 py-3 hover:bg-gray-500 focus-within:bg-gray-700 transition-all"
-            >
-              <FaMoneyCheck className="mr-4 text-lg" />
-              Payment
-            </Link>
+            {renderNavLink(
+              "/payments",
+              <FaMoneyCheck className="text-lg" />,
+              "Payment"
+            )}
           </li>
+
+          {/* Agreement */}
           <li>
-            <Link
-              to="/agreement"
-              className="flex items-center px-6 py-3 hover:bg-gray-500 focus-within:bg-gray-700 transition-all"
-            >
-              <FaFileContract className="mr-4 text-lg" />
-              Agreement
-            </Link>
+            {renderNavLink(
+              "/agreement",
+              <FaFileContract className="text-lg" />,
+              "Agreement"
+            )}
           </li>
+
+          {/* Logout */}
           <li>
             <button
               onClick={handleLogout}
-              className="flex items-center px-6 py-3 hover:bg-gray-500 focus-within:bg-gray-700 transition-all w-full text-left"
+              className={`${baseLinkClasses} text-left ${inactiveLinkClasses} hover:bg-red-600 hover:text-white`}
             >
-              <FaSignOutAlt className="mr-4 text-lg text-red-400" />
-              Logout
+              <FaSignOutAlt className="text-lg text-red-400" />
+              <span className="ml-4 font-medium">Logout</span>
             </button>
           </li>
         </ul>
       </nav>
 
+      {/* Logout Confirmation Dialog */}
       {showLogoutDialog && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-gray-800 p-6 rounded-lg shadow-md w-1/3">
-            <h2 className="text-xl font-semibold mb-4 text-white">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-gray-800 p-6 rounded-lg shadow-xl w-96">
+            <h2 className="text-2xl font-semibold mb-4 text-white">
               Confirm Logout
             </h2>
             <p className="text-gray-300">Are you sure you want to log out?</p>
-            <div className="mt-4 flex justify-end">
+            <div className="mt-6 flex justify-end">
               <button
                 onClick={cancelLogout}
-                className="px-4 py-2 bg-gray-500 text-white rounded-md mr-2"
+                className="px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors duration-300 mr-3"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmLogout}
-                className="px-4 py-2 bg-red-500 text-white rounded-md"
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-500 transition-colors duration-300"
               >
                 Logout
               </button>

@@ -13,15 +13,7 @@ const ProfileIcon = ({ ownerId }) => {
   const handleClick = () => {
     navigate(`/owner-profile/${ownerId}`);
   };
-  return (
-    <div
-      className="absolute top-4 right-4 cursor-pointer text-orange-600 hover:text-orange-800"
-      onClick={handleClick}
-      title="View Owner Profile"
-    >
-      <FaUserCircle size={32} />
-    </div>
-  );
+ 
 };
 
 

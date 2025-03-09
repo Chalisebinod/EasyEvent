@@ -1,115 +1,56 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+
+import BottomNavbar from "./BottomNavbar";
 
 const DashboardBefore = () => {
   const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [venues, setVenues] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const venues = [
-    {
-      id: 1,
-      name: "Luxury Banquet Hall",
-      location: "Jaipati, Kathmandu",
-      image: "https://via.placeholder.com/300",
-      rating: 5,
-    },
-    {
-      id: 2,
-      name: "Cozy Garden Venue",
-      location: "Thamel, Kathmandu",
-      image: "https://via.placeholder.com/300",
-      rating: 4.5,
-    },
-    {
-      id: 3,
-      name: "Bravo Venue",
-      location: "Shiva Chowk, Pokhara",
-      image: "https://via.placeholder.com/300",
-      rating: 4,
-    },
-    {
-      id: 4,
-      name: "Charming Retreat Venue",
-      location: "Chitwan",
-      image: "https://via.placeholder.com/300",
-      rating: 4.5,
-    },
-    {
-      id: 5,
-      name: "Grand Imperial Venue",
-      location: "Bhaktapur",
-      image: "https://via.placeholder.com/300",
-      rating: 4,
-    },
-    {
-      id: 6,
-      name: "Elegant Garden Venue",
-      location: "Lalitpur",
-      image: "https://via.placeholder.com/300",
-      rating: 5,
-    },
-    {
-      id: 7,
-      name: "Rustic Country Venue",
-      location: "Banepa",
-      image: "https://via.placeholder.com/300",
-      rating: 4,
-    },
-    {
-      id: 8,
-      name: "Royal Heritage Venue",
-      location: "Patan Durbar Square",
-      image: "https://via.placeholder.com/300",
-      rating: 4.5,
-    },
-    {
-      id: 9,
-      name: "Urban Rooftop Venue",
-      location: "New Road, Kathmandu",
-      image: "https://via.placeholder.com/300",
-      rating: 5,
-    },
-    {
-      id: 10,
-      name: "Beachfront Venue",
-      location: "Lakeside, Pokhara",
-      image: "https://via.placeholder.com/300",
-      rating: 4.5,
-    },
-    {
-      id: 11,
-      name: "Modern Conference Venue",
-      location: "Gongabu, Kathmandu",
-      image: "https://via.placeholder.com/300",
-      rating: 4,
-    },
-    {
-      id: 12,
-      name: "Serene Forest Venue",
-      location: "Godavari",
-      image: "https://via.placeholder.com/300",
-      rating: 5,
-    },
-  ];
+  // Fetch venues from the API
+  useEffect(() => {
+    const fetchVenues = async () => {
+      try {
+        const response = await fetch("http://localhost:8000/api/venues");
+        const data = await response.json();
+        setVenues(data.venues); // Assuming 'venues' is the key in the API response
+      } catch (error) {
+        console.error("Error fetching venues:", error);
+      }
+    };
+    fetchVenues();
+  }, []);
+
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const filteredVenues = venues.filter((venue) =>
+    venue.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Modal handlers
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Navbar */}
+    <div className="min-h-screen bg-gradient-to-b from-gray-100 to-white">
+      {/* Header */}
       <header className="bg-white shadow-md sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          {/* Logo */}
-          <div className="pl-8  text-2xl font-bold text-orange-500 ">
+          {/* Clickable Logo */}
+          <div
+            onClick={() => navigate("/")}
+            className="pl-8 text-2xl font-bold text-orange-500 cursor-pointer hover:underline transition-colors duration-200"
+          >
             EasyEvents
           </div>
-
-          {/* Search Bar */}
-          <div className="hidden sm:block">
-            <input
-              type="text"
-              placeholder="Search venues..."
-              className="px-4 py-2 border rounded-full w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
-            />
-          </div>
-
           {/* Buttons */}
           <div className="flex space-x-4">
             <button
@@ -129,99 +70,112 @@ const DashboardBefore = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-16 py-14">
-        <h2 className="text-2xl font-bold mb-6 text-gray-700">
-          Trending Venues
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {venues.map((venue) => (
-            <div
-              key={venue.id}
-              className="bg-white shadow-md rounded-lg overflow-hidden"
-            >
-              <img
-                src={venue.image}
-                alt={venue.name}
-                className="w-full h-60 object-cover"
-                style={{ height: "300px", width: "300px" }}
-              />
-              <div className="p-4">
-                <h3 className="text-lg font-bold text-gray-700">
-                  {venue.name}
-                </h3>
-                <p className="text-gray-600 text-sm">{venue.location}</p>
-                <div className="flex items-center mt-2">
-                  {[...Array(Math.floor(venue.rating))].map((_, index) => (
-                    <span key={index} className="text-orange-500 text-xl">
-                      ★
-                    </span>
-                  ))}
-                  {venue.rating % 1 !== 0 && (
-                    <span className="text-orange-500 text-xl">☆</span>
-                  )}
+      <div className="min-h-screen bg-white">
+        <main className="container mx-auto px-6 py-12">
+          {/* Venues Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {filteredVenues.map((venue) => (
+              <div
+                key={venue.id}
+                onClick={openModal}
+                className="bg-white shadow-lg rounded-lg overflow-hidden transition transform hover:scale-105 cursor-pointer"
+              >
+                <img
+                  src={
+                    venue.profile_image
+                      ? `http://localhost:8000/${venue.profile_image.replace(
+                          /\\/g,
+                          "/"
+                        )}`
+                      : "https://via.placeholder.com/300"
+                  }
+                  alt={venue.name}
+                  className="w-full h-48 object-cover"
+                />
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">
+                    {venue.name}
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    {venue.location.address}, {venue.location.city},{" "}
+                    {venue.location.state} {venue.location.zip_code}
+                  </p>
+                  <p className="text-gray-500 text-sm mb-4">
+                    {venue.description}
+                  </p>
+                  <div>
+                    {isNaN(parseFloat(venue.rating)) ? (
+                      <p className="text-gray-500 text-sm">{venue.rating}</p>
+                    ) : (
+                      <div className="flex items-center">
+                        {Array(Math.floor(parseFloat(venue.rating)))
+                          .fill()
+                          .map((_, index) => (
+                            <span
+                              key={index}
+                              className="text-orange-500 text-xl"
+                            >
+                              ★
+                            </span>
+                          ))}
+                        {parseFloat(venue.rating) % 1 !== 0 && (
+                          <span className="text-orange-500 text-xl">☆</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </main>
+            ))}
+          </div>
+        </main>
+        <BottomNavbar />
+      </div>
 
-      {/* Footer */}
-      <footer className="bg-orange-500 text-white py-8">
-        <div className="container mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* About Section */}
-          <div>
-            <h4 className="text-lg font-bold mb-3">About EasyEvents</h4>
-            <p className="text-sm">
-              EasyEvents is your one-stop solution for finding the perfect venue
-              for your special occasions. Browse, book, and celebrate with ease.
+      {/* Modal for Unauthenticated Users */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Dimmed & Blurred Backdrop */}
+          <div
+            className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm"
+            onClick={closeModal}
+          ></div>
+          <div className="relative z-10 bg-white p-8 rounded-lg shadow-2xl max-w-sm mx-auto">
+            <h2 className="text-2xl font-bold mb-4 text-orange-600">
+              Restricted Access
+            </h2>
+            <p className="mb-6 text-gray-700">
+              To view detailed information about this venue, please log in or sign up.
             </p>
-          </div>
-
-          {/* Links Section */}
-          <div>
-            <h4 className="text-lg font-bold mb-3">Quick Links</h4>
-            <ul className="text-sm space-y-2">
-              <li>
-                <a href="#" className="hover:underline">
-                  About Us
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:underline">
-                  Careers
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:underline">
-                  FAQ
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:underline">
-                  Terms & Conditions
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:underline">
-                  Privacy Policy
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Contact Section */}
-          <div>
-            <h4 className="text-lg font-bold mb-3">Contact Us</h4>
-            <p className="text-sm">Email: contact@easyevents.com</p>
-            <p className="text-sm">Phone: +977-123456789</p>
-            <p className="text-sm">Location: Kathmandu, Nepal</p>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => {
+                  closeModal();
+                  navigate("/login");
+                }}
+                className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 transition duration-300"
+              >
+                Login
+              </button>
+              <button
+                onClick={() => {
+                  closeModal();
+                  navigate("/user-signup");
+                }}
+                className="px-4 py-2 border border-orange-600 text-orange-600 rounded hover:bg-orange-600 hover:text-white transition duration-300"
+              >
+                Signup
+              </button>
+              <button
+                onClick={closeModal}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition duration-300"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
-        <div className="text-center text-sm mt-6 border-t border-orange-300 pt-4">
-          © 2025 EasyEvents. All Rights Reserved.
-        </div>
-      </footer>
+      )}
     </div>
   );
 };

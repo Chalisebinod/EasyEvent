@@ -53,14 +53,19 @@ const Notification = () => {
     }
   };
 
-  const clearNotifications = async () => {
-    // Optionally, you can add an API call here to clear notifications on the server.
+  const markAllAsRead = async () => {
     try {
-      // Example API call:
-      // const token = localStorage.getItem("access_token");
-      // await axios.delete("http://localhost:8000/api/notification/clearAll", {
-      //   headers: { Authorization: `Bearer ${token}` },
-      // });
+      // Optionally perform an API call to update the backend as well.
+      setNotifications((prev) =>
+        prev.map((notification) => ({ ...notification, read: true }))
+      );
+    } catch (err) {
+      console.error("Failed to mark all notifications as read", err);
+    }
+  };
+
+  const clearNotifications = async () => {
+    try {
       setNotifications([]);
     } catch (err) {
       console.error("Failed to clear notifications", err);
@@ -73,41 +78,74 @@ const Notification = () => {
       <VenueSidebar />
 
       {/* Main Content Section */}
-      <div className="flex-1 p-6 bg-gray-100">
-        <div className="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">Notifications</h2>
-            {notifications.length > 0 && (
-              <button
-                onClick={clearNotifications}
-                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
+      <div className="flex-1 p-8 bg-gray-100">
+        <div className="w-full mx-auto bg-white p-8 rounded-xl shadow-xl">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-8 border-b pb-4">
+            <h2 className="text-3xl font-bold text-gray-800 flex items-center">
+              <svg
+                className="h-8 w-8 text-blue-500 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
               >
-                Clear All
-              </button>
-            )}
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                />
+              </svg>
+              Notifications
+            </h2>
+            <div className="flex space-x-4 mt-4 sm:mt-0">
+              {notifications.length > 0 && (
+                <>
+                  <button
+                    onClick={markAllAsRead}
+                    className="bg-green-500 text-white px-5 py-2 rounded-lg hover:bg-green-600 transition-colors"
+                  >
+                    Mark All as Read
+                  </button>
+                  <button
+                    onClick={clearNotifications}
+                    className="bg-red-500 text-white px-5 py-2 rounded-lg hover:bg-red-600 transition-colors"
+                  >
+                    Clear All
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
-          {loading && <p>Loading notifications...</p>}
+          {loading && <p className="text-gray-600">Loading notifications...</p>}
           {error && <p className="text-red-500">{error}</p>}
           {!loading && notifications.length === 0 && (
-            <p className="text-gray-600">No notifications found.</p>
+            <p className="text-gray-600 text-center py-10">No notifications found.</p>
           )}
 
-          <ul className="space-y-4">
+          <ul className="space-y-6">
             {notifications.map((notification) => (
               <li
                 key={notification._id}
                 onClick={() => markAsRead(notification._id)}
-                className={`p-4 border rounded-lg cursor-pointer transition duration-300 ${
+                className={`p-6 border rounded-xl cursor-pointer transition transform duration-300 hover:scale-105 ${
                   notification.read
                     ? "bg-gray-200 border-gray-300"
-                    : "bg-white border-gray-200 hover:shadow-md"
+                    : "bg-white border-gray-200 hover:shadow-2xl"
                 }`}
               >
-                <p className="text-gray-800">{notification.message}</p>
-                <span className="text-gray-500 text-sm">
+                <div className="flex justify-between items-center">
+                  <p className="text-lg text-gray-800">{notification.message}</p>
+                  {!notification.read && (
+                    <span className="bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                      New
+                    </span>
+                  )}
+                </div>
+                <p className="text-gray-500 mt-2 text-sm">
                   {new Date(notification.createdAt).toLocaleString()}
-                </span>
+                </p>
               </li>
             ))}
           </ul>

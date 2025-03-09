@@ -230,9 +230,7 @@ const KYCPage = () => {
     <div className="min-h-screen flex">
       <VenueSidebar />
       <div className="flex-grow">
-        <header className="bg-white shadow p-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-orange-600">EasyEvent</h1>
-        </header>
+       
         <main className="p-8 bg-gray-50">
           <div className="max-w-3xl mx-auto bg-white shadow rounded-lg p-6">
             <h2 className="text-xl font-bold text-orange-600 mb-4 text-center">

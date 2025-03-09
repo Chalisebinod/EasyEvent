@@ -2,26 +2,24 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import VenueSidebar from "./VenueSidebar";
 import axios from "axios";
-import { FaTimes, FaCommentAlt } from "react-icons/fa"; // Added FaCommentAlt
+import { FaTimes, FaCommentAlt } from "react-icons/fa";
 
 function Request() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("date");
   const [requests, setRequests] = useState([]);
-  const [statuses, setStatuses] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10; // Adjust as needed
 
   const venueId = localStorage.getItem("venueID");
   const accessToken = localStorage.getItem("access_token");
 
-  // New state variables for the messaging feature
+  // Messaging feature state
   const [showChat, setShowChat] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState("");
 
-  // New function to handle sending messages
   const handleSendMessage = () => {
     if (chatInput.trim() === "") return;
     const newMessage = {
@@ -47,7 +45,6 @@ function Request() {
           }
         );
         setRequests(response.data.requests);
-        setStatuses(response.data.requests.map((req) => req.status));
       } catch (error) {
         console.error("Error fetching requests:", error);
       }
@@ -63,17 +60,11 @@ function Request() {
 
   const handleSortChange = (e) => setSort(e.target.value);
 
-  const handleStatusChange = (index, value) => {
-    const newStatuses = [...statuses];
-    newStatuses[index] = value;
-    setStatuses(newStatuses);
-  };
-
-  const handleProfileClick = (id) => {
+  const handleViewRequest = (id) => {
     navigate(`/event-details/${id}`);
   };
 
-  // Filter requests by user name or event type
+  // Filter and sort requests
   const filteredRequests = requests.filter(
     (req) =>
       (req.user?.name &&
@@ -129,7 +120,7 @@ function Request() {
           </select>
         </div>
 
-        {/* Table */}
+        {/* Requests Table */}
         <div className="overflow-x-auto bg-white rounded-lg shadow-lg">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-blue-600">
@@ -146,41 +137,63 @@ function Request() {
                 <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
                   Status
                 </th>
+                <th className="px-6 py-3 text-center text-xs font-bold text-white uppercase tracking-wider">
+                  Action
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {paginatedRequests.map((req, index) => (
+              {paginatedRequests.map((req) => (
                 <tr key={req._id} className="hover:bg-blue-50">
+                  {/* Profile Cell */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div
-                      className="cursor-pointer"
-                      onClick={() => handleProfileClick(req._id)}
+                      className="cursor-pointer flex items-center space-x-2"
+                      onClick={() => handleViewRequest(req._id)}
                     >
                       <img
-                        className="h-10 w-10 rounded-full"
-                        src="https://via.placeholder.com/40"
+                        className="h-10 w-10 rounded-full object-cover"
+                        src={
+                          req.user?.profile_image ||
+                          "https://via.placeholder.com/40"
+                        }
                         alt={req.user?.name || "Unknown User"}
                       />
+                      <span className="text-gray-800 font-medium">
+                        {req.user?.name || "Unknown"}
+                      </span>
                     </div>
                   </td>
+                  {/* Event Type Cell */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     {req.event_details.event_type}
                   </td>
+                  {/* Event Date Cell */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     {new Date(req.event_details.date).toLocaleDateString()}
                   </td>
+                  {/* Status Cell */}
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <select
-                      value={statuses[index]}
-                      onChange={(e) =>
-                        handleStatusChange(index, e.target.value)
-                      }
-                      className="px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    <span
+                      className={`px-2 py-1 rounded-md text-white font-semibold ${
+                        req.status === "Approve"
+                          ? "bg-green-500"
+                          : req.status === "Reject"
+                          ? "bg-red-500"
+                          : "bg-yellow-500"
+                      }`}
                     >
-                      <option value="Approve">Approve</option>
-                      <option value="Reject">Reject</option>
-                      <option value="Pending">Pending</option>
-                    </select>
+                      {req.status}
+                    </span>
+                  </td>
+                  {/* Action Cell */}
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <button
+                      onClick={() => handleViewRequest(req._id)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300"
+                    >
+                      View Request
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -209,7 +222,7 @@ function Request() {
           </button>
         </div>
 
-        {/* MESSAGING FEATURE */}
+        {/* Messaging Feature */}
         <div className="fixed bottom-6 right-6 z-50">
           {showChat ? (
             <div className="bg-white w-80 h-96 shadow-xl rounded-lg p-4 flex flex-col">
@@ -247,7 +260,9 @@ function Request() {
                   </div>
                 ))}
                 {chatMessages.length === 0 && (
-                  <p className="text-center text-gray-500">No messages yet...</p>
+                  <p className="text-center text-gray-500">
+                    No messages yet...
+                  </p>
                 )}
               </div>
               {/* Chat Input Area */}

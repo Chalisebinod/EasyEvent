@@ -106,7 +106,7 @@ function EventDetails() {
         toast.success(`Booking ${status.toLowerCase()} successfully!`);
         // Refresh the page after a short delay to show the updated status
         setTimeout(() => {
-          navigate("/venue-owner/bookings");
+          navigate("/user-request");
         }, 2000);
       }
     } catch (error) {
