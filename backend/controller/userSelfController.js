@@ -36,29 +36,41 @@ const getUserProfile = async (req, res) => {
 
 
 // Update Profile
-const updateProfile = async (req, res) => {
+async function updateUserProfile(req, res) {
   try {
+    // Get the authenticated user's ID
     const userId = req.user.id;
-    const { name, contact_number, location, profile_image } = req.body;
+    const { name, contact_number, email } = req.body;
+    
+    // Default to the value in the request body (if provided)
+    let profile_image = req.body.profile_image;
 
+    // If a file is uploaded, use the file's path instead.
+    if (req.file) {
+      profile_image = req.file.path; // or use req.file.filename based on your storage setup
+    }
+
+    // Update the allowed fields (profile_image now comes from the uploaded file if available)
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { name, contact_number, location, profile_image },
+      { name, contact_number, profile_image, email },
       { new: true, runValidators: true }
-    ).select("-password");
+    ).select("-password"); // Exclude password field from response
 
     if (!updatedUser) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res
-      .status(200)
-      .json({ message: "Profile updated successfully", user: updatedUser });
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user: updatedUser,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
-};
+}
+
 
 // Change Password
 const changePassword = async (req, res) => {
@@ -222,7 +234,7 @@ const resetPassword = async (req, res) => {
 };
 module.exports = {
   getUserProfile,
-  updateProfile,
+  updateUserProfile,
   changePassword,
   forgotPassword,
   resetPassword,

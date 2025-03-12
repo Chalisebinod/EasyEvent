@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 const path = require("path");
 const socketIo = require("socket.io");
 const http = require("http"); // For creating an HTTP server
+const reviewRoutes = require("./route/reviewRoutes");
 
 const authRoutes = require("./route/authRoutes");
 const userSelfRoute = require("./route/userSelfRoute");
@@ -44,6 +45,7 @@ app.use("/api/halls", hallRoutes);
 app.use("/api/booking", venueBookingRoutes);
 app.use("/api", foodRoutes);
 app.use("/api/chat", chatRoute);
+app.use("/api", reviewRoutes);
 
 
 

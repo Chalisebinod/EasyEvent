@@ -1,21 +1,26 @@
 // PartyPalace.jsx
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FaUserCircle, FaComments } from "react-icons/fa";
+import { FaUserCircle, FaComments, FaCheckCircle } from "react-icons/fa";
 import Navbar from "./Navbar";
 import BottomNavbar from "./BottomNavbar";
 import ChatWidget from "./chat/ChatWidget";
-
-
-// ProfileIcon remains the same for navigation purposes
+import { MdVerified } from "react-icons/md";
 const ProfileIcon = ({ ownerId }) => {
   const navigate = useNavigate();
   const handleClick = () => {
     navigate(`/owner-profile/${ownerId}`);
   };
- 
+  return (
+    <div
+      onClick={handleClick}
+      className="absolute top-4 right-4 cursor-pointer text-white"
+      title="View Owner Profile"
+    >
+      <FaUserCircle size={32} />
+    </div>
+  );
 };
-
 
 const PartyPalace = () => {
   const { id } = useParams();
@@ -73,6 +78,10 @@ const PartyPalace = () => {
     },
   ];
 
+  // Helper function to build full URL for an image path
+  const getImageUrl = (imgPath) =>
+    `http://localhost:8000/${imgPath.replace(/\\/g, "/")}`;
+
   useEffect(() => {
     const fetchVenue = async () => {
       try {
@@ -104,16 +113,6 @@ const PartyPalace = () => {
       setGuestCount(value);
     }
   };
-// console.log("User venue", venue.owner)
-
-  const getImageUrl = (imgPath) =>
-    `http://localhost:8000/${imgPath.replace(/\\/g, "/")}`;
-
-  if (loading) return <div className="text-center p-10">Loading...</div>;
-  if (error)
-    return <div className="text-center p-10 text-red-500">{error}</div>;
-  if (!venue)
-    return <div className="text-center p-10">No venue details available.</div>;
 
   const openChat = () => {
     setChatOpen(true);
@@ -124,11 +123,16 @@ const PartyPalace = () => {
     setChatOpen(false);
   };
 
-  // console.log("user id in party palace", venue.owner)
+  // Pass owner _id as partnerId for the booking flow
   const handleBookNow = () => {
-    navigate(`/user-book/${id}`, { state: { partnerId: venue.owner } });
+    navigate(`/user-book/${id}`, { state: { partnerId: venue.owner?._id } });
   };
-  
+
+  if (loading) return <div className="text-center p-10">Loading...</div>;
+  if (error)
+    return <div className="text-center p-10 text-red-500">{error}</div>;
+  if (!venue)
+    return <div className="text-center p-10">No venue details available.</div>;
 
   return (
     <div className="bg-gray-50 min-h-screen relative">
@@ -147,14 +151,14 @@ const PartyPalace = () => {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
         <div className="absolute inset-0 flex flex-col justify-center items-center text-center px-4">
-          <h1 className="text-4xl md:text-6xl font-bold text-white drop-shadow-lg">
+          <h1 className="text-4xl md:text-6xl font-bold text-white drop-shadow-lg flex items-center gap-2">
             {venue.name}
           </h1>
           <p className="text-lg md:text-2xl text-gray-200 mt-4">
             A premier venue for unforgettable events
           </p>
         </div>
-        <ProfileIcon ownerId={venue.ownerId} />
+        {venue.owner && <ProfileIcon ownerId={venue.owner._id} />}
       </section>
 
       {/* Tabs Section with Book Now Button */}
@@ -182,7 +186,7 @@ const PartyPalace = () => {
           </button>
           <button
             onClick={handleBookNow}
-            className="animated-stroke relative px-6 py-2 rounded-full font-medium transition duration-300 bg-gray-200 text-white-800 hover:bg-gray-300"
+            className="animated-stroke relative px-6 py-2 rounded-full font-medium transition duration-300 bg-gray-200 text-white hover:bg-gray-300"
           >
             Book Now
           </button>
@@ -201,24 +205,31 @@ const PartyPalace = () => {
                   A premier venue for unforgettable events
                 </p>
               </div>
-              <div className="mt-4 flex-col items-center">
+              <div className="mt-4 flex flex-col items-center">
                 <div className="w-24 h-24 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
                   <img
                     src={
-                      venue.owner?.image
-                        ? getImageUrl(venue.owner.image)
+                      venue.owner?.profile_image
+                        ? getImageUrl(venue.owner.profile_image)
                         : "https://via.placeholder.com/80"
                     }
                     alt="Owner Profile"
                     className="w-20 h-20 rounded-full object-cover"
                   />
                 </div>
-                <p className="mt-2 text-lg font-semibold text-gray-800">
-                  {venue.owner?.phone || "N/A"}
+                <p className="mt-2 text-lg font-semibold text-gray-800 flex items-center gap-1">
+                  {venue.owner?.name || "N/A"}
+                  {venue.verification_status === "Verified" && (
+                    <MdVerified
+                      className="text-blue-500"
+                      title="Verified User"
+                      size={20}
+                    />
+                  )}
                 </p>
-                <p className="mt-1 text-gray-600">
-                  {venue.owner?.email || "owner@example.com"}
-                </p>
+                {venue.owner?.email && (
+                  <p className="mt-1 text-gray-600">{venue.owner.email}</p>
+                )}
               </div>
             </div>
 
@@ -254,25 +265,20 @@ const PartyPalace = () => {
                     ? venue.halls.capacities.join(" & ")
                     : "N/A"}
                 </p>
-                <p className="mt-2">
-                  Food: {venue.halls?.food_type || "N/A"}
-                </p>
+                <p className="mt-2">Food: {venue.halls?.food_type || "N/A"}</p>
               </div>
               <div className="bg-gray-50 p-4 rounded-xl shadow">
                 <h4 className="text-xl font-bold mb-2">Payment Policy</h4>
                 <p>Advance: {venue.payment_policy.advance_percentage}%</p>
-                <p>
-                  Security Deposit: {venue.payment_policy.security_deposit}
-                </p>
+                <p>Security Deposit: {venue.payment_policy.security_deposit}</p>
                 <p>Refund: {venue.payment_policy.refund_policy}</p>
-                <p>
-                  Cancellation: {venue.payment_policy.cancellation_penalty}
-                </p>
+                <p>Cancellation: {venue.payment_policy.cancellation_penalty}</p>
               </div>
               <div className="bg-gray-50 p-4 rounded-xl shadow">
                 <h4 className="text-xl font-bold mb-2">Contact Details</h4>
                 <p>Phone: {venue.contact_details.phone}</p>
                 <p>Email: {venue.contact_details.email}</p>
+
                 <p className="mt-2 font-semibold">
                   Location: {venue.location.address}
                 </p>
@@ -310,9 +316,7 @@ const PartyPalace = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-600">
-                No completed events available.
-              </p>
+              <p className="text-gray-600">No completed events available.</p>
             )}
           </div>
         )}
@@ -329,7 +333,7 @@ const PartyPalace = () => {
         </div>
       )}
       {chatOpen && (
-        <ChatWidget partnerId={venue.owner} onClose={closeChat} />
+        <ChatWidget partnerId={venue.owner?._id} onClose={closeChat} />
       )}
 
       <BottomNavbar />

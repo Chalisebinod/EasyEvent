@@ -1,10 +1,10 @@
-// controllers/reviewController.js
-import Review from "../models/Review.js";
-import User from "../models/User.js";
-import nodemailer from "nodemailer";
+// reviewController.js
+const Review = require("../model/Review.js");
+const User = require("../model/user.js");
+const nodemailer = require("nodemailer");
 
 // Submit a Review
-export const submitReview = async (req, res) => {
+const submitReview = async (req, res) => {
   try {
     const { venueOwnerId, rating, review } = req.body;
     const userId = req.user.id;
@@ -27,7 +27,7 @@ export const submitReview = async (req, res) => {
 };
 
 // Get All Reviews for a Venue Owner
-export const getVenueReviews = async (req, res) => {
+const getVenueReviews = async (req, res) => {
   try {
     const { venueOwnerId } = req.params;
     const reviews = await Review.find({ venueOwnerId }).populate(
@@ -42,7 +42,7 @@ export const getVenueReviews = async (req, res) => {
 };
 
 // Send Email to User with Review Link
-export const sendReviewLink = async (req, res) => {
+const sendReviewLink = async (req, res) => {
   try {
     const { userEmail, venueOwnerId } = req.body;
 
@@ -67,4 +67,10 @@ export const sendReviewLink = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Error sending email", error });
   }
+};
+
+module.exports = {
+  submitReview,
+  getVenueReviews,
+  sendReviewLink,
 };

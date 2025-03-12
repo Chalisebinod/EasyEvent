@@ -146,7 +146,7 @@ const VenueOwnerPage = () => {
                   <th className="px-4 py-2">Name</th>
                   <th className="px-4 py-2">Email</th>
                   <th className="px-4 py-2">Contact Number</th>
-                  <th className="px-4 py-2">Location</th>
+                  
                   <th className="px-4 py-2">Status</th>
                   <th className="px-4 py-2">Action</th>
                 </tr>

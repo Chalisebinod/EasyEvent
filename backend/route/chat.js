@@ -7,6 +7,6 @@ const router = express.Router();
 
 router.post("/send",checkAuthentication, sendMessage); 
 router.post("/recieve",checkAuthentication, receiveMessage); // Get a single message by ID
-router.get("/conversation/",checkAuthentication,checkIsVenueOwner, getAllMessages); // Get all messages between two users
+router.get("/conversation/",checkAuthentication, getAllMessages); // Get all messages between two users
 
 module.exports = router;

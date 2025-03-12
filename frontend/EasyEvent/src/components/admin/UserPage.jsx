@@ -13,11 +13,13 @@ const UserPage = () => {
 
   useEffect(() => {
     fetchUsers(page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, search, blockStatus, sort]);
 
   const fetchUsers = async (currentPage) => {
     setLoading(true);
     const token = localStorage.getItem("access_token");
+
     try {
       const response = await axios.get(
         `http://localhost:8000/api/users?page=${currentPage}&limit=10&search=${search}&blockStatus=${blockStatus}&sort=${sort}`,
@@ -27,7 +29,8 @@ const UserPage = () => {
           },
         }
       );
-      // Our controller returns { success, data, pagination }
+
+      // Assuming your backend returns { success, data, pagination }
       const { data, pagination } = response.data;
       setUsers(data);
       setPages(pagination.totalPages);
@@ -38,8 +41,14 @@ const UserPage = () => {
     }
   };
 
-  const blockUser = async (userId) => {
+  const blockUser = async (userId, isBlocked) => {
+    const confirmMessage = isBlocked
+      ? "Are you sure you want to unblock this user?"
+      : "Are you sure you want to block this user?";
+    if (!window.confirm(confirmMessage)) return;
+
     const token = localStorage.getItem("access_token");
+
     try {
       await axios.put(
         `http://localhost:8000/api/users/block/${userId}`,
@@ -50,7 +59,7 @@ const UserPage = () => {
           },
         }
       );
-      // Refresh the user list after blocking/unblocking
+      // Refresh the list after the update
       fetchUsers(page);
     } catch (error) {
       console.error("Error blocking user:", error);
@@ -63,23 +72,27 @@ const UserPage = () => {
 
   const handleSearchChange = (event) => {
     setSearch(event.target.value);
+    setPage(1);
   };
 
   const handleBlockStatusChange = (event) => {
     setBlockStatus(event.target.value);
+    setPage(1);
   };
 
   const handleSortChange = (event) => {
     setSort(event.target.value);
+    setPage(1);
   };
 
   return (
     <div className="flex">
+      {/* Sidebar or admin dashboard layout */}
       <DashboardLayout />
       <div className="flex-grow p-6 bg-gray-100">
         <h1 className="text-3xl font-semibold mb-6">User Management</h1>
 
-        {/* Search and Filters */}
+        {/* Filters: Search, Block Status, and Sort */}
         <div className="mb-4 flex gap-4">
           <input
             type="text"
@@ -130,7 +143,7 @@ const UserPage = () => {
                     </td>
                     <td className="px-4 py-2">
                       <button
-                        onClick={() => blockUser(user._id)}
+                        onClick={() => blockUser(user._id, user.is_blocked)}
                         className={`px-4 py-2 text-white rounded ${
                           user.is_blocked
                             ? "bg-green-500 hover:bg-green-600"

@@ -161,7 +161,7 @@ const Sidebar = () => {
           {/* Venues */}
           <li>
             {renderNavLink(
-              "/dashboard",
+              "/all-venue",
               <FaTachometerAlt className="text-lg" />,
               "Venues"
             )}

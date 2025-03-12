@@ -1,4 +1,4 @@
-// Routes for userController
+// Routes for adminController
 const express = require("express");
 const {
   getAllUsers,
@@ -7,6 +7,9 @@ const {
   blockVenueOwner,
   getAllAdmins,
   getVenueOwner,
+  venueForAdmmin,
+  blockVenue,
+
 } = require("../controller/adminController");
 const {
   checkAuthentication,
@@ -25,6 +28,10 @@ router.get(
   checkIsAdmin,
   getAllVenueOwners
 );
+
+// New route for fetching all venues
+router.get("/admin/venues", checkAuthentication, checkIsAdmin, venueForAdmmin);
+
 router.put(
   "/users/block/:userId",
   checkAuthentication,
@@ -37,6 +44,11 @@ router.put(
   checkIsAdmin,
   blockVenueOwner
 );
-
+router.put(
+  "/venue/block/:venueId",
+  checkAuthentication,
+  checkIsAdmin,
+  blockVenue 
+);
 
 module.exports = router;

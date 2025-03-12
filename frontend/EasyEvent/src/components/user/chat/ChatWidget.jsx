@@ -6,8 +6,8 @@ import io from "socket.io-client";
 const ChatWidget = ({ partnerId, onClose }) => {
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState("");
+
   const token = localStorage.getItem("access_token");
-  // Assuming your app stores the current user's id in localStorage
   const selfId = localStorage.getItem("user_id");
 
   const axiosInstance = axios.create({
@@ -37,6 +37,7 @@ const ChatWidget = ({ partnerId, onClose }) => {
         socketRef.current.emit("join_room", roomId);
       }
     });
+
     socketRef.current.on("receive_message", (message) => {
       // Optionally, add a sender label if it's not present.
       if (!message.senderLabel) {
@@ -102,37 +103,48 @@ const ChatWidget = ({ partnerId, onClose }) => {
   }, [partnerId]);
 
   return (
-    <div className="bg-white/95 backdrop-blur-md w-80 h-96 shadow-2xl rounded-2xl p-6 flex flex-col fixed bottom-20 right-6 z-50">
+    <div className="fixed bottom-20 right-6 z-50 w-80 h-96 flex flex-col bg-white shadow-lg rounded-lg overflow-hidden">
       {/* Chat Header */}
-      <div className="flex justify-between items-center border-b pb-3 mb-5">
-        <h2 className="text-2xl font-bold text-gray-800">Messenger</h2>
-        <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-          <FaTimes size={22} />
+      <div className="bg-blue-600 text-white px-4 py-3 flex items-center justify-between shadow">
+        <h2 className="text-lg font-bold">Messenger</h2>
+        <button
+          onClick={onClose}
+          className="text-white hover:text-gray-200 focus:outline-none"
+        >
+          <FaTimes size={20} />
         </button>
       </div>
+
       {/* Chat Messages Area */}
-      <div className="flex-1 overflow-y-auto space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-4">
         {chatMessages.length > 0 ? (
           chatMessages.map((msg) => {
             const isMyMessage = msg.senderLabel === "You";
             return (
               <div
                 key={msg._id || msg.id}
-                className={`flex flex-col text-xs ${
+                className={`flex flex-col text-sm ${
                   isMyMessage ? "items-end" : "items-start"
                 }`}
               >
-                <span className="text-xs text-gray-500">{msg.senderLabel}</span>
+                {/* Sender Label */}
+                {msg.senderLabel && (
+                  <span className="text-xs text-gray-400 mb-1">
+                    {msg.senderLabel}
+                  </span>
+                )}
+                {/* Message Bubble */}
                 <div
-                  className={`px-4 py-2 rounded-lg max-w-xs ${
+                  className={`px-4 py-2 rounded-xl max-w-xs break-words shadow-sm ${
                     isMyMessage
                       ? "bg-blue-500 text-white rounded-br-none"
-                      : "bg-gray-300 text-gray-800 rounded-bl-none"
+                      : "bg-white text-gray-800 rounded-bl-none border"
                   }`}
                 >
                   {msg.message}
                 </div>
-                <span className="mt-1 text-gray-500">
+                {/* Timestamp */}
+                <span className="mt-1 text-xs text-gray-400">
                   {new Date(msg.createdAt).toLocaleTimeString([], {
                     hour: "2-digit",
                     minute: "2-digit",
@@ -145,29 +157,28 @@ const ChatWidget = ({ partnerId, onClose }) => {
           <p className="text-center text-gray-500">No messages yet...</p>
         )}
       </div>
-      {/* Chat Input Area */}
-     
-<div className="flex items-center border-t pt-3">
-  <input
-    type="text"
-    value={chatInput}
-    onChange={(e) => setChatInput(e.target.value)}
-    onKeyDown={(e) => {
-      if (e.key === "Enter") {
-        handleSendMessage();
-      }
-    }}
-    placeholder="Type a message..."
-    className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-  />
-  <button
-    onClick={handleSendMessage}
-    className="bg-blue-500 text-white ml-2 px-4 py-2 rounded-md hover:bg-blue-600"
-  >
-    Send
-  </button>
-</div>
 
+      {/* Chat Input Area */}
+      <div className="border-t p-3 bg-white flex items-center space-x-2">
+        <input
+          type="text"
+          value={chatInput}
+          onChange={(e) => setChatInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleSendMessage();
+            }
+          }}
+          placeholder="Type a message..."
+          className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+        <button
+          onClick={handleSendMessage}
+          className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
+        >
+          Send
+        </button>
+      </div>
     </div>
   );
 };

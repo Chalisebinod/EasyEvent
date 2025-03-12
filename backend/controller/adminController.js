@@ -1,5 +1,6 @@
-const User = require("../model/user"); // Replace with actual path to your User schema
-const VenueOwner = require("../model/venueOwner"); // Replace with actual path to your VenueOwner schema
+const User = require("../model/user");
+const VenueOwner = require("../model/venueOwner");
+const Venue = require("../model/venue");
 
 async function getAllUsers(req, res) {
   try {
@@ -9,7 +10,7 @@ async function getAllUsers(req, res) {
       search = "",
       sort = "date",
       blockStatus = "all",
-    } = req.query;S
+    } = req.query; // Removed extra "S"
 
     // Calculate the starting index
     const startIndex = (parseInt(page) - 1) * parseInt(limit);
@@ -193,11 +194,49 @@ async function blockUser(req, res) {
   }
 }
 
+async function blockVenue(req, res) {
+  const { venueId } = req.params;
+
+  try {
+    const venue = await Venue.findById(venueId);
+
+    if (!venue) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Venue not found" });
+    }
+
+    // Toggle block status for the venue
+    venue.is_blocked = !venue.is_blocked;
+    await venue.save();
+
+    res.status(200).json({
+      success: true,
+      message: venue.is_blocked
+        ? "Venue blocked successfully."
+        : "Venue unblocked successfully.",
+      data: venue,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to block/unblock venue.",
+      error: error.message,
+    });
+  }
+}
+
+/**
+ * Toggle block status for a venue owner.
+ * Additionally, update all venues belonging to this owner so that their
+ * is_blocked status matches the venue owner's block status.
+ * Expects req.params.userId to contain the venue owner's ID.
+ */
 async function blockVenueOwner(req, res) {
   const { userId } = req.params;
 
   try {
-    const user = await VenueOwner.findById(userId); // Find the venue owner by ID
+    const user = await VenueOwner.findById(userId);
 
     if (!user) {
       return res
@@ -206,20 +245,23 @@ async function blockVenueOwner(req, res) {
     }
 
     // Toggle the block status
-    user.is_blocked = !user.is_blocked; // If user is blocked, it will be unblocked, and vice versa.
-    await user.save(); // Save the updated venue owner document
+    user.is_blocked = !user.is_blocked;
+    await user.save();
+
+    // Update all venues belonging to this venue owner
+    await Venue.updateMany({ owner: userId }, { is_blocked: user.is_blocked });
 
     res.status(200).json({
       success: true,
       message: user.is_blocked
-        ? "Venue owner blocked successfully"
-        : "Venue owner unblocked successfully",
+        ? "Venue owner blocked successfully and all venues blocked."
+        : "Venue owner unblocked successfully and all venues unblocked.",
       data: user,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Failed to block/unblock venue owner",
+      message: "Failed to block/unblock venue owner.",
       error: error.message,
     });
   }
@@ -254,6 +296,61 @@ const getVenueOwner = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+async function venueForAdmmin(req, res) {
+  try {
+    const { page = 1, limit = 10, search = "", sort = "date" } = req.query; // Removed any stray characters
+
+    // Calculate the starting index for pagination
+    const startIndex = (parseInt(page) - 1) * parseInt(limit);
+
+    // Build the query for filtering venues
+    let query = {};
+
+    if (search) {
+      // Add search filter for name, location, or description (adjust fields as needed)
+      query = {
+        $or: [
+          { name: { $regex: search, $options: "i" } },
+          { location: { $regex: search, $options: "i" } },
+          { description: { $regex: search, $options: "i" } },
+        ],
+      };
+    }
+
+    // Define sorting options.
+    // If sorting by date, assume a "createdAt" field exists; otherwise, sort by the specified field.
+    const sortOptions = sort === "date" ? { createdAt: -1 } : { [sort]: 1 };
+
+    // Get total count of venues matching the query
+    const totalVenues = await Venue.countDocuments(query);
+
+    // Fetch venues with pagination, filtering, and sorting
+    const venues = await Venue.find(query)
+      .skip(startIndex)
+      .limit(parseInt(limit))
+      .sort(sortOptions);
+
+    // Send response with pagination and venue data
+    res.status(200).json({
+      success: true,
+      data: venues,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(totalVenues / parseInt(limit)),
+        totalVenues: totalVenues,
+        pageSize: parseInt(limit),
+        hasNextPage: startIndex + parseInt(limit) < totalVenues,
+        hasPrevPage: startIndex > 0,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch venues",
+      error: error.message,
+    });
+  }
+}
 
 module.exports = {
   getAllUsers,
@@ -262,4 +359,6 @@ module.exports = {
   blockVenueOwner,
   getAllAdmins,
   getVenueOwner,
+  venueForAdmmin,
+  blockVenue
 };

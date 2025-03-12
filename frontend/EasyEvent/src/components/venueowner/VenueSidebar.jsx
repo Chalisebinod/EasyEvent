@@ -14,7 +14,7 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  Slide
+  Slide,
 } from "@mui/material";
 import {
   Dashboard as DashboardIcon,
@@ -26,6 +26,8 @@ import {
   Store as StoreIcon,
   Logout as LogoutIcon,
   Notifications as NotificationsIcon,
+  Image as GalleryIcon,
+  VerifiedUser as KycIcon,
 } from "@mui/icons-material";
 import BookOnlineIcon from "@mui/icons-material/BookOnline";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -33,7 +35,7 @@ import axios from "axios";
 
 const drawerWidth = 250;
 
-// Optional: use a Slide transition for the Logout dialog
+// Logout Dialog Transition
 const Transition = forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
@@ -43,6 +45,27 @@ const VenueSidebar = ({ children }) => {
   const location = useLocation();
   const [notificationCount, setNotificationCount] = useState(0);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+  const [userId, setUserId] = useState(null);
+
+  // Fetch venue owner profile to get the user ID
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        if (!token) return;
+        const response = await axios.get(
+          "http://localhost:8000/api/venueOwner/profile",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setUserId(response.data._id);
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   useEffect(() => {
     const fetchNotificationCount = async () => {
@@ -59,8 +82,6 @@ const VenueSidebar = ({ children }) => {
     };
 
     fetchNotificationCount();
-
-    // Refresh notification count every 30 seconds
     const interval = setInterval(fetchNotificationCount, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -73,29 +94,20 @@ const VenueSidebar = ({ children }) => {
   const openLogoutDialog = () => setLogoutDialogOpen(true);
   const closeLogoutDialog = () => setLogoutDialogOpen(false);
 
-  // Highlight the active menu item based on the current path
-  const getNavItemStyle = (path) => {
-    const isActive = location.pathname === path;
-
-    return {
-      margin: "6px 8px",
-      borderRadius: "4px",
-      // Use a subtle background for the active item
-      backgroundColor: isActive ? "#e0e0e0" : "transparent",
-      transition: "background-color 0.2s ease",
-      "& .MuiListItemIcon-root, & .MuiListItemText-primary": {
-        // Use a consistent, darker text color
-        color: "#333",
-      },
-      // Subtle hover effect
-      "&:hover": {
-        backgroundColor: "#f5f5f5",
-      },
-    };
-  };
+  // Highlight active menu item
+  const getNavItemStyle = (path) => ({
+    margin: "6px 8px",
+    borderRadius: "4px",
+    backgroundColor: location.pathname === path ? "#e0e0e0" : "transparent",
+    transition: "background-color 0.2s ease",
+    "& .MuiListItemIcon-root, & .MuiListItemText-primary": { color: "#333" },
+    "&:hover": { backgroundColor: "#f5f5f5" },
+  });
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", backgroundColor: "#f4f6f8" }}>
+    <Box
+      sx={{ display: "flex", minHeight: "100vh", backgroundColor: "#f4f6f8" }}
+    >
       {/* Sidebar Drawer */}
       <Drawer
         sx={{
@@ -104,7 +116,6 @@ const VenueSidebar = ({ children }) => {
           "& .MuiDrawer-paper": {
             width: drawerWidth,
             boxSizing: "border-box",
-            // Simple white background for a professional look
             backgroundColor: "#fff",
             color: "#333",
             borderRight: "1px solid #ddd",
@@ -170,6 +181,18 @@ const VenueSidebar = ({ children }) => {
           <ListItem
             button
             component={Link}
+            to="/foodManagement"
+            sx={getNavItemStyle("/foodManagement")}
+          >
+            <ListItemIcon>
+              <AccountBalanceIcon />
+            </ListItemIcon>
+            <ListItemText primary="Food Management" />
+          </ListItem>
+
+          <ListItem
+            button
+            component={Link}
             to="/halls"
             sx={getNavItemStyle("/halls")}
           >
@@ -220,18 +243,6 @@ const VenueSidebar = ({ children }) => {
           <ListItem
             button
             component={Link}
-            to="/foodManagement"
-            sx={getNavItemStyle("/foodManagement")}
-          >
-            <ListItemIcon>
-              <AccountBalanceIcon />
-            </ListItemIcon>
-            <ListItemText primary="Food Management" />
-          </ListItem>
-
-          <ListItem
-            button
-            component={Link}
             to="/chat"
             sx={getNavItemStyle("/chat")}
           >
@@ -244,13 +255,25 @@ const VenueSidebar = ({ children }) => {
           <ListItem
             button
             component={Link}
-            to="/Venue-profile"
-            sx={getNavItemStyle("/Venue-profile")}
+            to={`/venueOwner-profile/${userId}`}
+            sx={getNavItemStyle(`/venueOwner-profile/${userId}`)}
           >
             <ListItemIcon>
-              <StoreIcon />
+              <ProfileIcon />
             </ListItemIcon>
-            <ListItemText primary="Venue Profile" />
+            <ListItemText primary="Profile" />
+          </ListItem>
+
+          <ListItem
+            button
+            component={Link}
+            to="/galleries"
+            sx={getNavItemStyle("/galleries")}
+          >
+            <ListItemIcon>
+              <GalleryIcon />
+            </ListItemIcon>
+            <ListItemText primary="Galleries" />
           </ListItem>
 
           <ListItem
@@ -260,7 +283,7 @@ const VenueSidebar = ({ children }) => {
             sx={getNavItemStyle("/venueOwnerKyc")}
           >
             <ListItemIcon>
-              <ProfileIcon />
+              <KycIcon />
             </ListItemIcon>
             <ListItemText primary="KYC" />
           </ListItem>
@@ -292,27 +315,18 @@ const VenueSidebar = ({ children }) => {
         {children}
       </Box>
 
-      {/* Logout Confirmation Dialog */}
+      {/* Logout Dialog */}
       <Dialog
         open={logoutDialogOpen}
         onClose={closeLogoutDialog}
-        TransitionComponent={Transition} 
-        BackdropProps={{
-          sx: { backgroundColor: "rgba(0, 0, 0, 0.7)" },
-        }}
-        PaperProps={{
-          sx: {
-            borderRadius: 2,
-            p: 2,
-            minWidth: "320px",
-          },
-        }}
+        TransitionComponent={Transition}
+        PaperProps={{ sx: { borderRadius: 2, p: 2, minWidth: "320px" } }}
       >
         <DialogTitle sx={{ fontWeight: "bold", fontSize: "1.25rem" }}>
           Confirm Logout
         </DialogTitle>
         <DialogContent>
-          <Typography variant="body1" sx={{ mb: 2 }}>
+          <Typography variant="body1">
             Are you sure you want to log out?
           </Typography>
         </DialogContent>
@@ -326,9 +340,7 @@ const VenueSidebar = ({ children }) => {
             sx={{
               backgroundColor: "#e53935",
               color: "#fff",
-              "&:hover": {
-                backgroundColor: "#d32f2f",
-              },
+              "&:hover": { backgroundColor: "#d32f2f" },
             }}
           >
             Logout

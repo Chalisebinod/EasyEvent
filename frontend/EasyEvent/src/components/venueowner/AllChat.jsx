@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import UserCard from "./helper/UserCard";
 import VenueSidebar from "./VenueSidebar";
-import { FiImage, FiPaperclip } from "react-icons/fi";
+import { FiImage, FiPaperclip, FiSearch } from "react-icons/fi";
 import io from "socket.io-client";
 
-// Adjust as needed if your images are served from a different URL
+// Adjust if your images are served from a different URL
 const BASE_IMAGE_URL = "http://localhost:8000/";
 
 const AllChat = () => {
@@ -13,8 +12,12 @@ const AllChat = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [chatInput, setChatInput] = useState("");
+
+  // Auth / user data
   const token = localStorage.getItem("access_token");
   const currentUserId = localStorage.getItem("user_id"); // current venue owner ID
+
+  // Socket reference
   const socketRef = useRef();
 
   // Helper: get full image URL or fallback
@@ -25,7 +28,7 @@ const AllChat = () => {
       : BASE_IMAGE_URL + imagePath;
   };
 
-  // Fetch conversation list
+  // 1) Fetch conversation list
   const fetchConversations = async (query = "") => {
     try {
       const response = await fetch(
@@ -43,12 +46,12 @@ const AllChat = () => {
     }
   };
 
-  // Initial fetch of conversations
+  // 2) Initial fetch of conversations
   useEffect(() => {
     fetchConversations();
   }, []);
 
-  // Debounce search
+  // 3) Debounce search
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       fetchConversations(searchQuery);
@@ -56,7 +59,7 @@ const AllChat = () => {
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
 
-  // Handle conversation click
+  // 4) Handle conversation click
   const handleUserClick = async (conversation) => {
     try {
       const response = await fetch("http://localhost:8000/api/chat/recieve", {
@@ -93,7 +96,7 @@ const AllChat = () => {
     }
   };
 
-  // Setup socket connection
+  // 5) Setup socket connection
   useEffect(() => {
     socketRef.current = io("http://localhost:8000");
     socketRef.current.on("connect", () => {
@@ -146,7 +149,7 @@ const AllChat = () => {
     };
   }, [currentUserId]);
 
-  // Continuously fetch messages for the selected conversation every 5 seconds
+  // 6) Continuously fetch messages for the selected conversation every 5 seconds
   useEffect(() => {
     const fetchMessages = async () => {
       if (!selectedConversation) return;
@@ -180,7 +183,7 @@ const AllChat = () => {
     return () => clearInterval(interval);
   }, [selectedConversation, token]);
 
-  // Send message
+  // 7) Send message
   const handleSendMessage = async () => {
     if (!chatInput.trim() || !selectedConversation) return;
     const selfId = selectedConversation.participants.self._id;
@@ -237,123 +240,167 @@ const AllChat = () => {
   };
 
   return (
-    <div className="flex h-screen">
-      {/* Sidebar */}
+    <div className="flex h-screen bg-gray-100">
+      {/* Left Sidebar */}
       <VenueSidebar />
 
-      {/* Conversation List */}
-      <div className="w-80 border-r p-4 overflow-y-auto">
-        <div className="mb-4">
-          <input
-            type="text"
-            placeholder="Search user..."
-            className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <div className="space-y-2">
-          {conversations.length > 0 ? (
-            conversations.map((conv) => (
-              <UserCard
-                key={conv.partnerId}
-                profileImage={getImageUrl(conv.profile_image)}
-                name={conv.name}
-                lastMessage={conv.lastMessage}
-                lastMessageTime={conv.lastMessageTime}
-                onClick={() => handleUserClick(conv)}
+      {/* Main Container (Conversations + Chat) */}
+      <div className="flex-1 flex flex-col md:flex-row m-4 bg-white shadow-md rounded-lg overflow-hidden">
+        {/* Conversation List Panel */}
+        <div className="md:w-72 border-r bg-white flex flex-col">
+          {/* Panel Header */}
+          <div className="px-4 py-3 bg-blue-600 text-white text-lg font-semibold">
+            Conversations
+          </div>
+          {/* Search Box */}
+          <div className="p-3 border-b">
+            <div className="relative">
+              <FiSearch className="absolute top-3 left-3 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search..."
+                className="w-full pl-10 pr-3 py-2 rounded border focus:outline-none focus:ring-2 focus:ring-blue-400"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
-            ))
-          ) : (
-            <p className="text-gray-500">No conversations found.</p>
-          )}
-        </div>
-      </div>
-
-      {/* Chat Area */}
-      <div className="flex-1 p-4 flex flex-col">
-        {selectedConversation ? (
-          <>
-            {/* Chat Header */}
-            <div className="flex items-center border-b pb-3 mb-4">
-              <img
-                src={getImageUrl(selectedConversation.profile_image)}
-                alt={selectedConversation.name}
-                className="w-12 h-12 rounded-full object-cover shadow-md"
-              />
-              <h3 className="ml-4 text-xl font-semibold">
-                {selectedConversation.name}
-              </h3>
             </div>
-            {/* Chat Messages */}
-            <div className="flex-1 overflow-y-auto space-y-4 pr-2">
-              {selectedConversation.messages &&
-              selectedConversation.messages.length > 0 ? (
-                selectedConversation.messages.map((msg) => (
-                  <div
-                    key={msg._id}
-                    className={`flex flex-col text-xs ${
-                      msg.senderLabel === "You" ? "items-end" : "items-start"
+          </div>
+          {/* Conversation Items */}
+          <div className="flex-1 overflow-y-auto">
+            {conversations.length > 0 ? (
+              conversations.map((conv) => {
+                // We'll highlight the selected conversation
+                const isActive =
+                  selectedConversation &&
+                  selectedConversation.participants &&
+                  selectedConversation.participants.partner._id ===
+                    conv.partnerId;
+                return (
+                  <button
+                    key={conv.partnerId}
+                    onClick={() => handleUserClick(conv)}
+                    className={`w-full text-left px-4 py-3 border-b flex items-center space-x-3 hover:bg-gray-50 focus:outline-none ${
+                      isActive ? "bg-blue-50" : ""
                     }`}
                   >
-                    <span className="text-xs text-gray-500">
-                      {msg.senderLabel}
-                    </span>
+                    <img
+                      src={getImageUrl(conv.profile_image)}
+                      alt={conv.name}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                    <div className="flex-1">
+                      <div className="text-sm font-semibold text-gray-700">
+                        {conv.name}
+                      </div>
+                      {conv.lastMessage && (
+                        <div className="text-xs text-gray-500 truncate">
+                          {conv.lastMessage}
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                );
+              })
+            ) : (
+              <p className="text-gray-500 p-4">No conversations found.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Chat Panel */}
+        <div className="flex-1 flex flex-col">
+          {selectedConversation ? (
+            <>
+              {/* Chat Header */}
+              <div className="bg-blue-600 text-white px-6 py-4 flex items-center space-x-4 shadow">
+                <img
+                  src={getImageUrl(selectedConversation.profile_image)}
+                  alt={selectedConversation.name}
+                  className="w-12 h-12 rounded-full object-cover border-2 border-white"
+                />
+                <h3 className="text-xl font-bold">
+                  {selectedConversation.name}
+                </h3>
+              </div>
+
+              {/* Messages List */}
+              <div className="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-4">
+                {selectedConversation.messages &&
+                selectedConversation.messages.length > 0 ? (
+                  selectedConversation.messages.map((msg) => (
                     <div
-                      className={`px-4 py-2 rounded-lg max-w-xs break-words shadow ${
-                        msg.senderLabel === "You"
-                          ? "bg-blue-500 text-white rounded-br-none"
-                          : "bg-gray-300 text-gray-800 rounded-bl-none"
+                      key={msg._id}
+                      className={`flex flex-col text-sm ${
+                        msg.senderLabel === "You" ? "items-end" : "items-start"
                       }`}
                     >
-                      {msg.message}
+                      {/* Sender Label */}
+                      <span className="text-xs text-gray-400 mb-1">
+                        {msg.senderLabel}
+                      </span>
+                      {/* Message Bubble */}
+                      <div
+                        className={`px-4 py-2 rounded-xl max-w-lg break-words shadow-sm ${
+                          msg.senderLabel === "You"
+                            ? "bg-blue-500 text-white rounded-br-none"
+                            : "bg-white text-gray-800 rounded-bl-none"
+                        }`}
+                      >
+                        {msg.message}
+                      </div>
+                      {/* Timestamp */}
+                      <span className="mt-1 text-xs text-gray-400">
+                        {new Date(msg.createdAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
                     </div>
-                    <span className="mt-1 text-gray-500">
-                      {new Date(msg.createdAt).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <p className="text-center text-gray-500">No messages yet...</p>
-              )}
+                  ))
+                ) : (
+                  <p className="text-center text-gray-500 mt-8">
+                    No messages yet...
+                  </p>
+                )}
+              </div>
+
+              {/* Chat Input */}
+              <div className="border-t p-3 bg-white flex items-center space-x-2">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleSendMessage();
+                    }
+                  }}
+                  placeholder="Type a message..."
+                  className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <button className="text-gray-600 hover:text-gray-800">
+                  <FiImage size={20} />
+                </button>
+                <button className="text-gray-600 hover:text-gray-800">
+                  <FiPaperclip size={20} />
+                </button>
+                <button
+                  onClick={handleSendMessage}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
+                >
+                  Send
+                </button>
+              </div>
+            </>
+          ) : (
+            // If no conversation is selected
+            <div className="flex flex-col items-center justify-center h-full">
+              <h2 className="text-xl text-gray-500 font-semibold">
+                Select a conversation to start chatting.
+              </h2>
             </div>
-           <div className="flex items-center border-t pt-3 mt-4">
-             <input
-               type="text"
-               value={chatInput}
-               onChange={(e) => setChatInput(e.target.value)}
-               onKeyDown={(e) => {
-                 if (e.key === "Enter") {
-                   handleSendMessage();
-                 }
-               }}
-               placeholder="Type a message..."
-               className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-             />
-             <button className="ml-2 text-gray-600 hover:text-gray-800">
-               <FiImage size={20} />
-             </button>
-             <button className="ml-2 text-gray-600 hover:text-gray-800">
-               <FiPaperclip size={20} />
-             </button>
-             <button
-               onClick={handleSendMessage}
-               className="bg-blue-500 text-white ml-2 px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
-             >
-               Send
-             </button>
-           </div>
-          </>
-        ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <h2 className="text-xl text-gray-500">
-              Select a conversation to start chatting.
-            </h2>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

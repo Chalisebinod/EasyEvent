@@ -6,6 +6,17 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
+const BASE_URL = "http://localhost:8000/";
+
+// Helper function to convert a stored image path to a full URL
+const getProfileImageUrl = (imagePath) => {
+  if (!imagePath) return "https://via.placeholder.com/150";
+  // If already a URL, return as is
+  if (imagePath.startsWith("http")) return imagePath;
+  // Replace backslashes with forward slashes and prepend the base URL
+  return `${BASE_URL}${imagePath.replace(/\\/g, "/")}`;
+};
+
 const Profile = () => {
   const [profile, setProfile] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -99,10 +110,10 @@ const Profile = () => {
 
     try {
       // 1) Update profile on server
-      await axios.put("http://localhost:8000/api/profile", formData, {
+      await axios.put("http://localhost:8000/api/profile/update", formData, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          // "Content-Type": "multipart/form-data", // Let axios set this automatically
+          // "Content-Type": "multipart/form-data" is set automatically by axios
         },
       });
 
@@ -119,7 +130,7 @@ const Profile = () => {
       setIsEditing(false);
     } catch (error) {
       console.error("Error updating profile:", error);
-      toast.error("Failed to update image:");
+      toast.error("Failed to update profile");
     }
   };
 
@@ -137,10 +148,7 @@ const Profile = () => {
               {/* Profile Image */}
               <div className="flex-shrink-0 mb-4 md:mb-0 relative">
                 <img
-                  src={
-                    profile.profile_image ||
-                    "https://via.placeholder.com/150"
-                  }
+                  src={getProfileImageUrl(profile.profile_image)}
                   alt="Profile"
                   className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-gray-200 object-cover shadow-sm"
                 />
@@ -285,7 +293,7 @@ const Profile = () => {
                       updatedProfile.profile_image instanceof File
                         ? URL.createObjectURL(updatedProfile.profile_image)
                         : profile && profile.profile_image
-                        ? profile.profile_image
+                        ? getProfileImageUrl(profile.profile_image)
                         : "https://via.placeholder.com/150"
                     }
                     alt="Profile Preview"

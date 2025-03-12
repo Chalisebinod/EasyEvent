@@ -50,7 +50,6 @@ function EventDetails() {
       try {
         setLoading(true);
         let response;
-        
         if (isRequest) {
           response = await axios.get(
             `http://localhost:8000/api/booking/requests/profile/${bookingId}`,
@@ -80,6 +79,7 @@ function EventDetails() {
     fetchBookingDetails();
   }, [bookingId, accessToken, isRequest]);
 
+  // Show an alert message if booking status is not Pending
   useEffect(() => {
     if (booking && booking.status !== "Pending") {
       setShowAlert(true);
@@ -100,11 +100,11 @@ function EventDetails() {
         payload,
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
-      
+
       if (response.data.booking) {
         setBooking(response.data.booking);
         toast.success(`Booking ${status.toLowerCase()} successfully!`);
-        // Refresh the page after a short delay to show the updated status
+        // Redirect after a short delay to show the updated status
         setTimeout(() => {
           navigate("/user-request");
         }, 2000);
@@ -124,7 +124,7 @@ function EventDetails() {
       setReason("");
       setShowModal(true);
     } else if (type === "approve") {
-      // Directly approve without showing modal
+      // Approve request directly without showing modal
       handleStatusUpdate("Accepted", "Request approved by venue owner");
     }
   };
@@ -195,7 +195,11 @@ function EventDetails() {
                   stroke="currentColor"
                   strokeWidth={2}
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
               </div>
               <div>
@@ -234,7 +238,9 @@ function EventDetails() {
                     </p>
                   </>
                 ) : (
-                  <p className="text-gray-500">User information not available.</p>
+                  <p className="text-gray-500">
+                    User information not available.
+                  </p>
                 )}
               </div>
             </div>
@@ -243,7 +249,10 @@ function EventDetails() {
               {/* Event Information */}
               <Grid item xs={12} md={6}>
                 <Paper className="p-6 rounded-lg shadow-md bg-gray-50">
-                  <Typography variant="h5" className="font-semibold text-gray-700 mb-3">
+                  <Typography
+                    variant="h5"
+                    className="font-semibold text-gray-700 mb-3"
+                  >
                     Event Information
                   </Typography>
                   <Divider className="mb-3" />
@@ -256,7 +265,9 @@ function EventDetails() {
                   <Box className="flex items-center gap-2 mb-2">
                     <FaCalendarAlt className="text-indigo-500" />
                     <Typography className="text-gray-600">
-                      {new Date(booking.event_details.date).toLocaleDateString()}
+                      {new Date(
+                        booking.event_details.date
+                      ).toLocaleDateString()}
                     </Typography>
                   </Box>
                   <Box className="flex items-center gap-2">
@@ -271,14 +282,18 @@ function EventDetails() {
               {/* Venue & Hall Details */}
               <Grid item xs={12} md={6}>
                 <Paper className="p-6 rounded-lg shadow-md bg-gray-50">
-                  <Typography variant="h5" className="font-semibold text-gray-700 mb-3">
+                  <Typography
+                    variant="h5"
+                    className="font-semibold text-gray-700 mb-3"
+                  >
                     Venue & Hall
                   </Typography>
                   <Divider className="mb-3" />
                   <Box className="flex items-center gap-2 mb-2">
                     <FaMapMarkerAlt className="text-pink-500" />
                     <Typography className="text-gray-600">
-                      {booking.venue.name} – {booking.venue.location.address}, {booking.venue.location.city}
+                      {booking.venue.name} – {booking.venue.location.address},{" "}
+                      {booking.venue.location.city}
                     </Typography>
                   </Box>
                   <Box className="flex items-center gap-2">
@@ -293,7 +308,10 @@ function EventDetails() {
               {/* Pricing Details */}
               <Grid item xs={12} md={6}>
                 <Paper className="p-6 rounded-lg shadow-md bg-gray-50">
-                  <Typography variant="h5" className="font-semibold text-gray-700 mb-3">
+                  <Typography
+                    variant="h5"
+                    className="font-semibold text-gray-700 mb-3"
+                  >
                     Pricing Details
                   </Typography>
                   <Divider className="mb-3" />
@@ -305,8 +323,10 @@ function EventDetails() {
                   </Box>
                   <Box className="mb-2">
                     <Typography className="text-gray-600">
-                      <span className="font-medium">User offered per plate:</span> ₹
-                      {booking.pricing.user_offered_per_plate_price}
+                      <span className="font-medium">
+                        User offered per plate:
+                      </span>{" "}
+                      ₹{booking.pricing.user_offered_per_plate_price}
                     </Typography>
                   </Box>
                   <Box className="mb-2">
@@ -327,11 +347,15 @@ function EventDetails() {
               {/* Selected Foods */}
               <Grid item xs={12} md={6}>
                 <Paper className="p-6 rounded-lg shadow-md bg-gray-50">
-                  <Typography variant="h5" className="font-semibold text-gray-700 mb-3">
+                  <Typography
+                    variant="h5"
+                    className="font-semibold text-gray-700 mb-3"
+                  >
                     Selected Foods
                   </Typography>
                   <Divider className="mb-3" />
-                  {booking.selected_foods && booking.selected_foods.length > 0 ? (
+                  {booking.selected_foods &&
+                  booking.selected_foods.length > 0 ? (
                     <Box className="flex flex-wrap gap-2">
                       {booking.selected_foods.map((food) => (
                         <Chip
@@ -343,7 +367,9 @@ function EventDetails() {
                       ))}
                     </Box>
                   ) : (
-                    <Typography className="text-gray-600">No food selected.</Typography>
+                    <Typography className="text-gray-600">
+                      No food selected.
+                    </Typography>
                   )}
                 </Paper>
               </Grid>
@@ -351,20 +377,27 @@ function EventDetails() {
               {/* Additional Services */}
               <Grid item xs={12} md={6}>
                 <Paper className="p-6 rounded-lg shadow-md bg-gray-50">
-                  <Typography variant="h5" className="font-semibold text-gray-700 mb-3">
+                  <Typography
+                    variant="h5"
+                    className="font-semibold text-gray-700 mb-3"
+                  >
                     Additional Services
                   </Typography>
                   <Divider className="mb-3" />
-                  {booking.additional_services && booking.additional_services.length > 0 ? (
+                  {booking.additional_services &&
+                  booking.additional_services.length > 0 ? (
                     <ul className="list-disc list-inside text-gray-600">
                       {booking.additional_services.map((service) => (
                         <li key={service._id}>
-                          <span className="font-medium">{service.name}:</span> {service.description}
+                          <span className="font-medium">{service.name}:</span>{" "}
+                          {service.description}
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <Typography className="text-gray-600">No additional services selected.</Typography>
+                    <Typography className="text-gray-600">
+                      No additional services selected.
+                    </Typography>
                   )}
                 </Paper>
               </Grid>
@@ -372,46 +405,67 @@ function EventDetails() {
               {/* Cancellation Policy */}
               <Grid item xs={12} md={6}>
                 <Paper className="p-6 rounded-lg shadow-md bg-gray-50">
-                  <Typography variant="h5" className="font-semibold text-gray-700 mb-3">
+                  <Typography
+                    variant="h5"
+                    className="font-semibold text-gray-700 mb-3"
+                  >
                     Cancellation Policy
                   </Typography>
                   <Divider className="mb-3" />
                   <Typography className="text-gray-600">
-                    Cancellation Fee: ₹{booking.cancellation_policy.cancellation_fee}
+                    Cancellation Fee: ₹
+                    {booking.cancellation_policy.cancellation_fee}
                   </Typography>
                 </Paper>
               </Grid>
             </Grid>
 
             {/* Payment & Booking Status */}
-            {isRequest && booking.status === "Pending" && (
-              <Box className="mt-6 flex flex-col md:flex-row justify-between items-center border-t pt-4">
-                <Box>
-                  <Typography className="text-gray-600">
-                    <span className="font-medium">Payment Status:</span> {booking.payment_status}
-                  </Typography>
-                  <Typography className="text-gray-600 mt-1">
-                    <span className="font-medium">Booking Status:</span> {booking.status}
-                  </Typography>
+            {isRequest &&
+              (booking.status === "Pending" ||
+                booking.status === "Accepted") && (
+                <Box className="mt-6 flex flex-col md:flex-row justify-between items-center border-t pt-4">
+                  <Box>
+                    <Typography className="text-gray-600">
+                      <span className="font-medium">Payment Status:</span>{" "}
+                      {booking.payment_status}
+                    </Typography>
+                    <Typography className="text-gray-600 mt-1">
+                      <span className="font-medium">Booking Status:</span>{" "}
+                      {booking.status}
+                    </Typography>
+                  </Box>
+                  <Box className="flex gap-4 mt-4 md:mt-0">
+                    {booking.status === "Pending" && (
+                      <>
+                        <button
+                          onClick={() => handleActionClick("approve")}
+                          disabled={actionLoading}
+                          className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition shadow-md disabled:opacity-50"
+                        >
+                          {actionLoading ? "Processing..." : "Approve Request"}
+                        </button>
+                        <button
+                          onClick={() => handleActionClick("reject")}
+                          disabled={actionLoading}
+                          className="border border-red-500 text-red-500 px-6 py-3 rounded-lg font-semibold hover:bg-red-500 hover:text-white transition shadow-md disabled:opacity-50"
+                        >
+                          {actionLoading ? "Processing..." : "Decline Request"}
+                        </button>
+                      </>
+                    )}
+                    {booking.status === "Accepted" && (
+                      <button
+                        onClick={() => handleActionClick("reject")}
+                        disabled={actionLoading}
+                        className="border border-red-500 text-red-500 px-6 py-3 rounded-lg font-semibold hover:bg-red-500 hover:text-white transition shadow-md disabled:opacity-50"
+                      >
+                        {actionLoading ? "Processing..." : "Reject Offer"}
+                      </button>
+                    )}
+                  </Box>
                 </Box>
-                <Box className="flex gap-4 mt-4 md:mt-0">
-                  <button
-                    onClick={() => handleActionClick("approve")}
-                    disabled={actionLoading}
-                    className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition shadow-md disabled:opacity-50"
-                  >
-                    {actionLoading ? "Processing..." : "Approve Request"}
-                  </button>
-                  <button
-                    onClick={() => handleActionClick("reject")}
-                    disabled={actionLoading}
-                    className="border border-red-500 text-red-500 px-6 py-3 rounded-lg font-semibold hover:bg-red-500 hover:text-white transition shadow-md disabled:opacity-50"
-                  >
-                    {actionLoading ? "Processing..." : "Decline Request"}
-                  </button>
-                </Box>
-              </Box>
-            )}
+              )}
           </div>
         </main>
 
@@ -421,7 +475,9 @@ function EventDetails() {
             <div className="bg-white rounded-lg p-6 w-11/12 md:w-1/3">
               <h3 className="text-xl font-bold mb-4">Confirm Rejection</h3>
               <div className="mb-4">
-                <label className="block text-gray-700 mb-2">Reason for Rejection:</label>
+                <label className="block text-gray-700 mb-2">
+                  Reason for Rejection:
+                </label>
                 <textarea
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}

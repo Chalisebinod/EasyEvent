@@ -10,6 +10,7 @@ const UserChat = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [chatInput, setChatInput] = useState("");
+
   const token = localStorage.getItem("access_token");
   const currentUserId = localStorage.getItem("user_id");
   const socketRef = useRef();
@@ -244,7 +245,7 @@ const UserChat = () => {
             <input
               type="text"
               placeholder="Search user..."
-              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-orange-400"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -255,7 +256,7 @@ const UserChat = () => {
                 <div
                   key={conv.partnerId}
                   onClick={() => handleUserClick(conv)}
-                  className="flex items-center space-x-4 cursor-pointer hover:bg-gray-100 p-2 rounded-md"
+                  className="flex items-center space-x-4 cursor-pointer hover:bg-orange-50 p-2 rounded-md"
                 >
                   <img
                     src={getImageUrl(conv.profile_image)}
@@ -319,7 +320,7 @@ const UserChat = () => {
                       <div
                         className={`px-4 py-2 rounded-lg max-w-xs break-words shadow ${
                           msg.senderLabel === "You"
-                            ? "bg-blue-500 text-white rounded-br-none"
+                            ? "bg-orange-500 text-white rounded-br-none"
                             : "bg-gray-300 text-gray-800 rounded-bl-none"
                         }`}
                       >
@@ -339,33 +340,32 @@ const UserChat = () => {
               </div>
 
               {/* Chat Input */}
-<div className="flex items-center border-t pt-3 mt-4">
-  <input
-    type="text"
-    value={chatInput}
-    onChange={(e) => setChatInput(e.target.value)}
-    onKeyDown={(e) => {
-      if (e.key === "Enter") {
-        handleSendMessage();
-      }
-    }}
-    placeholder="Type a message..."
-    className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-  />
-  <button className="ml-2 text-gray-600 hover:text-gray-800">
-    <FiImage size={20} />
-  </button>
-  <button className="ml-2 text-gray-600 hover:text-gray-800">
-    <FiPaperclip size={20} />
-  </button>
-  <button
-    onClick={handleSendMessage}
-    className="bg-blue-500 text-white ml-2 px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
-  >
-    Send
-  </button>
-</div>
-
+              <div className="flex items-center border-t pt-3 mt-4">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleSendMessage();
+                    }
+                  }}
+                  placeholder="Type a message..."
+                  className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                />
+                <button className="ml-2 text-gray-600 hover:text-gray-800">
+                  <FiImage size={20} />
+                </button>
+                <button className="ml-2 text-gray-600 hover:text-gray-800">
+                  <FiPaperclip size={20} />
+                </button>
+                <button
+                  onClick={handleSendMessage}
+                  className="bg-orange-500 text-white ml-2 px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
+                >
+                  Send
+                </button>
+              </div>
             </>
           ) : (
             <div className="flex-1 flex items-center justify-center">

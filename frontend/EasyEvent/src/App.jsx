@@ -56,6 +56,7 @@ import FoodManagement from "./components/venueowner/food/FoodManagement";
 import OwnerBooking from "./components/venueowner/OwnerBooking";
 import ApprovedBookingDetails from "./components/venueowner/ApprovedBookingDetails";
 import UserChat from "./components/user/chat/UserChat";
+import VenuePage from "./components/admin/VenuePage";
 
 function App() {
   // useEffect(() => {
@@ -115,7 +116,7 @@ function App() {
 
         <Route path="/event-details/:id" element={<EventDetails />} />
 
-        <Route path="/user-bookings" element={<UserBookings />} />
+        {/* <Route path="/user-bookings" element={<UserBookings />} /> */}
         <Route path="/user-book/:id" element={<Booking />} />
 
         {/* Landing Page */}
@@ -138,6 +139,7 @@ function App() {
         {/* Dashboard Pages */}
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/all-user" element={<UserPage />} />
+        <Route path="/all-venue" element={<VenuePage />} />
         <Route path="/all-venueUser" element={<VenueOwnerPage />} />
         <Route path="/all-admin" element={<AdminPage />} />
         <Route path="/kyc-request" element={<KycRequest />} />
@@ -145,7 +147,7 @@ function App() {
 
         <Route
           path="/venueOwner-profile/:id"
-          element={<VenueOwnerUserProfile />}
+          element={<VenueOwnerProfile />}
         />
         <Route path="/Create-venue" element={<CreateVenue />} />
 

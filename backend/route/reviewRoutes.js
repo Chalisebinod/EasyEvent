@@ -3,7 +3,7 @@ const {
   checkAuthentication,
   checkCanSubmitReview,
 } = require("../middleware/middleware");
-const { submitReview } = require("../controllers/reviewController");
+const { submitReview } = require("../controller/reviewController");
 
 const router = express.Router();
 
