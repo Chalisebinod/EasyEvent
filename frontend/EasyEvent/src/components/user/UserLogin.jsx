@@ -20,18 +20,23 @@ const UserLogin = () => {
       });
       toast.success(response.data.message);
       const token = response.data.token;
-
       localStorage.setItem("access_token", token);
 
-      setTimeout(() => {
-        if (response.data.role === "admin") {
-          navigate("/admin-dashboard");
-        } else if (response.data.role === "venueOwner") {
-          navigate("/venue-owner-dashboard");
-        } else {
-          navigate("/user-dashboard");
-        }
-      }, 2000);
+      // Retrieve stored redirect URL (if any)
+      const redirectUrl = localStorage.getItem("redirect_after_login");
+      console.log("Redirect URL retrieved:", redirectUrl);
+      localStorage.removeItem("redirect_after_login");
+
+      if (redirectUrl && redirectUrl !== "/login") {
+        navigate(redirectUrl, { replace: true });
+      } else if (response.data.role === "admin") {
+        navigate("/admin-dashboard", { replace: true });
+      } else if (response.data.role === "venueOwner") {
+        localStorage.setItem("venueId", response.data.venueId);
+        navigate("/venue-owner-dashboard", { replace: true });
+      } else {
+        navigate("/user-dashboard", { replace: true });
+      }
     } catch (error) {
       toast.error("Login failed!");
     }
@@ -45,8 +50,7 @@ const UserLogin = () => {
           Welcome, <span className="text-yellow-300">Back!</span>
         </h1>
         <p className="mt-4 text-lg text-white text-center px-6">
-          Seamless Event Planning Starts Here – Find, Book, and Celebrate with
-          Confidence!
+          Seamless Event Planning Starts Here – Find, Book, and Celebrate with Confidence!
         </p>
       </div>
 
@@ -100,10 +104,7 @@ const UserLogin = () => {
             </div>
           </div>
           <div className="flex justify-between items-center mb-6">
-            <Link
-              to="/forgotpassword"
-              className="text-blue-500 hover:underline ml-auto"
-            >
+            <Link to="/forgotpassword" className="text-blue-500 hover:underline ml-auto">
               Forgot password?
             </Link>
           </div>
@@ -115,7 +116,6 @@ const UserLogin = () => {
           </button>
         </form>
 
-        {/* Signup Options */}
         <div className="mt-6 text-center">
           <p className="text-gray-600 text-lg font-medium">
             Don't have an account?
@@ -136,8 +136,6 @@ const UserLogin = () => {
           </div>
         </div>
       </div>
-
-      {/* Toastify Container */}
       <ToastContainer />
     </div>
   );
