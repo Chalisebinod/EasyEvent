@@ -26,6 +26,17 @@ const VenueOwnerProfile = () => {
   const accessToken = localStorage.getItem("access_token");
   const navigate = useNavigate();
 
+  const BASE_URL = "http://localhost:8000/";
+
+  // Helper function to convert a stored image path to a full URL
+  const getProfileImageUrl = (imagePath) => {
+    if (!imagePath) return "https://via.placeholder.com/150";
+    // If already a URL, return as is
+    if (imagePath.startsWith("http")) return imagePath;
+    // Replace backslashes with forward slashes and prepend the base URL
+    return `${BASE_URL}${imagePath.replace(/\\/g, "/")}`;
+  };
+
   // 1) Fetch Profile
   useEffect(() => {
     const fetchProfile = async () => {
@@ -160,10 +171,11 @@ const VenueOwnerProfile = () => {
               {/* Profile Info */}
               <div className="flex items-center space-x-4">
                 <img
-                  src={profile.profile_image || "https://via.placeholder.com/150"}
+                  src={getProfileImageUrl(profile.profile_image)}
                   alt="Profile"
                   className="w-24 h-24 rounded-full object-cover border-4 border-orange-500"
                 />
+
                 <div>
                   <h2 className="text-2xl font-bold text-gray-800">
                     {profile.name || "USER"}
@@ -281,7 +293,7 @@ const VenueOwnerProfile = () => {
                   className="w-full border p-2 rounded"
                 />
               </div>
-            
+
               {/* Profile Image */}
               <div>
                 <label className="block text-gray-700">Profile Image</label>
@@ -292,7 +304,7 @@ const VenueOwnerProfile = () => {
                   className="w-full p-2 rounded"
                 />
               </div>
-             
+
               {/* Action Buttons */}
               <div className="flex space-x-4 mt-6">
                 <button
