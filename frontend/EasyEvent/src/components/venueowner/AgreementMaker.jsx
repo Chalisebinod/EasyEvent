@@ -45,7 +45,7 @@ const AgreementMaker = () => {
 
   const fetchTemplates = async () => {
     try {
-      const venueId = localStorage.getItem("venueID");
+      const venueId = localStorage.getItem("venueId");
       const response = await axios.get(
         `http://localhost:8000/api/booking/templates/${venueId}`,
         {
@@ -69,7 +69,7 @@ const AgreementMaker = () => {
 
   const handleCreateTemplate = async () => {
     try {
-      const venueId = localStorage.getItem("venueID");
+      const venueId = localStorage.getItem("venueId");
       const response = await axios.post(
         "http://localhost:8000/api/booking/templates",
         {
