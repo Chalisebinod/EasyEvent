@@ -38,45 +38,6 @@ const PartyPalace = () => {
   const [totalFare, setTotalFare] = useState(0);
   const [isMinimized, setIsMinimized] = useState(false);
 
-  // Mock data for completed events
-  const mockCompletedEvents = [
-    {
-      id: 1,
-      image: "https://via.placeholder.com/150",
-      name: "Wedding Reception",
-      short_description: "A beautiful wedding reception held at our venue.",
-    },
-    {
-      id: 2,
-      image: "https://via.placeholder.com/150",
-      name: "Corporate Meeting",
-      short_description: "A corporate event with industry leaders.",
-    },
-    {
-      id: 3,
-      image: "https://via.placeholder.com/150",
-      name: "Birthday Party",
-      short_description: "A fun birthday party with family and friends.",
-    },
-    {
-      id: 4,
-      image: "https://via.placeholder.com/150",
-      name: "Bartabanda",
-      short_description: "A fun birthday party with family and friends.",
-    },
-    {
-      id: 5,
-      image: "https://via.placeholder.com/150",
-      name: "Workshops",
-      short_description: "A fun birthday party with family and friends.",
-    },
-    {
-      id: 6,
-      image: "https://via.placeholder.com/150",
-      name: "Other Events",
-      short_description: "A fun birthday party with family and friends.",
-    },
-  ];
 
   // Helper function to build full URL for an image path
   const getImageUrl = (imgPath) =>
@@ -158,7 +119,7 @@ const PartyPalace = () => {
             A premier venue for unforgettable events
           </p>
         </div>
-        {venue.owner && <ProfileIcon ownerId={venue.owner._id} />}
+        
       </section>
 
       {/* Tabs Section with Book Now Button */}
