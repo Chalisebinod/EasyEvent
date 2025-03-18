@@ -183,7 +183,7 @@ function ApprovedBookingDetails() {
   // GET TEMPLATES
   const fetchTemplates = async () => {
     try {
-      const venueId = localStorage.getItem('venueID');
+      const venueId = localStorage.getItem('venueId');
       const response = await axiosInstance.get(`/api/booking/templates/${venueId}`);
 
       if (response.data.success) {
