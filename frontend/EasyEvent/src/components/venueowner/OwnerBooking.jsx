@@ -23,7 +23,7 @@ const OwnerBooking = () => {
   const [openCreateModal, setOpenCreateModal] = useState(false);
 
   const accessToken = localStorage.getItem("access_token");
-  const venueId = localStorage.getItem("venueID");
+  const venueId = localStorage.getItem("venueId");
   const navigate = useNavigate();
 
   // Reusable function to fetch approved bookings
