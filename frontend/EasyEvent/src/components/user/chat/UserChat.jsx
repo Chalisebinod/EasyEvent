@@ -231,21 +231,21 @@ const UserChat = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-gray-100">
       {/* Navbar (Top) */}
-      <header className="shadow">
+      <header className="shadow fixed w-full z-10 bg-white">
         <Navbar />
       </header>
 
       {/* Main content area */}
-      <div className="flex flex-1">
+      <div className="flex flex-1 pt-16">
         {/* Conversation List */}
-        <aside className="w-80 border-r p-4 overflow-y-auto bg-white">
+        <aside className="w-80 border-r p-4 bg-white fixed h-full overflow-y-auto">
           <div className="mb-4">
             <input
               type="text"
               placeholder="Search user..."
-              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -256,7 +256,7 @@ const UserChat = () => {
                 <div
                   key={conv.partnerId}
                   onClick={() => handleUserClick(conv)}
-                  className="flex items-center space-x-4 cursor-pointer hover:bg-orange-50 p-2 rounded-md"
+                  className="flex items-center space-x-4 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
                 >
                   <img
                     src={getImageUrl(conv.profile_image)}
@@ -286,11 +286,11 @@ const UserChat = () => {
         </aside>
 
         {/* Chat Area */}
-        <main className="flex-1 p-4 flex flex-col">
+        <main className="flex-1 p-4 flex flex-col ml-80">
           {selectedConversation ? (
             <>
               {/* Chat Header */}
-              <div className="flex items-center border-b pb-3 mb-4">
+              <div className="flex items-center border-b pb-3 mb-4 fixed w-[calc(100%-20rem)] text-black z-10 p-4">
                 <img
                   src={getImageUrl(selectedConversation.profile_image)}
                   alt={selectedConversation.name}
@@ -302,31 +302,29 @@ const UserChat = () => {
               </div>
 
               {/* Chat Messages */}
-              <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+              <div className="flex-1 overflow-y-auto space-y-4 pr-2 mt-20 pb-24 bg-gradient-to-b from-orange-50 to-white">
                 {selectedConversation.messages &&
                 selectedConversation.messages.length > 0 ? (
                   selectedConversation.messages.map((msg) => (
                     <div
                       key={msg._id}
-                      className={`flex flex-col text-xs ${
+                      className={`flex flex-col ${
                         msg.senderLabel === "You"
-                          ? "items-end"
-                          : "items-start"
+                          ? "items-end mr-4"
+                          : "items-start ml-4"
                       }`}
                     >
-                      <span className="text-xs text-gray-500">
-                        {msg.senderLabel}
-                      </span>
                       <div
                         className={`px-4 py-2 rounded-lg max-w-xs break-words shadow ${
                           msg.senderLabel === "You"
                             ? "bg-orange-500 text-white rounded-br-none"
-                            : "bg-gray-300 text-gray-800 rounded-bl-none"
+                            : "bg-gray-200 text-gray-800 rounded-bl-none"
                         }`}
                       >
                         {msg.message}
                       </div>
-                      <span className="mt-1 text-gray-500">
+                      <span className="mt-1 text-xs text-gray-500">
+                        {msg.senderLabel} •{" "}
                         {new Date(msg.createdAt).toLocaleTimeString([], {
                           hour: "2-digit",
                           minute: "2-digit",
@@ -340,7 +338,7 @@ const UserChat = () => {
               </div>
 
               {/* Chat Input */}
-              <div className="flex items-center border-t pt-3 mt-4">
+              <div className="flex items-center border-t pt-3 mt-4 fixed bottom-0 w-[calc(100%-20rem)] bg-white z-10 p-4">
                 <input
                   type="text"
                   value={chatInput}
@@ -351,7 +349,7 @@ const UserChat = () => {
                     }
                   }}
                   placeholder="Type a message..."
-                  className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
                 />
                 <button className="ml-2 text-gray-600 hover:text-gray-800">
                   <FiImage size={20} />
@@ -361,7 +359,7 @@ const UserChat = () => {
                 </button>
                 <button
                   onClick={handleSendMessage}
-                  className="bg-orange-500 text-white ml-2 px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
+                  className="bg-orange-500 text-white ml-2 px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
                 >
                   Send
                 </button>

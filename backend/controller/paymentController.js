@@ -153,4 +153,97 @@ const verifyPayment = async (req, res) => {
   }
 };
 
-module.exports = { initiatePayment, verifyPayment };
+const fetchReceivedAmount = async (req, res) => {
+  try {
+    const { pidx } = req.body; // Transaction ID
+
+    const response = await axios.post(
+      `${KHALTI_BASE_URL}epayment/lookup/`,
+      { pidx },
+      { headers }
+    );
+
+    if (!response.data || response.data.status !== "Completed") {
+      return res.status(400).json({
+        success: false,
+        message: "Payment not completed or invalid transaction ID.",
+      });
+    }
+
+    const receivedAmount = response.data.total_amount / 100; // Convert from paisa to NPR
+
+    res.json({
+      success: true,
+      transaction_id: pidx,
+      received_amount: receivedAmount,
+      status: response.data.status,
+    });
+  } catch (error) {
+    console.error("Khalti Fetch Amount Error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch received amount.",
+      error: error.message,
+    });
+  }
+};
+
+const refundPayment = async (req, res) => {
+  try {
+    const { pidx, refund_amount } = req.body;
+
+    const payment = await Payment.findOne({ transaction_id: pidx });
+    if (!payment) {
+      return res.status(404).json({ success: false, message: "Payment not found." });
+    }
+
+    if (payment.payment_status !== "Completed") {
+      return res.status(400).json({ success: false, message: "Only completed payments can be refunded." });
+    }
+
+    if (refund_amount > payment.amount) {
+      return res.status(400).json({ success: false, message: "Refund amount exceeds the paid amount." });
+    }
+
+    const payload = {
+      pidx,
+      amount: refund_amount * 100, // Convert to paisa
+    };
+
+    const response = await axios.post(
+      `${KHALTI_BASE_URL}epayment/refund/`,
+      payload,
+      { headers }
+    );
+
+    if (response.data.refund_status !== "Success") {
+      return res.status(400).json({
+        success: false,
+        message: "Refund failed.",
+        refund_status: response.data.refund_status,
+      });
+    }
+
+    // Update payment status in database
+    payment.payment_status = "Refunded";
+    payment.refunded_amount = refund_amount;
+    await payment.save();
+
+    res.json({
+      success: true,
+      message: "Refund successful",
+      refunded_amount: refund_amount,
+    });
+  } catch (error) {
+    console.error("Khalti Refund Error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to process refund.",
+      error: error.message,
+    });
+  }
+};
+
+module.exports = { initiatePayment, verifyPayment,fetchReceivedAmount,refundPayment };
