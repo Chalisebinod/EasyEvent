@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { toast } from "react-toastify"; // Ensure you have react-toastify installed
+import { toast } from "react-toastify";
 
 const paymentOptions = [
   { name: "Khalti", logo: "/khalti-logo.png" },
@@ -17,9 +17,25 @@ export default function ContinuePayment() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  // Retrieve token from localStorage or define it elsewhere
+  // Retrieve token from localStorage
   const token = localStorage.getItem("access_token");
 
+  // If no token, store the full URL and redirect to login
+  useEffect(() => {
+    if (!token) {
+      const redirectUrl = window.location.pathname + window.location.search;
+      console.log("Storing redirect URL:", redirectUrl);
+      localStorage.setItem("redirect_after_login", redirectUrl);
+      navigate("/login", { replace: true });
+    }
+  }, [token, navigate]);
+
+  // If no token, render nothing (or a loader)
+  if (!token) {
+    return null;
+  }
+
+  // Payment initiation handler
   const handlePaymentSelect = async (payment) => {
     setSelectedPayment(payment);
     if (payment === "Khalti") {
@@ -27,10 +43,10 @@ export default function ContinuePayment() {
         const response = await axios.post(
           "http://localhost:8000/api/auth/payment/initiate",
           {
-            amount: 100, // Amount in paisa
+            amount: 900,
             purchase_order_id: bookingId,
             purchase_order_name: "EasyEvent",
-            return_url: `http://localhost:5173/continue-payment/${bookingId}`, // Redirect URL after payment
+            return_url: `http://localhost:5173/continue-payment/${bookingId}`,
             website_url: `http://localhost:5173/continue-payment/${bookingId}`,
             bookingId: bookingId,
             userId: "67b6d065da09b880fa55361a",
@@ -40,18 +56,32 @@ export default function ContinuePayment() {
           }
         );
 
-        setPaymentUrl(response.data.payment_url);
-        window.location.href = response.data.payment_url; // Redirect to Khalti
+        if (response.data && response.data.payment_url) {
+          setPaymentUrl(response.data.payment_url);
+          window.location.href = response.data.payment_url;
+        } else {
+          toast.error("Payment initiation failed: No payment URL received.");
+        }
       } catch (error) {
         console.error(
           "Payment initiation failed:",
           error.response?.data || error.message
         );
+        // If token is invalid/expired, redirect to login with current URL stored
+        if (error.response && error.response.status === 401) {
+          toast.error("Session expired. Please login again.");
+          localStorage.removeItem("access_token");
+          const redirectUrl = window.location.pathname + window.location.search;
+          localStorage.setItem("redirect_after_login", redirectUrl);
+          navigate("/login", { replace: true });
+        } else {
+          toast.error("Payment initiation failed! Please try again.");
+        }
       }
     }
   };
 
-  // Verify payment when payment is successful and pidx is available in the URL
+  // Payment verification effect
   useEffect(() => {
     const verifyPayment = async () => {
       const pidx = searchParams.get("pidx");
@@ -59,12 +89,6 @@ export default function ContinuePayment() {
         console.error("Missing pidx in URL parameters");
         return;
       }
-
-      if (!token) {
-        console.error("Authorization token is missing!");
-        return;
-      }
-
       try {
         const response = await axios.post(
           "http://localhost:8000/api/auth/payment/verify",
@@ -73,21 +97,32 @@ export default function ContinuePayment() {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        console.log("Payment data: ", response.data.status);
         if (response.data.status === "Completed") {
           toast.success("Payment successful!");
-         
+          navigate(`/success/${bookingId}`, { replace: true });
+        } else {
+          toast.error("Payment verification failed.");
+        }
+      } catch (error) {
+        console.error(
+          "Payment verification error:",
+          error.response?.data || error.message
+        );
+        if (error.response && error.response.status === 401) {
+          toast.error("Session expired. Please login again.");
+          localStorage.removeItem("access_token");
+          const redirectUrl = window.location.pathname + window.location.search;
+          localStorage.setItem("redirect_after_login", redirectUrl);
+          navigate("/login", { replace: true });
         } else {
           toast.error("Payment verification failed. Please try again.");
         }
-      } catch (error) {
-        toast.error("Payment verification failed. Please try again.");
-      } finally {
-        // navigate(`//${bookingId}`, { replace: true });
       }
     };
 
-    verifyPayment();
+    if (searchParams.has("pidx")) {
+      verifyPayment();
+    }
   }, [searchParams, token, bookingId, navigate]);
 
   return (
