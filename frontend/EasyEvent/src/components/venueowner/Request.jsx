@@ -12,7 +12,7 @@ function Request() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10; // Adjust as needed
 
-  const venueId = localStorage.getItem("venueID");
+  const venueId = localStorage.getItem("venueId");
   const accessToken = localStorage.getItem("access_token");
 
   // Messaging feature state

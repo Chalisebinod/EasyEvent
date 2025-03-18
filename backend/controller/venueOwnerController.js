@@ -85,8 +85,18 @@ async function getVenueOwnerProfile(req, res) {
 // Update Venue Owner Profile
 async function updateVenueOwnerProfile(req, res) {
   try {
-    const venueOwnerId = req.user.venueOwnerId;
-    const { name, contact_number, location, profile_image } = req.body;
+    const venueOwnerId = req.user.id;
+    const { name, contact_number, location } = req.body;
+
+    // Check if a new profile image was uploaded
+    let profile_image;
+    if (req.file) {
+      // Use the path or filename provided by multer (adjust according to your multer configuration)
+      profile_image = req.file.path; 
+    } else {
+      // If no new file was uploaded, fall back to the existing value from req.body (if any)
+      profile_image = req.body.profile_image;
+    }
 
     const updatedVenueOwner = await VenueOwner.findByIdAndUpdate(
       venueOwnerId,

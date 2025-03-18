@@ -1,35 +1,65 @@
+<<<<<<< HEAD
 import React, { useState, useMemo } from "react";
+=======
+import React, { useState, useMemo, useEffect } from "react";
+>>>>>>> c0309419742e0c45b492b2749746c78e125961fb
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import VenueSidebar from "./VenueSidebar";
 import { format } from "date-fns"; // For date formatting (npm install date-fns)
 
 function EnhancedTransactions() {
   const navigate = useNavigate();
 
+<<<<<<< HEAD
   // -----------------------------
   // 1. Sample transaction data
   // -----------------------------
   const [transactions, setTransactions] = useState([
     {
       id: 1,
+=======
+  // 1. Sample transaction data with pidx added for API lookup
+  const [transactions, setTransactions] = useState([
+    {
+      id: 1,
+      pidx: "txn_12345", // Khalti transaction id
+>>>>>>> c0309419742e0c45b492b2749746c78e125961fb
       date: "2025-03-10",
       name: "John Doe",
       cardNumber: "**** **** **** 2300",
       totalAmount: 100,
+<<<<<<< HEAD
       receivedAmount: 75,
       status: "Partial", // can be "Paid", "Partial", "Pending", "Refunded"
     },
     {
       id: 2,
+=======
+      receivedAmount: 0, // will update after API call
+      status: "Partial", // "Paid", "Partial", "Pending", "Refunded"
+    },
+    {
+      id: 2,
+      pidx: "txn_67890",
+>>>>>>> c0309419742e0c45b492b2749746c78e125961fb
       date: "2025-03-12",
       name: "Jane Smith",
       cardNumber: "**** **** **** 2300",
       totalAmount: 2352,
+<<<<<<< HEAD
       receivedAmount: 2352,
+=======
+      receivedAmount: 0,
+>>>>>>> c0309419742e0c45b492b2749746c78e125961fb
       status: "Paid",
     },
     {
       id: 3,
+<<<<<<< HEAD
+=======
+      pidx: "txn_abcde",
+>>>>>>> c0309419742e0c45b492b2749746c78e125961fb
       date: "2025-03-15",
       name: "Michael Johnson",
       cardNumber: "**** **** **** 2300",
@@ -39,13 +69,61 @@ function EnhancedTransactions() {
     },
   ]);
 
+<<<<<<< HEAD
   // -----------------------------
   // 2. Search & Filters
   // -----------------------------
+=======
+  // 2. Fetch actual received amounts from the backend
+  useEffect(() => {
+    transactions.forEach(async (tx) => {
+      try {
+        // Using GET and sending the pidx as query parameter to match your route definition
+        const res = await axios.get("http://localhost:5000/api/payment/get", {
+          params: { pidx: tx.pidx },
+        });
+        if (res.data && res.data.success) {
+          setTransactions((prev) =>
+            prev.map((item) =>
+              item.id === tx.id
+                ? { ...item, receivedAmount: res.data.received_amount }
+                : item
+            )
+          );
+        }
+      } catch (error) {
+        console.error("Fetch payment error for transaction:", tx.pidx, error);
+      }
+    });
+  }, []);
+
+  // 3. Derived data (totals)
+  const { totalReceived, totalPending, totalRefunded, totalTransactions } =
+    useMemo(() => {
+      let totalReceived = 0;
+      let totalPending = 0;
+      let totalRefunded = 0;
+      let totalTransactions = transactions.length;
+
+      transactions.forEach((tx) => {
+        totalReceived += tx.receivedAmount;
+        const pending = tx.totalAmount - tx.receivedAmount;
+        totalPending += pending > 0 ? pending : 0;
+        if (tx.status === "Refunded") {
+          totalRefunded += tx.receivedAmount;
+        }
+      });
+
+      return { totalReceived, totalPending, totalRefunded, totalTransactions };
+    }, [transactions]);
+
+  // 4. Filtering logic
+>>>>>>> c0309419742e0c45b492b2749746c78e125961fb
   const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
+<<<<<<< HEAD
   // -----------------------------
   // 3. Derived data (totals)
   // -----------------------------
@@ -90,19 +168,41 @@ function EnhancedTransactions() {
   // 5. Handlers
   // -----------------------------
   // Navigate to details page on row click
+=======
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter((tx) => {
+      const matchesName = tx.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const txDate = new Date(tx.date);
+      const isAfterStart = startDate ? txDate >= new Date(startDate) : true;
+      const isBeforeEnd = endDate ? txDate <= new Date(endDate) : true;
+      return matchesName && isAfterStart && isBeforeEnd;
+    });
+  }, [transactions, searchTerm, startDate, endDate]);
+
+  // 5. Handlers
+>>>>>>> c0309419742e0c45b492b2749746c78e125961fb
   const handleRowClick = (transactionId) => {
     navigate(`/transactions/${transactionId}`);
   };
 
+<<<<<<< HEAD
   // Stop click from propagating when interacting with buttons/inputs
+=======
+>>>>>>> c0309419742e0c45b492b2749746c78e125961fb
   const stopPropagation = (e) => {
     e.stopPropagation();
   };
 
+<<<<<<< HEAD
   // Example: Mark a payment as refunded (you'll integrate your Khalti logic here)
   const handleRefund = (e, transactionId) => {
     e.stopPropagation();
     // TODO: Khalti API integration or confirmation modal
+=======
+  // Example Refund Handler
+  const handleRefund = (e, transactionId) => {
+    e.stopPropagation();
+>>>>>>> c0309419742e0c45b492b2749746c78e125961fb
     setTransactions((prev) =>
       prev.map((tx) =>
         tx.id === transactionId ? { ...tx, status: "Refunded" } : tx
@@ -119,14 +219,21 @@ function EnhancedTransactions() {
 
       {/* Main Content Area */}
       <div className="flex-1 p-6 md:p-8">
+<<<<<<< HEAD
         {/* Page Heading */}
+=======
+>>>>>>> c0309419742e0c45b492b2749746c78e125961fb
         <h1 className="text-3xl font-bold text-gray-800 mb-4">
           Payment Management
         </h1>
 
+<<<<<<< HEAD
         {/* -----------------------------
             A) Summary Cards
         ----------------------------- */}
+=======
+        {/* A) Summary Cards */}
+>>>>>>> c0309419742e0c45b492b2749746c78e125961fb
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white rounded shadow p-4 flex flex-col">
             <span className="text-gray-500 text-sm">Total Transactions</span>
@@ -152,11 +259,16 @@ function EnhancedTransactions() {
           </div>
         </div>
 
+<<<<<<< HEAD
         {/* -----------------------------
             B) Filters
         ----------------------------- */}
         <div className="bg-white shadow rounded p-4 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
           {/* Search by name */}
+=======
+        {/* B) Filters */}
+        <div className="bg-white shadow rounded p-4 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+>>>>>>> c0309419742e0c45b492b2749746c78e125961fb
           <div className="w-full md:w-1/2">
             <input
               type="text"
@@ -166,8 +278,11 @@ function EnhancedTransactions() {
               className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-400"
             />
           </div>
+<<<<<<< HEAD
 
           {/* Date Range Filter */}
+=======
+>>>>>>> c0309419742e0c45b492b2749746c78e125961fb
           <div className="flex items-center gap-2">
             <div>
               <label className="text-sm text-gray-600">Start Date</label>
@@ -190,13 +305,16 @@ function EnhancedTransactions() {
           </div>
         </div>
 
+<<<<<<< HEAD
         {/* -----------------------------
             C) Transactions Table
         ----------------------------- */}
+=======
+        {/* C) Transactions Table */}
+>>>>>>> c0309419742e0c45b492b2749746c78e125961fb
         <div className="bg-white shadow rounded">
           <div className="overflow-x-auto">
             <table className="min-w-full table-auto">
-              {/* Table Head */}
               <thead className="bg-red-500 text-white">
                 <tr>
                   <th className="p-3 text-left font-semibold">Date</th>
@@ -209,14 +327,15 @@ function EnhancedTransactions() {
                   <th className="p-3 text-left font-semibold">Actions</th>
                 </tr>
               </thead>
-
-              {/* Table Body */}
               <tbody className="text-gray-700">
                 {filteredTransactions.length > 0 ? (
                   filteredTransactions.map((tx) => {
                     const pendingAmount = tx.totalAmount - tx.receivedAmount;
+<<<<<<< HEAD
 
                     // Choose a color badge for status
+=======
+>>>>>>> c0309419742e0c45b492b2749746c78e125961fb
                     let statusColor = "bg-gray-200";
                     if (tx.status === "Paid")
                       statusColor = "bg-green-100 text-green-800";
@@ -251,9 +370,13 @@ function EnhancedTransactions() {
                           </span>
                         </td>
                         <td className="p-3" onClick={stopPropagation}>
+<<<<<<< HEAD
                           {/* Only show Refund if there's something to refund */}
                           {(tx.status === "Paid" ||
                             tx.status === "Partial") && (
+=======
+                          {(tx.status === "Paid" || tx.status === "Partial") && (
+>>>>>>> c0309419742e0c45b492b2749746c78e125961fb
                             <button
                               onClick={(e) => handleRefund(e, tx.id)}
                               className="text-sm bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"

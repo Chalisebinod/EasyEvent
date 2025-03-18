@@ -1,4 +1,5 @@
 const express = require("express");
+const upload = require("../controller/fileController");
 // Middleware to protect routes
 const {
   checkAuthentication,
@@ -43,7 +44,7 @@ router.get(
 router.put(
   "/profile",
   checkAuthentication,
-  checkIsVenueOwner,
+  checkIsVenueOwner,upload.single("profile_image"),
   updateVenueOwnerProfile
 );
 

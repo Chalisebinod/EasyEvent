@@ -1,6 +1,6 @@
 const Payment = require("../model/payment");
 const axios = require("axios");
-const BookingRequest = require("../model/request");
+const BookingRequest = require("../model/bookingSchema");
 
 require('dotenv').config();
 
@@ -23,25 +23,27 @@ const initiatePayment = async (req, res) => {
       bookingId,
       userId,
     } = req.body;
-    const roundedAmount = Math.round(amount); // Ensure proper amount format
+    const roundedAmount = Math.round(amount);
 
+    console.log("booking id", amount);
     // Find the related booking
     const booking = await BookingRequest.findById(bookingId);
     if (!booking) {
       return res.status(404).json({ success: false, message: "Booking not found." });
     }
 
-    if(amount<500){
+    if(amount < 500){
       return res.status(404).json({ success: false, message: "Payment must be a minimum of 50%." });
-
     }
 
+    // Add payment_type as required by Khalti API.
     const payload = {
       return_url,
       website_url,
-      amount: roundedAmount * 100,
+      amount: roundedAmount * 100, // Convert to paisa
       purchase_order_id,
       purchase_order_name,
+      payment_type: "payment" // Required field per documentation
     };
 
     const response = await axios.post(
@@ -58,6 +60,7 @@ const initiatePayment = async (req, res) => {
       payment_method: "Khalti",
       transaction_id: response.data.pidx,
       payment_status: "Pending",
+      payment_type: "payment" 
     });
 
     await newPayment.save();
@@ -69,21 +72,18 @@ const initiatePayment = async (req, res) => {
     if (error.response) {
       res.status(error.response.status || 400).json(error.response.data);
     } else if (error.request) {
-      res
-        .status(500)
-        .json({
-          message: "No response from Khalti. Check your internet or API URL.",
-        });
+      res.status(500).json({
+        message: "No response from Khalti. Check your internet or API URL.",
+      });
     } else {
-      res
-        .status(500)
-        .json({
-          message: "Request failed before reaching Khalti.",
-          error: error.message,
-        });
+      res.status(500).json({
+        message: "Request failed before reaching Khalti.",
+        error: error.message,
+      });
     }
   }
 };
+
 const verifyPayment = async (req, res) => {
   try {
     const { pidx } = req.body;
