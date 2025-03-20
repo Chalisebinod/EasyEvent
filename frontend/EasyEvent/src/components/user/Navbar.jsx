@@ -62,7 +62,7 @@ const Navbar = () => {
           <nav className="flex flex-col space-y-3 text-center">
             {[
               { path: "/user-dashboard", label: "Home" },
-              { path: "/user-bookings", label: "My Bookings" },
+              { path: "user-bookings", label: "My Bookings" },
               { path: "/user-chat", label: "Chat" },
               { path: "/about-us", label: "About Us" },
             ].map((item) => (

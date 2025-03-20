@@ -1,9 +1,25 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FiImage, FiPaperclip } from "react-icons/fi";
+import { FiImage, FiPaperclip, FiSearch } from "react-icons/fi";
 import io from "socket.io-client";
 import Navbar from "../Navbar";
 
 const BASE_IMAGE_URL = "http://localhost:8000/";
+
+// Helper to get full image URL or fallback for small images
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return "https://via.placeholder.com/40";
+  return imagePath.startsWith("http")
+    ? imagePath
+    : BASE_IMAGE_URL + imagePath;
+};
+
+// Helper to get full profile image URL for partner profile pictures
+const getProfileImageUrl = (imagePath) => {
+  if (!imagePath) return "https://via.placeholder.com/150";
+  return imagePath.startsWith("http")
+    ? imagePath
+    : BASE_IMAGE_URL + imagePath;
+};
 
 const UserChat = () => {
   const [conversations, setConversations] = useState([]);
@@ -11,25 +27,18 @@ const UserChat = () => {
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [chatInput, setChatInput] = useState("");
 
+  // Auth / user data
   const token = localStorage.getItem("access_token");
   const currentUserId = localStorage.getItem("user_id");
+
+  // Socket reference
   const socketRef = useRef();
 
-  // Helper to get full image URL or fallback
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return "https://via.placeholder.com/40";
-    return imagePath.startsWith("http")
-      ? imagePath
-      : BASE_IMAGE_URL + imagePath;
-  };
-
-  // Fetch conversation list
+  // 1) Fetch conversation list
   const fetchConversations = async (query = "") => {
     try {
       const response = await fetch(
-        `http://localhost:8000/api/chat/conversation/?q=${encodeURIComponent(
-          query
-        )}`,
+        `http://localhost:8000/api/chat/conversation/?q=${encodeURIComponent(query)}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await response.json();
@@ -41,12 +50,12 @@ const UserChat = () => {
     }
   };
 
-  // Initial fetch of conversations
+  // 2) Initial fetch of conversations
   useEffect(() => {
     fetchConversations();
   }, []);
 
-  // Debounce search
+  // 3) Debounce search
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       fetchConversations(searchQuery);
@@ -54,7 +63,7 @@ const UserChat = () => {
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
 
-  // Handle conversation click
+  // 4) Handle conversation click
   const handleUserClick = async (conversation) => {
     try {
       const response = await fetch("http://localhost:8000/api/chat/recieve", {
@@ -67,6 +76,7 @@ const UserChat = () => {
       });
       const data = await response.json();
       if (data.success) {
+        // Prepare conversation details using the partner's data
         const conv = {
           ...data.data,
           name: data.data.participants.partner.name,
@@ -78,9 +88,7 @@ const UserChat = () => {
         const selfId = conv.participants.self._id;
         const partnerId = conv.participants.partner._id;
         const roomId =
-          selfId < partnerId
-            ? `${selfId}_${partnerId}`
-            : `${partnerId}_${selfId}`;
+          selfId < partnerId ? `${selfId}_${partnerId}` : `${partnerId}_${selfId}`;
         if (socketRef.current) {
           socketRef.current.emit("join_room", roomId);
         }
@@ -90,11 +98,12 @@ const UserChat = () => {
     }
   };
 
-  // Setup socket connection
+  // 5) Setup socket connection
   useEffect(() => {
     socketRef.current = io("http://localhost:8000");
     socketRef.current.on("connect", () => {
       console.log("Connected to socket server");
+      // Join personal room so that we receive messages addressed to this user
       if (currentUserId) {
         socketRef.current.emit("join_room", currentUserId);
       }
@@ -122,10 +131,7 @@ const UserChat = () => {
       // Update conversation list with the latest message
       setConversations((prevConversations) =>
         prevConversations.map((conv) => {
-          if (
-            conv.partnerId === data.sender ||
-            conv.partnerId === data.receiver
-          ) {
+          if (conv.partnerId === data.sender || conv.partnerId === data.receiver) {
             return {
               ...conv,
               lastMessage: data.message,
@@ -142,7 +148,7 @@ const UserChat = () => {
     };
   }, [currentUserId]);
 
-  // Periodically fetch messages for the selected conversation
+  // 6) Continuously fetch messages for the selected conversation every 5 seconds
   useEffect(() => {
     const fetchMessages = async () => {
       if (!selectedConversation) return;
@@ -169,12 +175,14 @@ const UserChat = () => {
       }
     };
 
+    // Fetch messages initially and every 5 seconds
     fetchMessages();
     const interval = setInterval(fetchMessages, 5000);
+
     return () => clearInterval(interval);
   }, [selectedConversation, token]);
 
-  // Send message
+  // 7) Send message
   const handleSendMessage = async () => {
     if (!chatInput.trim() || !selectedConversation) return;
     const selfId = selectedConversation.participants.self._id;
@@ -231,100 +239,119 @@ const UserChat = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
-      {/* Navbar (Top) */}
-      <header className="shadow fixed w-full z-10 bg-white">
+    <div className="flex flex-col h-screen bg-gray-50">
+      {/* Fixed Navbar at the Top */}
+      <header className="fixed top-0 left-0 right-0 z-50 shadow bg-white">
         <Navbar />
       </header>
 
-      {/* Main content area */}
-      <div className="flex flex-1 pt-16">
-        {/* Conversation List */}
-        <aside className="w-80 border-r p-4 bg-white fixed h-full overflow-y-auto">
-          <div className="mb-4">
-            <input
-              type="text"
-              placeholder="Search user..."
-              className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+      {/* Conversations & Chat Panel */}
+      <div className="flex-1 flex flex-col md:flex-row mt-16 bg-white shadow-lg rounded-lg overflow-hidden mx-4 mb-4">
+        {/* Conversation List Panel */}
+        <div className="md:w-72 border-r bg-white flex flex-col">
+          {/* Panel Header */}
+          <div className="px-6 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-lg font-semibold">
+            Conversations
           </div>
-          <div className="space-y-2">
+          {/* Search Box */}
+          <div className="p-4 border-b">
+            <div className="relative">
+              <FiSearch className="absolute top-3 left-3 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search..."
+                className="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+          {/* Conversation Items */}
+          <div className="flex-1 overflow-y-auto">
             {conversations.length > 0 ? (
-              conversations.map((conv) => (
-                <div
-                  key={conv.partnerId}
-                  onClick={() => handleUserClick(conv)}
-                  className="flex items-center space-x-4 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
-                >
-                  <img
-                    src={getImageUrl(conv.profile_image)}
-                    alt={conv.name}
-                    className="w-10 h-10 rounded-full"
-                  />
-                  <div className="flex-1">
-                    <div className="flex justify-between items-center">
-                      <h3 className="font-semibold">{conv.name}</h3>
-                      {conv.lastMessageTime && (
-                        <span className="text-xs text-gray-400">
-                          {new Date(conv.lastMessageTime).toLocaleTimeString(
-                            [],
-                            { hour: "2-digit", minute: "2-digit" }
-                          )}
-                        </span>
+              conversations.map((conv) => {
+                // Highlight the selected conversation
+                const isActive =
+                  selectedConversation &&
+                  selectedConversation.participants &&
+                  selectedConversation.participants.partner._id === conv.partnerId;
+                return (
+                  <button
+                    key={conv.partnerId}
+                    onClick={() => handleUserClick(conv)}
+                    className={`w-full text-left px-6 py-4 border-b flex items-center space-x-4 hover:bg-gray-50 focus:outline-none transition-colors ${
+                      isActive ? "bg-orange-50" : ""
+                    }`}
+                  >
+                    <img
+                      src={getImageUrl(conv.profile_image)}
+                      alt={conv.name}
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                    <div className="flex-1">
+                      <div className="text-sm font-semibold text-gray-800">
+                        {conv.name}
+                      </div>
+                      {conv.lastMessage && (
+                        <div className="text-xs text-gray-500 truncate">
+                          {conv.lastMessage}
+                        </div>
                       )}
                     </div>
-                    <p className="text-gray-500 text-sm">{conv.lastMessage}</p>
-                  </div>
-                </div>
-              ))
+                  </button>
+                );
+              })
             ) : (
-              <p className="text-gray-500">No conversations found.</p>
+              <p className="text-gray-500 p-6">No conversations found.</p>
             )}
           </div>
-        </aside>
+        </div>
 
-        {/* Chat Area */}
-        <main className="flex-1 p-4 flex flex-col ml-80">
+        {/* Chat Panel */}
+        <div className="flex-1 flex flex-col">
           {selectedConversation ? (
             <>
               {/* Chat Header */}
-              <div className="flex items-center border-b pb-3 mb-4 fixed w-[calc(100%-20rem)] text-black z-10 p-4">
+              <div className="bg-white text-black px-6 py-4 flex items-center space-x-4 shadow">
                 <img
-                  src={getImageUrl(selectedConversation.profile_image)}
+                  src={getProfileImageUrl(
+                    selectedConversation.participants.partner.profile_image
+                  )}
                   alt={selectedConversation.name}
-                  className="w-12 h-12 rounded-full object-cover shadow-md"
+                  className="w-12 h-12 rounded-full object-cover border-2 border-white"
                 />
-                <h3 className="ml-4 text-xl font-semibold">
+                <h3 className="text-xl font-bold">
                   {selectedConversation.name}
                 </h3>
               </div>
 
-              {/* Chat Messages */}
-              <div className="flex-1 overflow-y-auto space-y-4 pr-2 mt-20 pb-24 bg-gradient-to-b from-orange-50 to-white">
+              {/* Messages List */}
+              <div className="flex-1 overflow-y-auto p-6 bg-gray-50 space-y-4">
                 {selectedConversation.messages &&
                 selectedConversation.messages.length > 0 ? (
                   selectedConversation.messages.map((msg) => (
                     <div
                       key={msg._id}
-                      className={`flex flex-col ${
-                        msg.senderLabel === "You"
-                          ? "items-end mr-4"
-                          : "items-start ml-4"
+                      className={`flex flex-col text-sm ${
+                        msg.senderLabel === "You" ? "items-end" : "items-start"
                       }`}
                     >
+                      {/* Sender Label */}
+                      <span className="text-xs text-gray-400 mb-1">
+                        {msg.senderLabel}
+                      </span>
+                      {/* Message Bubble */}
                       <div
-                        className={`px-4 py-2 rounded-lg max-w-xs break-words shadow ${
+                        className={`px-4 py-2 rounded-xl max-w-lg break-words shadow-sm ${
                           msg.senderLabel === "You"
                             ? "bg-orange-500 text-white rounded-br-none"
-                            : "bg-gray-200 text-gray-800 rounded-bl-none"
+                            : "bg-white text-gray-800 rounded-bl-none"
                         }`}
                       >
                         {msg.message}
                       </div>
-                      <span className="mt-1 text-xs text-gray-500">
-                        {msg.senderLabel} •{" "}
+                      {/* Timestamp */}
+                      <span className="mt-1 text-xs text-gray-400">
                         {new Date(msg.createdAt).toLocaleTimeString([], {
                           hour: "2-digit",
                           minute: "2-digit",
@@ -333,46 +360,47 @@ const UserChat = () => {
                     </div>
                   ))
                 ) : (
-                  <p className="text-center text-gray-500">No messages yet...</p>
+                  <p className="text-center text-gray-500 mt-8">
+                    No messages yet...
+                  </p>
                 )}
               </div>
 
               {/* Chat Input */}
-              <div className="flex items-center border-t pt-3 mt-4 fixed bottom-0 w-[calc(100%-20rem)] bg-white z-10 p-4">
+              <div className="border-t p-4 bg-white flex items-center space-x-2">
                 <input
                   type="text"
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleSendMessage();
-                    }
+                    if (e.key === "Enter") handleSendMessage();
                   }}
                   placeholder="Type a message..."
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  className="flex-1 border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
                 />
-                <button className="ml-2 text-gray-600 hover:text-gray-800">
+                <button className="text-gray-600 hover:text-gray-800 transition-colors">
                   <FiImage size={20} />
                 </button>
-                <button className="ml-2 text-gray-600 hover:text-gray-800">
+                <button className="text-gray-600 hover:text-gray-800 transition-colors">
                   <FiPaperclip size={20} />
                 </button>
                 <button
                   onClick={handleSendMessage}
-                  className="bg-orange-500 text-white ml-2 px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+                  className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
                 >
                   Send
                 </button>
               </div>
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center">
-              <h2 className="text-xl text-gray-500">
+            // If no conversation is selected
+            <div className="flex flex-col items-center justify-center h-full">
+              <h2 className="text-xl text-gray-500 font-semibold">
                 Select a conversation to start chatting.
               </h2>
             </div>
           )}
-        </main>
+        </div>
       </div>
     </div>
   );

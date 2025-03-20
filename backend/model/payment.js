@@ -33,7 +33,7 @@ const paymentSchema = new mongoose.Schema({
   payment_type: {
     type: String,
     enum: ["Advance", "Full"],
-    required: true,
+    required: false,
   },
   due_date: {
     type: Date,

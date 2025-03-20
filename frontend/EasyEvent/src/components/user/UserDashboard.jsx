@@ -47,10 +47,6 @@ const UserDashboard = () => {
         <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
           <div className="flex space-x-6">
             <select className="px-6 py-3 border rounded-lg">
-              <option>Trending Venues</option>
-              <option>Most Booked</option>
-            </select>
-            <select className="px-6 py-3 border rounded-lg">
               <option>Sort by Rating</option>
               <option>High to Low</option>
               <option>Low to High</option>
@@ -62,7 +58,6 @@ const UserDashboard = () => {
               <option>Jhapa</option>
             </select>
           </div>
-     
         </div>
 
         {/* Venues Grid or No Venues Message */}
@@ -121,9 +116,25 @@ const UserDashboard = () => {
             ))}
           </div>
         ) : (
-          // This block displays when no venues exist or match the search criteria.
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-xl">No venues available.</p>
+          <div className="flex flex-col items-center justify-center text-center py-20">
+            <img
+              src="https://via.placeholder.com/300x200?text=No+Venues+Available"
+              alt="No venues available"
+              className="w-60 h-40 mb-6"
+            />
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              No Venues Available
+            </h2>
+            <p className="text-gray-600 mb-4">
+              It seems we don't have any venues at the moment. Please check back
+              later or explore other options.
+            </p>
+            <Link
+              to="/"
+              className="px-6 py-2 bg-orange-600 text-white font-medium rounded-lg shadow-md hover:bg-orange-700 transition duration-300"
+            >
+              Explore Other Options
+            </Link>
           </div>
         )}
       </main>

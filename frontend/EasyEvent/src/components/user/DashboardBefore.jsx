@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
 import BottomNavbar from "./BottomNavbar";
 
 const DashboardBefore = () => {
@@ -14,10 +13,16 @@ const DashboardBefore = () => {
     const fetchVenues = async () => {
       try {
         const response = await fetch("http://localhost:8000/api/venues");
+        if (!response.ok) {
+          console.error("Error fetching venues:", response.statusText);
+          setVenues([]); // Fallback to an empty array if the response is not OK
+          return;
+        }
         const data = await response.json();
-        setVenues(data.venues); // Assuming 'venues' is the key in the API response
+        setVenues(data.venues || []); // Ensure venues is an array
       } catch (error) {
         console.error("Error fetching venues:", error);
+        setVenues([]); // Fallback to an empty array if there's an error
       }
     };
     fetchVenues();
@@ -72,62 +77,77 @@ const DashboardBefore = () => {
       {/* Main Content */}
       <div className="min-h-screen bg-white">
         <main className="container mx-auto px-6 py-12">
-          {/* Venues Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {filteredVenues.map((venue) => (
-              <div
-                key={venue.id}
-                onClick={openModal}
-                className="bg-white shadow-lg rounded-lg overflow-hidden transition transform hover:scale-105 cursor-pointer"
+          {filteredVenues.length === 0 ? (
+            <div className="flex flex-col items-center justify-center text-center py-20">
+              <img
+                src="https://via.placeholder.com/300x200?text=No+Venues+Available"
+                alt="No venues"
+                className="w-60 h-40 mb-6"
+              />
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                No Venues Available
+              </h2>
+              <p className="text-gray-600 mb-4">
+                Sorry, there are no venues listed at the moment. Please check back later.
+              </p>
+              <button
+                onClick={() => navigate("/")}
+                className="px-6 py-2 bg-orange-600 text-white font-medium rounded-lg shadow-md hover:bg-orange-700 transition duration-300"
               >
-                <img
-                  src={
-                    venue.profile_image
-                      ? `http://localhost:8000/${venue.profile_image.replace(
-                          /\\/g,
-                          "/"
-                        )}`
-                      : "https://via.placeholder.com/300"
-                  }
-                  alt={venue.name}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">
-                    {venue.name}
-                  </h3>
-                  <p className="text-gray-600 mb-4">
-                    {venue.location.address}, {venue.location.city},{" "}
-                    {venue.location.state} {venue.location.zip_code}
-                  </p>
-                  <p className="text-gray-500 text-sm mb-4">
-                    {venue.description}
-                  </p>
-                  <div>
-                    {isNaN(parseFloat(venue.rating)) ? (
-                      <p className="text-gray-500 text-sm">{venue.rating}</p>
-                    ) : (
-                      <div className="flex items-center">
-                        {Array(Math.floor(parseFloat(venue.rating)))
-                          .fill()
-                          .map((_, index) => (
-                            <span
-                              key={index}
-                              className="text-orange-500 text-xl"
-                            >
-                              ★
-                            </span>
-                          ))}
-                        {parseFloat(venue.rating) % 1 !== 0 && (
-                          <span className="text-orange-500 text-xl">☆</span>
-                        )}
-                      </div>
-                    )}
+                Explore Other Options
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {filteredVenues.map((venue) => (
+                <div
+                  key={venue.id}
+                  onClick={openModal}
+                  className="bg-white shadow-lg rounded-lg overflow-hidden transition transform hover:scale-105 cursor-pointer"
+                >
+                  <img
+                    src={
+                      venue.profile_image
+                        ? `http://localhost:8000/${venue.profile_image.replace(/\\/g, "/")}`
+                        : "https://via.placeholder.com/300"
+                    }
+                    alt={venue.name}
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">
+                      {venue.name}
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      {venue.location.address}, {venue.location.city},{" "}
+                      {venue.location.state} {venue.location.zip_code}
+                    </p>
+                    <p className="text-gray-500 text-sm mb-4">
+                      {venue.description}
+                    </p>
+                    <div>
+                      {isNaN(parseFloat(venue.rating)) ? (
+                        <p className="text-gray-500 text-sm">{venue.rating}</p>
+                      ) : (
+                        <div className="flex items-center">
+                          {Array(Math.floor(parseFloat(venue.rating)))
+                            .fill()
+                            .map((_, index) => (
+                              <span key={index} className="text-orange-500 text-xl">
+                                ★
+                              </span>
+                            ))}
+                          {parseFloat(venue.rating) % 1 !== 0 && (
+                            <span className="text-orange-500 text-xl">☆</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </main>
         <BottomNavbar />
       </div>

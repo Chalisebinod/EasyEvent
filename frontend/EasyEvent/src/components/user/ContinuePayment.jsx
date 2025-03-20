@@ -4,7 +4,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 
 const paymentOptions = [
-  { name: "Khalti", logo: "/khalti-logo.png" },
+  { name: "Khalti", logo: "/khalti.png" },
   { name: "eSewa", logo: "/esewa-logo.png" },
   { name: "IMEpay", logo: "/imepay-logo.png" },
 ];
@@ -16,6 +16,7 @@ export default function ContinuePayment() {
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  console.log("booking",bookingId);
 
   // Retrieve token from localStorage
   const token = localStorage.getItem("access_token");
@@ -73,7 +74,7 @@ export default function ContinuePayment() {
           localStorage.removeItem("access_token");
           const redirectUrl = window.location.pathname + window.location.search;
           localStorage.setItem("redirect_after_login", redirectUrl);
-          navigate("/login", { replace: true });
+          navigate("/user-dashboard", { replace: true });
         } else {
           toast.error("Payment initiation failed! Please try again.");
         }

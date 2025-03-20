@@ -10,6 +10,7 @@ const KYCPage = () => {
   const fileInputRefs = useRef({});
   const [loading, setLoading] = useState(false);
   const [existingKyc, setExistingKyc] = useState(null); // stores fetched KYC data
+  const [kycSubmitted, setKycSubmitted] = useState(false); // New state for submitted KYC
 
   // To store preview URLs for individual document uploads
   const [docPreviewUrls, setDocPreviewUrls] = useState({});
@@ -119,14 +120,13 @@ const KYCPage = () => {
     setFormValues((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  // Handle file input changes
-  // If "multiple" is true, we assume the field is for venue images.
+  // Handle file input changes for documents
   const handleFileChange = (field, e, multiple = false) => {
     if (!isEditable) return; // Prevent changes if not editable
 
     if (multiple) {
+      // Not used now since venue images have their own handler.
       const files = Array.from(e.target.files);
-      // Check if appending these files would exceed the limit of 3 images
       if (venueImages.length + files.length > 3) {
         alert("You can only upload a total of 3 venue images.");
         return;
@@ -134,13 +134,11 @@ const KYCPage = () => {
       const urls = files.map((file) => URL.createObjectURL(file));
       setVenueImages((prev) => [...prev, ...files]);
       setVenueImagesUrls((prev) => [...prev, ...urls]);
-      // Clear the file input
       e.target.value = "";
     } else {
       const file = e.target.files[0];
       if (!file) return;
 
-      // Validate file type and size (max 5MB)
       const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];
       const maxSize = 5 * 1024 * 1024;
       if (!allowedTypes.includes(file.type) || file.size > maxSize) {
@@ -151,6 +149,30 @@ const KYCPage = () => {
       setDocPreviewUrls((prev) => ({ ...prev, [field]: url }));
       setDocFiles((prev) => ({ ...prev, [field]: file }));
     }
+  };
+
+  // New handler for each venue image slot (single file per slot)
+  const handleVenueImageChange = (index, e) => {
+    if (!isEditable) return;
+    const file = e.target.files[0];
+    if (!file) return;
+    const allowedTypes = ["image/jpeg", "image/png"];
+    const maxSize = 5 * 1024 * 1024;
+    if (!allowedTypes.includes(file.type) || file.size > maxSize) {
+      alert("Invalid file! Only JPG and PNG under 5MB are allowed for venue images.");
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setVenueImages((prev) => {
+      const newArr = [...prev];
+      newArr[index] = file;
+      return newArr;
+    });
+    setVenueImagesUrls((prev) => {
+      const newArr = [...prev];
+      newArr[index] = url;
+      return newArr;
+    });
   };
 
   // Handle form submission to send the KYC data
@@ -172,9 +194,9 @@ const KYCPage = () => {
     }
     // ... (other document validations)
 
-    // Validate venue images using the preview array (which holds both existing and new uploads)
-    const totalVenueImages = venueImagesUrls.length;
-    if (totalVenueImages !== 3) {
+    // Validate venue images by checking if all 3 slots are filled
+    const filledImagesCount = venueImagesUrls.filter((url) => !!url).length;
+    if (filledImagesCount !== 3) {
       alert("Please upload exactly 3 venue images.");
       return;
     }
@@ -196,7 +218,9 @@ const KYCPage = () => {
 
     // Append new venue images (if any)
     venueImages.forEach((file) => {
-      formDataToSend.append("venueImages", file);
+      if (file) {
+        formDataToSend.append("venueImages", file);
+      }
     });
 
     try {
@@ -213,8 +237,9 @@ const KYCPage = () => {
       );
 
       if (response.status === 200) {
-        toast.success("KYC updated successfully!");
-        navigate("/venue-owner-dashboard");
+        toast.success("KYC submitted successfully!");
+        // Instead of navigating immediately, show a professional submission message
+        setKycSubmitted(true);
       }
     } catch (error) {
       alert(
@@ -225,12 +250,32 @@ const KYCPage = () => {
     }
   };
 
-  console.log("Checking the kyc data", existingKyc);
+  // If KYC is submitted, display a professional confirmation screen
+  if (kycSubmitted) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+        <div className="max-w-md mx-auto bg-white shadow-md rounded-lg p-6 text-center">
+          <h2 className="text-2xl font-bold text-orange-600 mb-4">KYC Submitted</h2>
+          <p className="text-gray-700 mb-6">
+            Your KYC has been submitted successfully and is now under review. Verification may take some time.
+            Please check your email for updates or contact support if you have any questions.
+          </p>
+          <button
+            onClick={() => navigate("/venue-owner-dashboard")}
+            className="bg-orange-600 text-white px-6 py-2 rounded-md font-semibold hover:bg-orange-700 transition"
+          >
+            Go to Dashboard
+          </button>
+        </div>
+        <ToastContainer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex">
       <VenueSidebar />
       <div className="flex-grow">
-       
         <main className="p-8 bg-gray-50">
           <div className="max-w-3xl mx-auto bg-white shadow rounded-lg p-6">
             <h2 className="text-xl font-bold text-orange-600 mb-4 text-center">
@@ -242,8 +287,7 @@ const KYCPage = () => {
               <div className="mb-4 p-4 border rounded-md text-center">
                 {existingKyc.status === "pending" && (
                   <p className="text-blue-600">
-                    Your KYC has been submitted for review. You cannot edit your
-                    details until a decision is made.
+                    Your KYC has been submitted for review. You cannot edit your details until a decision is made.
                   </p>
                 )}
                 {existingKyc.status === "approved" && (
@@ -269,10 +313,7 @@ const KYCPage = () => {
                 </h3>
                 <div className="grid grid-cols-1 gap-4">
                   <div>
-                    <label
-                      htmlFor="venueName"
-                      className="block text-gray-700 font-medium"
-                    >
+                    <label htmlFor="venueName" className="block text-gray-700 font-medium">
                       Venue Name <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -287,10 +328,7 @@ const KYCPage = () => {
                     />
                   </div>
                   <div>
-                    <label
-                      htmlFor="address"
-                      className="block text-gray-700 font-medium"
-                    >
+                    <label htmlFor="address" className="block text-gray-700 font-medium">
                       Address <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -306,10 +344,7 @@ const KYCPage = () => {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label
-                        htmlFor="city"
-                        className="block text-gray-700 font-medium"
-                      >
+                      <label htmlFor="city" className="block text-gray-700 font-medium">
                         City <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -324,10 +359,7 @@ const KYCPage = () => {
                       />
                     </div>
                     <div>
-                      <label
-                        htmlFor="state"
-                        className="block text-gray-700 font-medium"
-                      >
+                      <label htmlFor="state" className="block text-gray-700 font-medium">
                         State <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -342,10 +374,7 @@ const KYCPage = () => {
                       />
                     </div>
                     <div>
-                      <label
-                        htmlFor="zip_code"
-                        className="block text-gray-700 font-medium"
-                      >
+                      <label htmlFor="zip_code" className="block text-gray-700 font-medium">
                         Zip Code <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -370,10 +399,7 @@ const KYCPage = () => {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {fileFields.map((field) => (
-                    <div
-                      key={field}
-                      className="flex flex-col items-center border p-4 rounded-md"
-                    >
+                    <div key={field} className="flex flex-col items-center border p-4 rounded-md">
                       <label className="mb-2 text-gray-700 font-medium capitalize">
                         {field.replace(/([A-Z])/g, " $1")}
                       </label>
@@ -392,9 +418,7 @@ const KYCPage = () => {
                         <>
                           <button
                             type="button"
-                            onClick={() =>
-                              fileInputRefs.current[field]?.click()
-                            }
+                            onClick={() => fileInputRefs.current[field]?.click()}
                             className="bg-orange-500 text-white px-3 py-1 rounded hover:bg-orange-600 transition"
                           >
                             Upload
@@ -419,12 +443,8 @@ const KYCPage = () => {
                   Upload Venue Images <span className="text-red-500">*</span>
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Render 3 image slots */}
                   {[0, 1, 2].map((index) => (
-                    <div
-                      key={index}
-                      className="border p-4 rounded-md flex flex-col items-center"
-                    >
+                    <div key={index} className="border p-4 rounded-md flex flex-col items-center">
                       {venueImagesUrls[index] ? (
                         <img
                           src={venueImagesUrls[index]}
@@ -434,34 +454,26 @@ const KYCPage = () => {
                       ) : (
                         <span className="text-gray-400 text-sm">No file</span>
                       )}
+                      {isEditable && (
+                        <>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            ref={(el) => (fileInputRefs.current[`venueImage${index}`] = el)}
+                            onChange={(e) => handleVenueImageChange(index, e)}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => fileInputRefs.current[`venueImage${index}`]?.click()}
+                            className="mt-2 bg-orange-500 text-white px-3 py-1 rounded hover:bg-orange-600 transition"
+                          >
+                            Upload Image {index + 1}
+                          </button>
+                        </>
+                      )}
                     </div>
                   ))}
-                  {/* Venue image upload button (only if editable) */}
-                  {isEditable && (
-                    <div className="border p-4 rounded-md flex flex-col items-center">
-                      <input
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        onChange={(e) =>
-                          handleFileChange("venueImages", e, true)
-                        }
-                        className="hidden"
-                        ref={(el) =>
-                          (fileInputRefs.current["venueImages"] = el)
-                        }
-                      />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          fileInputRefs.current["venueImages"]?.click()
-                        }
-                        className="bg-orange-500 text-white px-3 py-1 rounded hover:bg-orange-600 transition"
-                      >
-                        Upload Venue Images
-                      </button>
-                    </div>
-                  )}
                 </div>
                 <small className="mt-2 text-gray-500">
                   Please upload exactly 3 images.

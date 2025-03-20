@@ -7,6 +7,22 @@ import io from "socket.io-client";
 // Adjust if your images are served from a different URL
 const BASE_IMAGE_URL = "http://localhost:8000/";
 
+// Helper to get full image URL for conversation images
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return "https://via.placeholder.com/40";
+  return imagePath.startsWith("http")
+    ? imagePath
+    : BASE_IMAGE_URL + imagePath;
+};
+
+// NEW: Helper to get full profile image URL for partner profile pictures
+const getProfileImageUrl = (imagePath) => {
+  if (!imagePath) return "https://via.placeholder.com/150";
+  return imagePath.startsWith("http")
+    ? imagePath
+    : BASE_IMAGE_URL + imagePath;
+};
+
 const AllChat = () => {
   const [conversations, setConversations] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -19,14 +35,6 @@ const AllChat = () => {
 
   // Socket reference
   const socketRef = useRef();
-
-  // Helper: get full image URL or fallback
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return "https://via.placeholder.com/40";
-    return imagePath.startsWith("http")
-      ? imagePath
-      : BASE_IMAGE_URL + imagePath;
-  };
 
   // 1) Fetch conversation list
   const fetchConversations = async (query = "") => {
@@ -314,7 +322,9 @@ const AllChat = () => {
               {/* Chat Header */}
               <div className="bg-blue-600 text-white px-6 py-4 flex items-center space-x-4 shadow">
                 <img
-                  src={getImageUrl(selectedConversation.profile_image)}
+                  src={getProfileImageUrl(
+                    selectedConversation.participants.partner.profile_image
+                  )}
                   alt={selectedConversation.name}
                   className="w-12 h-12 rounded-full object-cover border-2 border-white"
                 />
@@ -322,6 +332,8 @@ const AllChat = () => {
                   {selectedConversation.name}
                 </h3>
               </div>
+              
+              
 
               {/* Messages List */}
               <div className="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-4">

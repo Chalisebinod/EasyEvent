@@ -83,9 +83,9 @@ const updateKYC = async (req, res) => {
       const existingKyc = await Kyc.findOne({ owner: existingOwner._id });
 
       if (existingKyc) {
-        // If the KYC record already exists and its status is not "Rejected",
+        // If the KYC record already exists and its status is not "rejected",
         // do not allow a new submission.
-        if (existingKyc.verificationStatus !== "Rejected") {
+        if (existingKyc.verificationStatus.toLowerCase() !== "rejected") {
           return res.status(400).json({
             error:
               "You have already submitted a KYC. Please check your current status.",
@@ -94,7 +94,7 @@ const updateKYC = async (req, res) => {
         }
         // If the previous KYC was rejected, allow reapplication by updating the record.
         Object.assign(existingKyc, updateData);
-        existingKyc.verificationStatus = "Pending"; // Reset status for reapplication
+        existingKyc.verificationStatus = "pending"; // Reset status for reapplication
         existingKyc.rejectMsg = null; // Clear any previous rejection message
         await existingKyc.save();
 
@@ -123,7 +123,6 @@ const updateKYC = async (req, res) => {
     res.status(500).json({ error: "Server error. Please try again later." });
   }
 };
-
 
 // Updated verifyKYC controller
 const verifyKYC = async (req, res) => {
@@ -245,8 +244,6 @@ const verifyKYC = async (req, res) => {
     res.status(500).json({ error: "Server error. Please try again later." });
   }
 };
-
-
 
 // Other KYC controllers remain unchanged
 

@@ -1,6 +1,7 @@
 const Payment = require("../model/payment");
 const axios = require("axios");
 const BookingRequest = require("../model/bookingSchema");
+const Venue = require("../model/venue");
 
 require('dotenv').config();
 
@@ -25,7 +26,7 @@ const initiatePayment = async (req, res) => {
     } = req.body;
     const roundedAmount = Math.round(amount);
 
-    console.log("booking id", amount);
+    console.log("booking id", roundedAmount);
     // Find the related booking
     const booking = await BookingRequest.findById(bookingId);
     if (!booking) {
@@ -43,7 +44,6 @@ const initiatePayment = async (req, res) => {
       amount: roundedAmount * 100, // Convert to paisa
       purchase_order_id,
       purchase_order_name,
-      payment_type: "payment" // Required field per documentation
     };
 
     const response = await axios.post(
@@ -60,7 +60,6 @@ const initiatePayment = async (req, res) => {
       payment_method: "Khalti",
       transaction_id: response.data.pidx,
       payment_status: "Pending",
-      payment_type: "payment" 
     });
 
     await newPayment.save();
@@ -150,6 +149,31 @@ const verifyPayment = async (req, res) => {
           error: error.message,
         });
     }
+  }
+};
+
+// Controller to fetch payments under a venue owner's bookings
+const getOwnerPayments = async (req, res) => {
+  try {
+    const ownerId = req.user.id;
+    
+    // Find venues owned by the logged-in venue owner
+    const venues = await Venue.find({ owner: ownerId }).select("_id");
+    const venueIds = venues.map(venue => venue._id);
+    
+    // Find bookings under these venues
+    const bookings = await BookingRequest.find({ venue: { $in: venueIds } }).select("_id");
+    const bookingIds = bookings.map(booking => booking._id);
+    
+    // Fetch payments associated with those bookings
+    const payments = await Payment.find({ booking: { $in: bookingIds } })
+      .populate("user", "name email")
+      .populate("booking", "event_details.date venue")
+      .sort({ created_at: -1 });
+    
+    res.status(200).json({ success: true, payments });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
 
@@ -246,4 +270,4 @@ const refundPayment = async (req, res) => {
   }
 };
 
-module.exports = { initiatePayment, verifyPayment,fetchReceivedAmount,refundPayment };
+module.exports = { initiatePayment, verifyPayment,fetchReceivedAmount,refundPayment, getOwnerPayments };

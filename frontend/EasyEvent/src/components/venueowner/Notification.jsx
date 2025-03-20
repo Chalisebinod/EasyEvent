@@ -7,6 +7,7 @@ const Notification = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Fetch notifications on mount
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
@@ -30,6 +31,7 @@ const Notification = () => {
     fetchNotifications();
   }, []);
 
+  // Mark a single notification as read
   const markAsRead = async (id) => {
     try {
       const token = localStorage.getItem("access_token");
@@ -53,9 +55,26 @@ const Notification = () => {
     }
   };
 
+  // Mark all notifications as read
   const markAllAsRead = async () => {
     try {
-      // Optionally perform an API call to update the backend as well.
+      const token = localStorage.getItem("access_token");
+      // Loop through all notifications that are not read and mark them as read on the backend
+      const unreadNotifications = notifications.filter((notification) => !notification.read);
+      await Promise.all(
+        unreadNotifications.map((notification) =>
+          axios.put(
+            `http://localhost:8000/api/notification/markRead/${notification._id}`,
+            {},
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          )
+        )
+      );
+      // Then update local state so that all notifications are marked as read
       setNotifications((prev) =>
         prev.map((notification) => ({ ...notification, read: true }))
       );
@@ -64,6 +83,7 @@ const Notification = () => {
     }
   };
 
+  // Clear all notifications
   const clearNotifications = async () => {
     try {
       setNotifications([]);
@@ -71,6 +91,9 @@ const Notification = () => {
       console.error("Failed to clear notifications", err);
     }
   };
+
+  // Compute unread notifications count
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
     <div className="flex min-h-screen">
@@ -98,7 +121,13 @@ const Notification = () => {
               </svg>
               Notifications
             </h2>
-            <div className="flex space-x-4 mt-4 sm:mt-0">
+            <div className="flex space-x-4 mt-4 sm:mt-0 items-center">
+              {/* Notification count badge */}
+              {unreadCount > 0 && (
+                <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm">
+                  {unreadCount} New
+                </span>
+              )}
               {notifications.length > 0 && (
                 <>
                   <button

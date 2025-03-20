@@ -58,6 +58,7 @@ import ApprovedBookingDetails from "./components/venueowner/ApprovedBookingDetai
 import UserChat from "./components/user/chat/UserChat";
 import VenuePage from "./components/admin/VenuePage";
 import AboutUs from "./components/user/Aboutus";
+import MyBookings from "./components/user/MyBookings";
 
 function App() {
   // useEffect(() => {
@@ -146,6 +147,7 @@ function App() {
         <Route path="/kyc-request" element={<KycRequest />} />
         <Route path="/kyc-profile/:kycId" element={<KycProfile />} />
         <Route path="about-us" element={<AboutUs />} />
+        <Route path="user-bookings" element={<MyBookings />} />
 
         <Route
           path="/venueOwner-profile/:id"
