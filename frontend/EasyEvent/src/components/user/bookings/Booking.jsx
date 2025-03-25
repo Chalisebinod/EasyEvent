@@ -218,6 +218,7 @@ const Booking = () => {
       },
     };
 
+    
     fetch("http://localhost:8000/api/booking/create", {
       method: "POST",
       headers: {
