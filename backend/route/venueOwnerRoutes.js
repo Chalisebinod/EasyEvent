@@ -10,7 +10,9 @@ const {
   getVenueOwnerProfile,
   updateVenueOwnerProfile,
   changeVenueOwnerPassword,
+  getVenueOwnerStats,
 } = require("../controller/venueOwnerController");
+const { updateBookingStatus } = require("../controller/bookingController");
 
 const router = express.Router();
 
@@ -25,6 +27,13 @@ const router = express.Router();
 
 // // Delete a venue
 // router.delete("/venues/:venueId", verifyToken, deleteVenue);
+
+
+router.post(
+  "/stats",
+  checkAuthentication,
+  checkIsVenueOwner,
+  getVenueOwnerStats)
 
 router.get(
   "/check-kyc-status",
@@ -55,5 +64,5 @@ router.put(
   checkIsVenueOwner,
   changeVenueOwnerPassword
 );
-
+router.patch("/updateStatus",checkAuthentication , updateBookingStatus);
 module.exports = router;
