@@ -32,6 +32,7 @@ router.get(
 // New route for fetching all venues
 router.get("/admin/venues", checkAuthentication, checkIsAdmin, venueForAdmmin);
 
+
 router.put(
   "/users/block/:userId",
   checkAuthentication,
