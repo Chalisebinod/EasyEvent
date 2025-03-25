@@ -55,6 +55,7 @@ function Request() {
           }
         );
         setRequests(response.data.requests);
+        console.log("Requests fetched:", response.data.requests);
       } catch (error) {
         console.error("Error fetching requests:", error);
       }
