@@ -1,6 +1,9 @@
 const Booking = require("../model/bookingSchema");
 const User = require("../model/user");
 const VenueOwner = require("../model/venueOwner");
+const Venue = require("../model/venue");
+const BookingRequest = require("../model/request");
+const nodemailer = require("nodemailer");
 
 // Create a new booking
 exports.createBooking = async (req, res) => {
@@ -89,7 +92,7 @@ exports.getBookings = async (req, res) => {
     }
     // Optionally sort by event date ascending (earliest first)
     const bookings = await Booking.find(filter)
-      .populate("user", "name email")
+      .populate("user", "name email profile_image")
       .populate("hall", "name capacity")
       .populate("selected_foods", "name price")
       .sort({ "event_details.date": 1 });
@@ -97,5 +100,140 @@ exports.getBookings = async (req, res) => {
   } catch (error) {
     console.error("Get Bookings Error:", error);
     res.status(500).json({ message: "Failed to fetch bookings", error: error.message });
+  }
+};
+
+// Update booking status for both request and confirmed bookings
+exports.updateBookingStatus = async (req, res) => {
+  try {
+    const ownerId = req.user.id;
+    const { bookingId, requestId, isCompleted } = req.body;
+
+    if (typeof isCompleted !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        message: "isCompleted must be a boolean value"
+      });
+    }
+
+    if (!bookingId || !requestId) {
+      return res.status(400).json({
+        success: false,
+        message: "Both bookingId and requestId are required"
+      });
+    }
+
+    // First find both the booking and request to verify they exist
+    const [booking, request] = await Promise.all([
+      Booking.findById(bookingId).populate("user venue"),
+      BookingRequest.findById(requestId)
+    ]);
+
+    if (!booking || !request) {
+      return res.status(404).json({
+        success: false,
+        message: !booking ? "Booking not found" : "Request not found"
+      });
+    }
+
+    // Verify they belong to the same venue and user
+    if (booking.venue._id.toString() !== request.venue.toString() || 
+        booking.user._id.toString() !== request.user.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: "Booking and request details do not match"
+      });
+    }
+
+    // Check if the venue belongs to the owner
+    const venue = await Venue.findOne({
+      _id: booking.venue._id,
+      owner: ownerId
+    });
+
+    if (!venue) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to update this booking's status"
+      });
+    }
+
+    // Update both BookingRequest and Booking models using their respective IDs
+    const [updatedBooking, updatedRequest] = await Promise.all([
+      Booking.findByIdAndUpdate(
+        bookingId,
+        { 
+          booking_statius: isCompleted,
+          status: isCompleted ? "Completed" : "Running"
+        },
+        { new: true }
+      ),
+      BookingRequest.findByIdAndUpdate(
+        requestId,
+        { 
+          booking_statius: isCompleted,
+          status: isCompleted ? "Completed" : "Running"
+        },
+        { new: true }
+      )
+    ]);
+
+    // If event is marked as completed, send email to user with review link
+    if (isCompleted) {
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+
+      const htmlContent = `
+        <html>
+          <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+            <div style="max-width:600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+              <h2 style="color: #2e7d32; text-align: center;">Event Completed Successfully!</h2>
+              <p>Dear ${booking.user.name},</p>
+              <p>Your event at <strong>${booking.venue.name}</strong> has been marked as completed.</p>
+              <p>We hope you had a wonderful experience! We would greatly appreciate if you could take a moment to share your feedback.</p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="http://localhost:5173/review/${bookingId}" 
+                   style="display: inline-block; padding: 12px 24px; background-color: #2e7d32; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                  Share Your Review
+                </a>
+              </div>
+              <p>Your feedback helps us improve our services and assists other users in making informed decisions.</p>
+              <p style="text-align: right; margin-top: 20px;">Best regards,<br>${booking.venue.name} Team</p>
+            </div>
+          </body>
+        </html>
+      `;
+
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: booking.user.email,
+        subject: "Event Completed - Share Your Experience!",
+        html: htmlContent,
+      };
+
+      await transporter.sendMail(mailOptions);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Booking marked as ${isCompleted ? 'completed' : 'incomplete'}`,
+      data: {
+        booking: updatedBooking,
+        request: updatedRequest
+      }
+    });
+
+  } catch (error) {
+    console.error("Update Booking Status Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update booking status",
+      error: error.message
+    });
   }
 };
