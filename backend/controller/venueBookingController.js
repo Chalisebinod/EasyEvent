@@ -177,21 +177,21 @@ async function getRequestsByVenue(req, res) {
       .populate("selected_foods", "name price")
       .sort({ created_at: -1 });
 
-    // Manually fetch user details from User or VenueOwner
+    // Manually fetch user details from User or VenueOwner and include profile_image
     bookingRequests = await Promise.all(
       bookingRequests.map(async (booking) => {
         let user = await User.findById(booking.user).select(
-          "name email"
+          "name email profile_image"
         );
         if (!user) {
           user = await VenueOwner.findById(booking.user).select(
-            "name email"
+            "name email profile_image"
           );
         }
         return {
           ...booking.toObject(),
           user: user
-            ? { _id: booking.user, name: user.name, email: user.email }
+            ? { _id: booking.user, name: user.name, email: user.email, profile_image: user.profile_image }
             : null,
         };
       })
@@ -434,10 +434,25 @@ async function getApprovedBookings(req, res) {
       .populate("requested_foods", "name price")
       .sort({ "event_details.date": 1 });
 
+    // Fetch corresponding request IDs
+    const enhancedBookings = await Promise.all(
+      bookings.map(async (booking) => {
+        const request = await BookingRequest.findOne({
+          venue: booking.venue,
+          user: booking.user._id
+        }).select('_id');
+
+        return {
+          ...booking.toObject(),
+          requestId: request ? request._id : null
+        };
+      })
+    );
+
     return res.status(200).json({
       success: true,
-      bookings,
-      count: bookings.length,
+      bookings: enhancedBookings,
+      count: enhancedBookings.length,
     });
   } catch (error) {
     console.error("Get Approved Bookings Error:", error);
@@ -782,6 +797,8 @@ const sendFinalConfirmationEmail = async (booking, payment, agreement) => {
 
 
 // Set payment details for an approved booking
+// Updated setPaymentDetails function based on updated Payment model
+
 async function setPaymentDetails(req, res) {
   try {
     const { bookingId } = req.params;
@@ -823,10 +840,15 @@ async function setPaymentDetails(req, res) {
       });
     }
 
+    // Create Payment document using new model fields:
+    //   - amount: the advance paid
+    //   - expected_amount: the full total cost from the booking pricing
+    //   - payment_method defaults to "Khalti"
     const payment = new Payment({
       booking: bookingId,
       user: booking.user._id,
       amount: advanceAmount,
+      expected_amount: booking.pricing.total_cost, // full expected amount
       payment_type: "Advance",
       due_date: new Date(dueDate),
       payment_instructions: paymentInstructions,
@@ -923,6 +945,52 @@ async function uploadOwnerSignature(req, res) {
   }
 }
 
+async function getPaymentDetails(req, res) {
+  try {
+    const { bookingId } = req.params;
+
+    // Optionally, fetch booking pricing info from Booking Schema
+    const booking = await Booking.findById(bookingId)
+      .select("pricing payment_status")
+      .lean();
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+
+    // Fetch Payment data from Payment model
+    const payment = await Payment.findOne({ booking: bookingId }).lean();
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: "Payment details not found for this booking",
+      });
+    }
+
+    // Optionally, compute a summary to send to the frontend
+    const summary = {
+      totalCost: booking.pricing.total_cost,
+      amountPaid: payment.amount,
+      balanceAmount: booking.pricing.total_cost - payment.amount,
+    };
+
+    return res.status(200).json({
+      success: true,
+      booking,
+      payment,
+      summary,
+    });
+  } catch (error) {
+    console.error("Get Payment Details Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch payment details",
+      error: error.message,
+    });
+  }
+}
 
 
 
@@ -939,4 +1007,5 @@ module.exports = {
   getApprovedBookingDetails,
   setPaymentDetails,
   uploadOwnerSignature,
+  getPaymentDetails
 };
