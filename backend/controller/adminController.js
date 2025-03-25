@@ -10,7 +10,7 @@ async function getAllUsers(req, res) {
       search = "",
       sort = "date",
       blockStatus = "all",
-    } = req.query; 
+    } = req.query; // Removed extra "S"
 
     // Calculate the starting index
     const startIndex = (parseInt(page) - 1) * parseInt(limit);
@@ -226,7 +226,12 @@ async function blockVenue(req, res) {
   }
 }
 
-
+/**
+ * Toggle block status for a venue owner.
+ * Additionally, update all venues belonging to this owner so that their
+ * is_blocked status matches the venue owner's block status.
+ * Expects req.params.userId to contain the venue owner's ID.
+ */
 async function blockVenueOwner(req, res) {
   const { userId } = req.params;
 
@@ -347,6 +352,8 @@ async function venueForAdmmin(req, res) {
   }
 }
 
+
+
 module.exports = {
   getAllUsers,
   getAllVenueOwners,
@@ -355,5 +362,6 @@ module.exports = {
   getAllAdmins,
   getVenueOwner,
   venueForAdmmin,
-  blockVenue
+  blockVenue,
+
 };
