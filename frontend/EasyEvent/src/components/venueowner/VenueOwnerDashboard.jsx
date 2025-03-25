@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Bar, Pie } from "react-chartjs-2";
+import { Bar, Pie, Doughnut } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -13,23 +13,21 @@ import {
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import VenueSidebar from "./VenueSidebar";
+import { FaUsers, FaBookmark, FaWarehouse, FaMoneyBillWave } from "react-icons/fa";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  ArcElement,
-  Tooltip,
-  Legend
-);
+// Register ChartJS components
+ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
 
 const VenueOwnerDashboard = () => {
-  const [verified, setVerified] = useState(null); // null indicates status not yet determined
+  // State for KYC verification and stats
+  const [verified, setVerified] = useState(null); // null: not yet determined
+  const [stats, setStats] = useState(null);
   const navigate = useNavigate();
+  const token = localStorage.getItem("access_token");
+  const venueId = localStorage.getItem("venueId");
 
+  // Check KYC status on mount
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
-
     axios
       .get("http://localhost:8000/api/check-kyc-status", {
         headers: { Authorization: `Bearer ${token}` },
@@ -47,10 +45,29 @@ const VenueOwnerDashboard = () => {
         toast.error("Error verifying KYC status.");
         setVerified(false);
       });
-  }, []);
+  }, [token]);
 
-  // Show a loader (or nothing) until we have determined the KYC status
-  if (verified === null) {
+  // Fetch venue stats once verified
+  useEffect(() => {
+    if (verified) {
+      axios
+        .post(
+          "http://localhost:8000/api/stats",
+          { venueId },
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+        .then((response) => {
+          setStats(response.data.stats);
+        })
+        .catch((error) => {
+          console.error("Error fetching stats:", error);
+          toast.error("Failed to load dashboard statistics");
+        });
+    }
+  }, [verified, token, venueId]);
+
+  // Show loader until KYC and stats are determined
+  if (verified === null || !stats) {
     return (
       <div className="h-screen flex items-center justify-center">
         Loading...
@@ -58,11 +75,10 @@ const VenueOwnerDashboard = () => {
     );
   }
 
-  // If KYC is not approved, display only the KYC warning message
+  // If KYC is not approved, show a KYC update prompt
   if (!verified) {
     return (
       <div className="h-screen flex bg-gray-100">
-        {/* Sidebar remains visible */}
         <VenueSidebar />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
@@ -70,8 +86,7 @@ const VenueOwnerDashboard = () => {
               KYC Verification Required
             </p>
             <p className="mb-6">
-              Your KYC is not approved. Please update your KYC to access the
-              dashboard.
+              Your KYC is not approved. Please update your KYC to access the dashboard.
             </p>
             <button
               className="bg-orange-600 text-white px-6 py-2 rounded hover:bg-orange-700 transition"
@@ -85,24 +100,38 @@ const VenueOwnerDashboard = () => {
     );
   }
 
-  // Dashboard data and options (rendered only if verified)
-  const barData = {
-    labels: ["A", "B", "C", "D"],
+  // Currency formatting helper
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  // Prepare data for the charts
+  const revenueData = {
+    labels: ["Received Today", "Refunded", "To Be Received"],
     datasets: [
       {
-        label: "Monthly Data",
-        data: [300, 600, 900, 1200],
-        backgroundColor: ["#f87171", "#fbbf24", "#34d399", "#60a5fa"],
+        data: [
+          stats.totalReceivedToday,
+          stats.totalRefundAmount,
+          stats.totalAmountToBeReceived,
+        ],
+        backgroundColor: ["#10B981", "#EF4444", "#F59E0B"],
+        borderWidth: 0,
       },
     ],
   };
 
-  const pieData = {
-    labels: ["Corporate", "Weddings", "Birthdays", "Others"],
+  const bookingDistributionData = {
+    labels: ["Total Halls", "Active Bookings"],
     datasets: [
       {
-        data: [40, 30, 10, 20],
-        backgroundColor: ["#60a5fa", "#34d399", "#fbbf24", "#d1d5db"],
+        data: [stats.hallCount, stats.bookingCount],
+        backgroundColor: ["#6366F1", "#8B5CF6"],
+        borderWidth: 0,
       },
     ],
   };
@@ -112,56 +141,126 @@ const VenueOwnerDashboard = () => {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: "top",
+        position: "bottom",
+        labels: {
+          padding: 20,
+          usePointStyle: true,
+        },
       },
     },
   };
 
   return (
-    <div className="h-screen flex bg-gray-100">
+    <div className="h-screen flex bg-gray-50">
       <VenueSidebar />
-      <main className="flex-1 p-6">
-        <header className="flex justify-between items-center mb-8">
-          <h2 className="text-xl font-bold text-orange-500">Dashboard</h2>
-        
+      <main className="flex-1 p-8 overflow-auto">
+        <header className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-800">Venue Analytics Dashboard</h2>
+          <p className="text-gray-600">Overview of your venue's performance</p>
         </header>
 
-        {/* Stats Section */}
-        <div className="grid grid-cols-4 gap-6 mb-8">
-          {[{ title: "Total Bookings", value: "45", bg: "bg-orange-100" }].map(
-            (stat, index) => (
-              <div
-                key={index}
-                className={`p-4 rounded shadow ${stat.bg} text-center`}
-              >
-                <h3 className="text-sm font-bold text-gray-700 mb-2">
-                  {stat.title}
-                </h3>
-                <p className="text-xl font-bold text-gray-800">{stat.value}</p>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Total Users */}
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <FaUsers className="text-blue-500 text-xl" />
               </div>
-            )
-          )}
+              <span className="text-sm font-medium text-green-500 bg-green-50 px-2 py-1 rounded">
+                Active
+              </span>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-700">{stats.totalUsers}</h3>
+            <p className="text-gray-600 text-sm">Total Users</p>
+          </div>
+
+          {/* Total Bookings */}
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <div className="bg-purple-50 p-3 rounded-lg">
+                <FaBookmark className="text-purple-500 text-xl" />
+              </div>
+              <span className="text-sm font-medium text-purple-500 bg-purple-50 px-2 py-1 rounded">
+                Bookings
+              </span>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-700">{stats.bookingCount}</h3>
+            <p className="text-gray-600 text-sm">Total Bookings</p>
+          </div>
+
+          {/* Revenue Today */}
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <div className="bg-green-50 p-3 rounded-lg">
+                <FaMoneyBillWave className="text-green-500 text-xl" />
+              </div>
+              <span className="text-sm font-medium text-green-500 bg-green-50 px-2 py-1 rounded">
+                Today
+              </span>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-700">
+              {formatCurrency(stats.totalReceivedToday)}
+            </h3>
+            <p className="text-gray-600 text-sm">Revenue Today</p>
+          </div>
+
+          {/* Total Halls */}
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <div className="bg-yellow-50 p-3 rounded-lg">
+                <FaWarehouse className="text-yellow-500 text-xl" />
+              </div>
+              <span className="text-sm font-medium text-yellow-500 bg-yellow-50 px-2 py-1 rounded">
+                Halls
+              </span>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-700">{stats.hallCount}</h3>
+            <p className="text-gray-600 text-sm">Total Halls</p>
+          </div>
         </div>
 
         {/* Charts Section */}
-        <div className="grid grid-cols-2 gap-6">
-          <div
-            className="bg-white p-4 shadow rounded"
-            style={{ height: "400px" }}
-          >
-            <h3 className="text-lg font-bold text-gray-700 mb-4">
-              Monthly Data
-            </h3>
-            <Bar data={barData} options={chartOptions} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Revenue Overview Doughnut Chart */}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Revenue Overview</h3>
+            <div className="h-80">
+              <Doughnut data={revenueData} options={chartOptions} />
+            </div>
           </div>
-          <div
-            className="bg-white p-4 shadow rounded"
-            style={{ height: "400px" }}
-          >
-            <h3 className="text-lg font-bold text-gray-700 mb-4">
-              Event Types
-            </h3>
-            <Pie data={pieData} options={chartOptions} />
+
+          {/* Booking Distribution Pie Chart */}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Booking Distribution</h3>
+            <div className="h-80">
+              <Pie data={bookingDistributionData} options={chartOptions} />
+            </div>
+          </div>
+        </div>
+
+        {/* Additional Financial Summary */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Financial Summary</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="p-4 bg-green-50 rounded-lg">
+              <p className="text-sm text-green-600 mb-1">Total Revenue Today</p>
+              <p className="text-xl font-bold text-green-700">
+                {formatCurrency(stats.totalReceivedToday)}
+              </p>
+            </div>
+            <div className="p-4 bg-red-50 rounded-lg">
+              <p className="text-sm text-red-600 mb-1">Total Refunds</p>
+              <p className="text-xl font-bold text-red-700">
+                {formatCurrency(stats.totalRefundAmount)}
+              </p>
+            </div>
+            <div className="p-4 bg-yellow-50 rounded-lg">
+              <p className="text-sm text-yellow-600 mb-1">Amount to be Received</p>
+              <p className="text-xl font-bold text-yellow-700">
+                {formatCurrency(stats.totalAmountToBeReceived)}
+              </p>
+            </div>
           </div>
         </div>
       </main>
