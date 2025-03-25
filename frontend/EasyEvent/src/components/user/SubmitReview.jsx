@@ -1,12 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import MiniLogin from "./MiniLogin";
+import { ToastContainer } from "react-toastify";
 
 /**
  * A simple star rating input component (interactive).
- * The parent can pass `rating` and `onRatingChange` props.
  */
 function StarRatingInput({ rating, onRatingChange }) {
-  // We assume rating is 1 to 5. You can adjust as needed.
   const stars = [1, 2, 3, 4, 5];
 
   return (
@@ -23,9 +23,7 @@ function StarRatingInput({ rating, onRatingChange }) {
             fill={star <= rating ? "currentColor" : "none"}
             viewBox="0 0 24 24"
             stroke="currentColor"
-            className={`w-8 h-8 ${
-              star <= rating ? "text-yellow-400" : "text-gray-400"
-            }`}
+            className={`w-8 h-8 ${star <= rating ? "text-yellow-400" : "text-gray-400"}`}
           >
             <path
               strokeLinecap="round"
@@ -48,50 +46,60 @@ function StarRatingInput({ rating, onRatingChange }) {
 }
 
 function SubmitReview() {
-  const { id: venueId } = useParams(); // or useParams().venueId
+  const { id: venueId } = useParams();
+  const [accessToken, setAccessToken] = useState(localStorage.getItem("access_token"));
+  const [showLogin, setShowLogin] = useState(false);
 
-  // Local state for rating and comment
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
-
-  // Optional: track loading, error, success states
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
+  // Prompt login if no token
+  useEffect(() => {
+    if (!accessToken) {
+      setShowLogin(true);
+    }
+  }, [accessToken]);
+
+  const handleLoginClose = () => {
+    setShowLogin(false);
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      setAccessToken(token);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!accessToken) {
+      setShowLogin(true);
+      return;
+    }
 
     setIsSubmitting(true);
     setError("");
     setSuccess(false);
 
     try {
-      // ---------------------
-      // Example: If you want to integrate the backend, uncomment the fetch call:
-      //
-      // const response = await fetch(
-      //   `http://localhost:8000/api/venues/${venueId}/reviews`,
-      //   {
-      //     method: "POST",
-      //     headers: {
-      //       "Content-Type": "application/json",
-      //     },
-      //     body: JSON.stringify({ rating, comment }),
-      //   }
-      // );
-      //
-      // if (!response.ok) {
-      //   throw new Error("Failed to submit review");
-      // }
-      // ---------------------
+      // Example API request — adjust as needed
+      // const response = await fetch(`http://localhost:8000/api/venues/${venueId}/reviews`, {
+      //   method: "POST",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //     Authorization: `Bearer ${accessToken}`,
+      //   },
+      //   body: JSON.stringify({ rating, comment }),
+      // });
 
-      // Simulate a short delay (remove this setTimeout when integrating backend)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Simulated delay
+      await new Promise((res) => setTimeout(res, 1000));
 
-      // If successful, show success message
+      // if (!response.ok) throw new Error("Failed to submit review");
+
       setSuccess(true);
-      // Clear form
       setRating(0);
       setComment("");
     } catch (err) {
@@ -101,73 +109,60 @@ function SubmitReview() {
     }
   };
 
-  // If success is true, show a simple thank-you message
   if (success) {
     return (
       <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center">
         <div className="bg-white p-6 rounded-md shadow-md text-center">
-          <h1 className="text-2xl font-bold mb-4 text-gray-800">
-            Thank You!
-          </h1>
-          <p className="text-gray-700 mb-2">
-            Your review has been submitted successfully.
-          </p>
-          <p className="text-gray-500">
-            We appreciate your feedback and hope to serve you again!
-          </p>
+          <h1 className="text-2xl font-bold mb-4 text-gray-800">Thank You!</h1>
+          <p className="text-gray-700 mb-2">Your review has been submitted successfully.</p>
+          <p className="text-gray-500">We appreciate your feedback and hope to serve you again!</p>
         </div>
       </div>
     );
   }
 
-  // Otherwise, render the review form
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center py-10">
-      <div className="bg-white p-6 rounded-md shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-semibold mb-4 text-gray-800">
-          Submit Your Review
-        </h1>
-        <p className="mb-6 text-gray-600">
-          Venue ID: <span className="font-mono">{venueId}</span>
-        </p>
+    <>
+      <div className="min-h-screen bg-gray-100 flex flex-col items-center py-10">
+        <div className="bg-white p-6 rounded-md shadow-md w-full max-w-md">
+          <h1 className="text-2xl font-semibold mb-4 text-gray-800">Submit Your Review</h1>
+          <p className="mb-6 text-gray-600">
+            Venue ID: <span className="font-mono">{venueId}</span>
+          </p>
 
-        <form onSubmit={handleSubmit}>
-          {/* Star Rating */}
-          <label className="block mb-2 text-gray-700 font-medium">
-            Your Rating
-          </label>
-          <StarRatingInput rating={rating} onRatingChange={setRating} />
-          {rating === 0 && (
-            <p className="text-sm text-red-500 mt-1">
-              Please select a star rating.
-            </p>
-          )}
+          <form onSubmit={handleSubmit}>
+            <label className="block mb-2 text-gray-700 font-medium">Your Rating</label>
+            <StarRatingInput rating={rating} onRatingChange={setRating} />
+            {rating === 0 && (
+              <p className="text-sm text-red-500 mt-1">Please select a star rating.</p>
+            )}
 
-          {/* Comment */}
-          <label className="block mt-6 mb-2 text-gray-700 font-medium">
-            Your Review
-          </label>
-          <textarea
-            className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:border-orange-400"
-            rows="4"
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="Share your experience..."
-          ></textarea>
+            <label className="block mt-6 mb-2 text-gray-700 font-medium">Your Review</label>
+            <textarea
+              className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:border-orange-400"
+              rows="4"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Share your experience..."
+            ></textarea>
 
-          {error && <p className="text-red-500 mt-2">{error}</p>}
+            {error && <p className="text-red-500 mt-2">{error}</p>}
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isSubmitting || rating === 0}
-            className="mt-4 px-4 py-2 bg-orange-500 text-white font-semibold rounded-md hover:bg-orange-600 disabled:opacity-50"
-          >
-            {isSubmitting ? "Submitting..." : "Submit Review"}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={isSubmitting || rating === 0}
+              className="mt-4 px-4 py-2 bg-orange-500 text-white font-semibold rounded-md hover:bg-orange-600 disabled:opacity-50"
+            >
+              {isSubmitting ? "Submitting..." : "Submit Review"}
+            </button>
+          </form>
+        </div>
       </div>
-    </div>
+
+      {/* MiniLogin Modal */}
+      <MiniLogin show={showLogin} onClose={handleLoginClose} />
+      <ToastContainer />
+    </>
   );
 }
 
