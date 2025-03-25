@@ -10,23 +10,94 @@ import {
   LinearProgress,
   Alert,
   Chip,
+  Switch,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
 } from "@mui/material";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import VenueBookModel from "./modal/VenueBookModel";
 import VenueSidebar from "./VenueSidebar";
+import { toast } from "react-toastify";
 
 const OwnerBooking = () => {
   const [approvedBookings, setApprovedBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [openCreateModal, setOpenCreateModal] = useState(false);
+  const [requestId, setRequestId] = useState("");
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // NEW: Local state for confirmation text
+  const [confirmationText, setConfirmationText] = useState("");
 
   const accessToken = localStorage.getItem("access_token");
   const venueId = localStorage.getItem("venueId");
   const navigate = useNavigate();
 
-  // Reusable function to fetch approved bookings
+  // PATCH request to update booking status
+  const handleStatusUpdate = async (bookingId, requestId, isCompleted) => {
+    try {
+      setIsUpdating(true);
+      const response = await axios.patch(
+        "http://localhost:8000/api/updateStatus",
+        {
+          bookingId,
+          requestId,
+          isCompleted,
+        },
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      if (response.data.success) {
+        toast.success(
+          `Event marked as ${isCompleted ? "completed" : "running"}`
+        );
+        fetchApprovedBookings(); // Refresh the bookings list
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update status");
+    } finally {
+      setIsUpdating(false);
+      setOpenDialog(false);
+      setSelectedBooking(null);
+      // Reset the dialog text field after closing
+      setConfirmationText("");
+    }
+  };
+
+  // Show the confirmation dialog when switch is clicked
+  const handleToggleClick = (booking) => {
+    setSelectedBooking(booking);
+    setOpenDialog(true);
+  };
+
+  // Close dialog
+  const handleDialogClose = () => {
+    setOpenDialog(false);
+    setSelectedBooking(null);
+    setConfirmationText("");
+  };
+
+  // Confirm and call the updater
+  const handleConfirmStatus = () => {
+    if (selectedBooking) {
+      handleStatusUpdate(
+        selectedBooking._id,
+        selectedBooking.requestId,
+        !selectedBooking.booking_statius
+      );
+    }
+  };
+
+  // Fetch approved bookings
   const fetchApprovedBookings = async () => {
     try {
       setLoading(true);
@@ -35,6 +106,9 @@ const OwnerBooking = () => {
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
       setApprovedBookings(response.data.bookings || []);
+      if (response.data.bookings && response.data.bookings[0]) {
+        setRequestId(response.data.bookings[0].requestId);
+      }
       setLoading(false);
     } catch (err) {
       setError(err.response?.data?.message || err.message);
@@ -65,7 +139,7 @@ const OwnerBooking = () => {
     navigate(`/venue-owner/approved-booking/${booking._id}`);
   };
 
-  // Chip color mapping based on booking status
+  // Mapping for status chip colors
   const getStatusChipColor = (status) => {
     const colors = {
       Pending: "warning",
@@ -78,7 +152,7 @@ const OwnerBooking = () => {
     return colors[status] || "default";
   };
 
-  // Renders each booking as a clickable card
+  // Render a single booking card
   const renderBookingCard = (booking) => (
     <Grid item xs={12} md={6} key={booking._id}>
       <Paper
@@ -109,7 +183,18 @@ const OwnerBooking = () => {
             color={getStatusChipColor(booking.status)}
             size="small"
           />
+
+          {/* Wrap switch in a Box to prevent parent onClick from firing */}
+          <Box onClick={(e) => e.stopPropagation()}>
+            <Switch
+              checked={booking.booking_statius || false}
+              onChange={() => handleToggleClick(booking)}
+              disabled={isUpdating}
+              color="success"
+            />
+          </Box>
         </Box>
+
         <Divider sx={{ my: 1 }} />
         <Typography variant="body2" color="text.secondary">
           <strong>Date:</strong>{" "}
@@ -157,8 +242,12 @@ const OwnerBooking = () => {
       <VenueSidebar />
       <Box flexGrow={1} p={3}>
         <Container maxWidth="lg">
-          {/* Page Header */}
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            mb={4}
+          >
             <Typography variant="h4" component="h1" fontWeight="bold">
               Approved Bookings
             </Typography>
@@ -167,19 +256,47 @@ const OwnerBooking = () => {
             </Button>
           </Box>
 
-          {/* Loading / Error Handling */}
           {loading && <LinearProgress />}
           {error && <Alert severity="error">{error}</Alert>}
           {!loading && approvedBookings.length === 0 && (
             <Alert severity="info">No approved bookings available.</Alert>
           )}
 
-          {/* Approved Bookings Grid */}
           <Grid container spacing={3}>
             {approvedBookings.map((booking) => renderBookingCard(booking))}
           </Grid>
         </Container>
       </Box>
+
+      {/* Dialog for confirmation (with text field) */}
+      <Dialog open={openDialog} onClose={handleDialogClose}>
+        <DialogTitle>Confirm Event Completion</DialogTitle>
+        <DialogContent>
+          <Typography gutterBottom>
+            Are you sure you want to mark this event as completed?
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Please type <strong>YES</strong> below to confirm:
+          </Typography>
+          <TextField
+            autoFocus
+            margin="normal"
+            label="Type YES to confirm"
+            fullWidth
+            value={confirmationText}
+            onChange={(e) => setConfirmationText(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDialogClose}>Cancel</Button>
+          <Button
+            onClick={handleConfirmStatus}
+            disabled={confirmationText !== "YES" || isUpdating}
+          >
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Modal for Creating a Booking */}
       <VenueBookModel open={openCreateModal} onClose={handleCloseCreate} />
