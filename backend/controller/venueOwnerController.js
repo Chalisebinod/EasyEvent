@@ -3,7 +3,11 @@ const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
 const Kyc = require("../model/KYC");
 const Venue = require("../model/venue");
+const Booking = require("../model/bookingSchema");
+const Payment = require("../model/payment");  
+const Hall = require("../model/hallSchema");
 
+// Check KYC Status
 async function checkKycStatus(req, res) {
   try {
     // Get the venue owner ID from the authentication middleware
@@ -144,10 +148,74 @@ async function changeVenueOwnerPassword(req, res) {
     res.status(500).json({ message: "Server error" });
   }
 }
+async function getVenueOwnerStats(req, res) {
+  try {
+    // Get venueOwner id from the authentication middleware and venueId from the request body
+    const venueOwnerId = req.user.id;
+    const { venueId } = req.body;
+    if (!venueId) {
+      return res.status(400).json({ success: false, message: "Venue ID is required." });
+    }
 
+    // Verify that this venue belongs to the logged-in venue owner
+    const venue = await Venue.findOne({ _id: venueId, owner: venueOwnerId });
+    if (!venue) {
+      return res.status(404).json({ success: false, message: "Venue not found for this owner." });
+    }
+
+    // Get all bookings for this venue
+    const bookings = await Booking.find({ venue: venueId }).lean();
+    const bookingCount = bookings.length;
+
+    // Count total distinct users who booked this venue 
+    const userIds = new Set(bookings.map((b) => b.user.toString()));
+    const totalUsers = userIds.size;
+
+    // Count total halls for this venue (assuming halls have a venue field)
+    const hallCount = await Hall.countDocuments({ venue: venueId });
+
+    // Get all payment records corresponding to these bookings
+    const bookingIds = bookings.map((b) => b._id);
+    const payments = await Payment.find({ booking: { $in: bookingIds } }).lean();
+
+    let totalReceivedToday = 0;
+    let totalRefundAmount = 0;
+    let totalAmountToBeReceived = 0;
+
+    // Define today's start and end timestamps
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    payments.forEach((payment) => {
+      if (payment.created_at >= todayStart && payment.created_at <= todayEnd) {
+        totalReceivedToday += payment.cumulative_paid;
+      }
+      totalRefundAmount += payment.refund_amount;
+      totalAmountToBeReceived += (payment.expected_amount - payment.cumulative_paid);
+    });
+
+    return res.status(200).json({
+      success: true,
+      stats: {
+        totalUsers,             // distinct count of users who booked this venue
+        bookingCount,           // total bookings for the venue
+        hallCount,              // total halls available for the venue
+        totalReceivedToday,     // total payment (cumulative) received today
+        totalRefundAmount,      // total refunds processed on these payments
+        totalAmountToBeReceived // sum of (expected_amount - cumulative_paid) across payments
+      },
+    });
+  } catch (error) {
+    console.error("Error in getVenueOwnerStats:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
 module.exports = {
   checkKycStatus,
   getVenueOwnerProfile,
   changeVenueOwnerPassword,
   updateVenueOwnerProfile,
+  getVenueOwnerStats
 };
