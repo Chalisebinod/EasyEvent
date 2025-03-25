@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { checkAuthentication, checkIsVenueOwner } = require("../middleware/middleware");
 const upload = require("../controller/fileController");
-const { createBooking, updateBooking, cancelBooking, deleteBooking, getRequestsByVenue, getBookingByRequestId, updateRequestStatus, getApprovedBookings, getApprovedBookingDetails, createOwnerBooking, setPaymentDetails, uploadOwnerSignature } = require("../controller/venueBookingController");
+const { createBooking, updateBooking, cancelBooking, deleteBooking, getRequestsByVenue, getBookingByRequestId, updateRequestStatus, getApprovedBookings, getApprovedBookingDetails, createOwnerBooking, setPaymentDetails, uploadOwnerSignature, getPaymentDetails } = require("../controller/venueBookingController");
 const { createTemplate, getTemplatesByVenue, updateTemplate, deleteTemplate, setDefaultTemplate, generateAgreement } = require("../controller/agreementController");
 
 
@@ -33,7 +33,7 @@ router.put('/templates/:templateId/set-default', checkAuthentication, checkIsVen
 
 // Agreement Generation Route
 router.post('/generate-agreement/:bookingId', checkAuthentication, checkIsVenueOwner, generateAgreement);
-
+router.get("/payment-details/:bookingId", checkAuthentication, getPaymentDetails);
 // Route for uploading owner's signature
 router.put(
   '/owner-signature/:bookingId',
