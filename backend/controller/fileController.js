@@ -1,8 +1,8 @@
-// fileController.js
+
 const multer = require('multer');
 const path = require('path');
 
-// Set up storage for uploaded files (you can change the destination and filename as needed)
+// Set up storage for uploaded files 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, './uploads'); // Specify the folder where files will be uploaded

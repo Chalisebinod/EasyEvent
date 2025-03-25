@@ -1,5 +1,5 @@
 const BookingRequest = require("../model/request");
-const Venue = require("../model/Venue");
+const Venue = require("../model/venue");
 const Hall = require("../model/hallSchema");
 
 // User books an event

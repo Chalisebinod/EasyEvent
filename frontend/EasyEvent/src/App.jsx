@@ -59,6 +59,7 @@ import VenuePage from "./components/admin/VenuePage";
 import AboutUs from "./components/user/Aboutus";
 import MyBookings from "./components/user/MyBookings";
 import EventImageFolders from "./components/venueowner/EventImageFolders";
+import SubmitReview from "./components/user/SubmitReview";
 
 function App() {
   // useEffect(() => {
@@ -104,6 +105,9 @@ function App() {
         <Route path="/halls" element={<Hall />} />
         <Route path="/party-palace/:id" element={<PartyPalace />} />
         <Route path="/Gallery" element={<EventImageFolders />} />
+
+      {/* rating and review */}
+      <Route path="/review" element={<SubmitReview />} />
 
         <Route path="/venueOwnerKyc" element={<KYCPage />} />
         <Route path="/notification" element={<Notification />} />

@@ -18,10 +18,10 @@ function EnhancedTransactions() {
     const fetchPayments = async () => {
        try {
               const response = await axios.get(
-                http://localhost:8000/api/auth/payment/getpayments,
+                `http://localhost:8000/api/auth/payment/getpayments`,
                 {
                   headers: {
-                    Authorization: Bearer ${accessToken},
+                    Authorization: `Bearer ${accessToken}`,
                   },
                 }
               );
@@ -41,11 +41,11 @@ function EnhancedTransactions() {
 
     // try {
     //   const response = await axios.post(
-    //     http://localhost:8000/api/auth/payment/refund/${paymentId},
+    //     `http://localhost:8000/api/auth/payment/refund/${paymentId}`,
     //     {},
     //     {
     //       headers: {
-    //         Authorization: Bearer ${accessToken},
+    //         Authorization: `Bearer ${accessToken}`,
     //       },
     //     }
     //   );
@@ -71,13 +71,13 @@ function EnhancedTransactions() {
                 amount: 900,
                 purchase_order_id: bookingId,
                 purchase_order_name: "EasyEvent",
-                return_url: http://localhost:5173/transaction/${bookingId},
-                website_url: http://localhost:5173/transaction/${bookingId},
+                return_url: `http://localhost:5173/transaction/${bookingId}`,
+                website_url: `http://localhost:5173/transaction/${bookingId}`,
                 bookingId: bookingId,
                 userId: "67b6d065da09b880fa55361a",
               },
               {
-                headers: { Authorization: Bearer ${accessToken} },
+                headers: { Authorization: `Bearer ${accessToken}` },
               }
             );
     
@@ -135,12 +135,12 @@ function EnhancedTransactions() {
             "http://localhost:8000/api/auth/payment/refund",
             { pidx },
             {
-              headers: { Authorization: Bearer ${accessToken} },
+              headers: { Authorization: `Bearer ${accessToken}` },
             }
           );
           if (response.data.status === "Completed") {
             toast.success("Payment successful!");
-            navigate(/transaction, { replace: true });
+            navigate(`/transaction`, { replace: true });
           } else {
             toast.error("Payment verification failed.");
           }
@@ -208,7 +208,7 @@ function EnhancedTransactions() {
                 <tr
                   key={payment._id}
                   className="border-b hover:bg-gray-100 cursor-pointer"
-                  onClick={() => navigate(/transactions/${payment._id})}
+                  onClick={() => navigate(`/transactions/${payment._id}`)}
                 >
                   <td className="p-3">
                     {new Date(payment.booking?.event_details?.date || payment.created_at).toLocaleDateString()}

@@ -1,12 +1,10 @@
-// controllers/agreementController.js
+
 
 const { Agreement, AgreementTemplate } = require("../model/agreementSchema");
 const Booking = require("../model/bookingSchema");
 const VenueOwner = require("../model/venueOwner");
 const Payment = require("../model/payment");
-// ==================== AGREEMENT TEMPLATE CONTROLLERS ====================
 
-// Create a new template
 exports.createTemplate = async (req, res) => {
   try {
     const { title, type, content, venue } = req.body;

@@ -1,11 +1,123 @@
 // PartyPalace.jsx
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FaUserCircle, FaComments, FaCheckCircle } from "react-icons/fa";
+import { FaUserCircle, FaComments } from "react-icons/fa";
 import Navbar from "./Navbar";
 import BottomNavbar from "./BottomNavbar";
 import ChatWidget from "./chat/ChatWidget";
 import { MdVerified } from "react-icons/md";
+
+
+const StarRating = ({ rating }) => {
+  const fullStars = Math.floor(rating);
+  const halfStar = rating % 1 !== 0;
+
+  return (
+    <div className="flex">
+      {/* Full stars */}
+      {[...Array(fullStars)].map((_, i) => (
+        <svg
+          key={i}
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-5 w-5 text-yellow-500"
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.19c.969 0 1.371 1.24.588 1.81l-3.392 2.46a1 1 0 00-.364 1.118l1.287 3.966c.3.922-.755 1.688-1.54 1.118l-3.392-2.46a1 1 0 00-1.176 0l-3.392 2.46c-.785.57-1.84-.196-1.54-1.118l1.286-3.966a1 1 0 00-.364-1.118L2.035 9.394c-.783-.57-.38-1.81.588-1.81h4.19a1 1 0 00.95-.69l1.286-3.967z" />
+        </svg>
+      ))}
+
+      {/* Half star if needed */}
+      {halfStar && (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-5 w-5 text-yellow-500"
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <defs>
+            <linearGradient id="halfStar">
+              <stop offset="50%" stopColor="currentColor" />
+              <stop offset="50%" stopColor="transparent" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path
+            fill="url(#halfStar)"
+            d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.19c.969 0 1.371 1.24.588 1.81l-3.392 2.46a1 1 0 00-.364 1.118l1.287 3.966c.3.922-.755 1.688-1.54 1.118l-3.392-2.46a1 1 0 00-1.176 0l-3.392 2.46c-.785.57-1.84-.196-1.54-1.118l1.286-3.966a1 1 0 00-.364-1.118L2.035 9.394c-.783-.57-.38-1.81.588-1.81h4.19a1 1 0 00.95-.69l1.286-3.967z"
+          />
+        </svg>
+      )}
+
+      {/* Empty stars if fullStars < 5 */}
+      {[...Array(5 - fullStars - (halfStar ? 1 : 0))].map((_, i) => (
+        <svg
+          key={i}
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-5 w-5 text-gray-300"
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.19c.969 0 1.371 1.24.588 1.81l-3.392 2.46a1 1 0 00-.364 1.118l1.287 3.966c.3.922-.755 1.688-1.54 1.118l-3.392-2.46a1 1 0 00-1.176 0l-3.392 2.46c-.785.57-1.84-.196-1.54-1.118l1.286-3.966a1 1 0 00-.364-1.118L2.035 9.394c-.783-.57-.38-1.81.588-1.81h4.19a1 1 0 00.95-.69l1.286-3.967z" />
+        </svg>
+      ))}
+    </div>
+  );
+};
+
+// A simple list of reviews
+const ReviewsList = () => {
+  // Example data (replace with your data or fetch from API)
+  const reviews = [
+    {
+      name: "Ps",
+      rating: 4.5,
+      date: "4 weeks ago",
+      comment:
+        "babbal xa, long lasting, yo price ma, more worthy, fragrance pani dammi nam paryo...",
+    },
+    {
+      name: "Nita L",
+      rating: 5,
+      date: "4 weeks ago",
+      comment: "Awesome",
+    },
+  ];
+
+  // Calculate average rating
+  const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
+  const averageRating = (totalRating / reviews.length).toFixed(1);
+
+  return (
+    <div className="max-w-xl mx-auto p-4 bg-white rounded-md shadow-md mt-8">
+      {/* Overall Rating and Count */}
+      <div className="mb-4">
+        <div className="flex items-center">
+          <span className="text-2xl font-bold">{averageRating}</span>
+          <StarRating rating={parseFloat(averageRating)} />
+          <span className="ml-2 text-gray-600">({reviews.length} Ratings)</span>
+        </div>
+      </div>
+
+      {/* Reviews List */}
+      <div className="space-y-6">
+        {reviews.map((review, idx) => (
+          <div key={idx} className="border-b pb-4">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-gray-800">{review.name}</span>
+              <span className="text-sm text-gray-500">{review.date}</span>
+            </div>
+            <div className="mt-2">
+              <StarRating rating={review.rating} />
+            </div>
+            <p className="mt-2 text-gray-700">{review.comment}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+
 const ProfileIcon = ({ ownerId }) => {
   const navigate = useNavigate();
   const handleClick = () => {
@@ -28,7 +140,9 @@ const PartyPalace = () => {
   const [venue, setVenue] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  // Track which tab is active: "overview", "completed-events", or "reviews"
   const [activeTab, setActiveTab] = useState("overview");
+
   const [selectedHall, setSelectedHall] = useState("");
   const [selectedFood, setSelectedFood] = useState("");
   const [guestCount, setGuestCount] = useState("");
@@ -37,7 +151,6 @@ const PartyPalace = () => {
   const [userOfferedFee, setUserOfferedFee] = useState(0);
   const [totalFare, setTotalFare] = useState(0);
   const [isMinimized, setIsMinimized] = useState(false);
-
 
   // Helper function to build full URL for an image path
   const getImageUrl = (imgPath) =>
@@ -90,8 +203,7 @@ const PartyPalace = () => {
   };
 
   if (loading) return <div className="text-center p-10">Loading...</div>;
-  if (error)
-    return <div className="text-center p-10 text-red-500">{error}</div>;
+  if (error) return <div className="text-center p-10 text-red-500">{error}</div>;
   if (!venue)
     return <div className="text-center p-10">No venue details available.</div>;
 
@@ -119,12 +231,12 @@ const PartyPalace = () => {
             A premier venue for unforgettable events
           </p>
         </div>
-        
       </section>
 
       {/* Tabs Section with Book Now Button */}
       <section className="max-w-7xl mx-auto my-8 px-4">
         <div className="flex justify-center space-x-4 mb-6">
+          {/* Overview Tab */}
           <button
             onClick={() => setActiveTab("overview")}
             className={`px-6 py-2 rounded-full font-medium transition duration-300 ${
@@ -135,6 +247,8 @@ const PartyPalace = () => {
           >
             Overview
           </button>
+
+          {/* Completed Events Tab */}
           <button
             onClick={() => setActiveTab("completed-events")}
             className={`px-6 py-2 rounded-full font-medium transition duration-300 ${
@@ -145,6 +259,20 @@ const PartyPalace = () => {
           >
             Completed Events
           </button>
+
+          {/* Reviews Tab */}
+          <button
+            onClick={() => setActiveTab("reviews")}
+            className={`px-6 py-2 rounded-full font-medium transition duration-300 ${
+              activeTab === "reviews"
+                ? "bg-orange-500 text-white shadow-md"
+                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+            }`}
+          >
+            Reviews
+          </button>
+
+          {/* Book Now Button */}
           <button
             onClick={handleBookNow}
             className="animated-stroke relative px-6 py-2 rounded-full font-medium transition duration-300 bg-gray-200 text-black hover:bg-gray-300"
@@ -153,7 +281,7 @@ const PartyPalace = () => {
           </button>
         </div>
 
-        {/* Content Section */}
+        {/* Content Section: conditionally render each tab */}
         {activeTab === "overview" && (
           <div className="bg-white rounded-xl shadow-lg p-6 space-y-8">
             {/* Top Row: Venue Name and Owner Info */}
@@ -231,15 +359,18 @@ const PartyPalace = () => {
               <div className="bg-gray-50 p-4 rounded-xl shadow">
                 <h4 className="text-xl font-bold mb-2">Payment Policy</h4>
                 <p>Advance: {venue.payment_policy.advance_percentage}%</p>
-                <p>Security Deposit: {venue.payment_policy.security_deposit}</p>
+                <p>
+                  Security Deposit: {venue.payment_policy.security_deposit}
+                </p>
                 <p>Refund: {venue.payment_policy.refund_policy}</p>
-                <p>Cancellation: {venue.payment_policy.cancellation_penalty}</p>
+                <p>
+                  Cancellation: {venue.payment_policy.cancellation_penalty}
+                </p>
               </div>
               <div className="bg-gray-50 p-4 rounded-xl shadow">
                 <h4 className="text-xl font-bold mb-2">Contact Details</h4>
                 <p>Phone: {venue.contact_details.phone}</p>
                 <p>Email: {venue.contact_details.email}</p>
-
                 <p className="mt-2 font-semibold">
                   Location: {venue.location.address}
                 </p>
@@ -281,6 +412,9 @@ const PartyPalace = () => {
             )}
           </div>
         )}
+
+        {/* Only show ReviewsList when activeTab is "reviews" */}
+        {activeTab === "reviews" && <ReviewsList />}
       </section>
 
       {/* Messaging Feature */}
@@ -301,5 +435,19 @@ const PartyPalace = () => {
     </div>
   );
 };
+
+// Sample data for Completed Events
+const mockCompletedEvents = [
+  {
+    name: "Wedding Reception",
+    short_description: "A lovely ceremony with beautiful decorations",
+    image: "https://via.placeholder.com/300x200?text=Wedding",
+  },
+  {
+    name: "Corporate Gala",
+    short_description: "An evening of networking and fine dining",
+    image: "https://via.placeholder.com/300x200?text=Gala",
+  },
+];
 
 export default PartyPalace;
