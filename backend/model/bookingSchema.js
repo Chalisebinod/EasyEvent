@@ -15,6 +15,8 @@ const bookingSchema = new mongoose.Schema({
 
   // New field to store extra food requests from the frontend
   requested_foods: [{ type: mongoose.Schema.Types.ObjectId, ref: "Food" }],
+  booking_statius: { type: Boolean, default: false },
+
 
   additional_services: [
     {
