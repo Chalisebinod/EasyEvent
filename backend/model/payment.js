@@ -11,7 +11,17 @@ const paymentSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
+  // amount represents the last partial payment (if needed)
   amount: {
+    type: Number,
+    required: true,
+  },
+  // cumulative_paid tracks the total amount received across partial payments
+  cumulative_paid: {
+    type: Number,
+    default: 0,
+  },
+  expected_amount: {
     type: Number,
     required: true,
   },
@@ -27,7 +37,7 @@ const paymentSchema = new mongoose.Schema({
   },
   payment_status: {
     type: String,
-    enum: ["Pending", "Completed", "Failed","Refunded"],
+    enum: ["Pending", "Completed", "Failed", "Refunded"],
     default: "Pending",
   },
   payment_type: {
@@ -46,6 +56,10 @@ const paymentSchema = new mongoose.Schema({
     required: function () {
       return this.payment_type === "Advance";
     },
+  },
+  refund_amount: {
+    type: Number,
+    default: 0,
   },
   paid_at: {
     type: Date,
