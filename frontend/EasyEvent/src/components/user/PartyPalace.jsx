@@ -147,7 +147,7 @@ const PartyPalace = () => {
           </button>
           <button
             onClick={handleBookNow}
-            className="animated-stroke relative px-6 py-2 rounded-full font-medium transition duration-300 bg-gray-200 text-white hover:bg-gray-300"
+            className="animated-stroke relative px-6 py-2 rounded-full font-medium transition duration-300 bg-gray-200 text-black hover:bg-gray-300"
           >
             Book Now
           </button>

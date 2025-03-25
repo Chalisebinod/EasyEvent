@@ -241,12 +241,12 @@ const UserChat = () => {
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       {/* Fixed Navbar at the Top */}
-      <header className="fixed top-0 left-0 right-0 z-50 shadow bg-white">
+      
         <Navbar />
-      </header>
+     
 
       {/* Conversations & Chat Panel */}
-      <div className="flex-1 flex flex-col md:flex-row mt-16 bg-white shadow-lg rounded-lg overflow-hidden mx-4 mb-4">
+      <div className="flex-1 flex flex-col md:flex-row mt-1 bg-white shadow-lg rounded-lg overflow-hidden mx-4 mb-4">
         {/* Conversation List Panel */}
         <div className="md:w-72 border-r bg-white flex flex-col">
           {/* Panel Header */}
@@ -312,7 +312,7 @@ const UserChat = () => {
           {selectedConversation ? (
             <>
               {/* Chat Header */}
-              <div className="bg-white text-black px-6 py-4 flex items-center space-x-4 shadow">
+              <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-4 flex items-center space-x-4 shadow">
                 <img
                   src={getProfileImageUrl(
                     selectedConversation.participants.partner.profile_image

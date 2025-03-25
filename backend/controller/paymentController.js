@@ -160,10 +160,13 @@ const getOwnerPayments = async (req, res) => {
     // Find venues owned by the logged-in venue owner
     const venues = await Venue.find({ owner: ownerId }).select("_id");
     const venueIds = venues.map(venue => venue._id);
+    // console.log("Venues: ", venueIds);
     
     // Find bookings under these venues
     const bookings = await BookingRequest.find({ venue: { $in: venueIds } }).select("_id");
     const bookingIds = bookings.map(booking => booking._id);
+    // console.log("Bookings: ", bookingIds);
+
     
     // Fetch payments associated with those bookings
     const payments = await Payment.find({ booking: { $in: bookingIds } })
@@ -215,58 +218,63 @@ const fetchReceivedAmount = async (req, res) => {
 
 const refundPayment = async (req, res) => {
   try {
-    const { pidx, refund_amount } = req.body;
-
-    const payment = await Payment.findOne({ transaction_id: pidx });
-    if (!payment) {
-      return res.status(404).json({ success: false, message: "Payment not found." });
-    }
-
-    if (payment.payment_status !== "Completed") {
-      return res.status(400).json({ success: false, message: "Only completed payments can be refunded." });
-    }
-
-    if (refund_amount > payment.amount) {
-      return res.status(400).json({ success: false, message: "Refund amount exceeds the paid amount." });
-    }
-
-    const payload = {
-      pidx,
-      amount: refund_amount * 100, // Convert to paisa
-    };
+    const { pidx } = req.body;
 
     const response = await axios.post(
-      `${KHALTI_BASE_URL}epayment/refund/`,
-      payload,
+      `${KHALTI_BASE_URL}epayment/lookup/`,
+      { pidx },
       { headers }
     );
 
-    if (response.data.refund_status !== "Success") {
-      return res.status(400).json({
-        success: false,
-        message: "Refund failed.",
-        refund_status: response.data.refund_status,
-      });
+    if (response.data.status !== "Completed") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Payment not completed yet." });
     }
 
-    // Update payment status in database
+    // Find the payment entry
+    const payment = await Payment.findOne({ transaction_id: pidx });
+    if (!payment) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Payment record not found." });
+    }
+
+    // Update payment status
     payment.payment_status = "Refunded";
-    payment.refunded_amount = refund_amount;
     await payment.save();
 
-    res.json({
-      success: true,
-      message: "Refund successful",
-      refunded_amount: refund_amount,
-    });
-  } catch (error) {
-    console.error("Khalti Refund Error:", error);
+    // Find the related booking
+    const booking = await BookingRequest.findById(payment.booking);
+    if (!booking) {
+      return res.status(404).json({ success: false, message: "Booking not found." });
+    }
 
-    res.status(500).json({
-      success: false,
-      message: "Failed to process refund.",
-      error: error.message,
-    });
+    
+    booking.payment_status = "Refunded";
+
+    await booking.save();
+
+    res.json(response.data);
+  } catch (error) {
+    console.error("Khalti Verification Error:", error);
+
+    if (error.response) {
+      res.status(error.response.status || 400).json(error.response.data);
+    } else if (error.request) {
+      res
+        .status(500)
+        .json({
+          message: "No response from Khalti. Check your internet or API URL.",
+        });
+    } else {
+      res
+        .status(500)
+        .json({
+          message: "Request failed before reaching Khalti.",
+          error: error.message,
+        });
+    }
   }
 };
 

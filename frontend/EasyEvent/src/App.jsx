@@ -43,10 +43,9 @@ import PartyPalace from "./components/user/PartyPalace";
 
 import Request from "./components/venueowner/Request";
 import EventDetails from "./components/venueowner/EventDetails";
-import UserBookings from "./components/user/UserBookings";
+
 import Booking from "./components/user/bookings/Booking";
 import Transaction from "./components/venueowner/Transaction";
-import PaymentPage from "./components/user/PaymentPage";
 import TransactionDetails from "./components/venueowner/TransactionDetails";
 import ContinuePayment from "./components/user/ContinuePayment";
 import AllChat from "./components/venueowner/AllChat";
@@ -59,6 +58,7 @@ import UserChat from "./components/user/chat/UserChat";
 import VenuePage from "./components/admin/VenuePage";
 import AboutUs from "./components/user/Aboutus";
 import MyBookings from "./components/user/MyBookings";
+import EventImageFolders from "./components/venueowner/EventImageFolders";
 
 function App() {
   // useEffect(() => {
@@ -103,6 +103,7 @@ function App() {
         <Route path="/Venue-profile" element={<VenueProfile />} />
         <Route path="/halls" element={<Hall />} />
         <Route path="/party-palace/:id" element={<PartyPalace />} />
+        <Route path="/Gallery" element={<EventImageFolders />} />
 
         <Route path="/venueOwnerKyc" element={<KYCPage />} />
         <Route path="/notification" element={<Notification />} />
@@ -174,7 +175,7 @@ function App() {
         <Route path="/venue-KYC" element={<KYCPage />} />
         <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/payment-details" element={<PaymentDetails />} />
-        <Route path="/user-payment" element={<PaymentPage />} />
+       
         <Route
           path="/continue-payment/:bookingId"
           element={<ContinuePayment />}

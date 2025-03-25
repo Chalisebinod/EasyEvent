@@ -119,7 +119,7 @@ const Profile = () => {
 
       toast.success("Profile updated successfully!");
 
-      // 2) Fetch updated data from server so we get the real new image path
+      
       const updatedResponse = await axios.get("http://localhost:8000/api/profile", {
         headers: {
           Authorization: `Bearer ${accessToken}`,

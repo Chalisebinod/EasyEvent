@@ -135,9 +135,10 @@ const VenueSidebar = ({ children }) => {
             borderRadius: 1,
           }}
         >
-          <Typography variant="h5" sx={{ color: "orange", fontWeight: "bold" }}>
-            EasyEvent
-          </Typography>
+         <Typography variant="h5" sx={{ color: "#FF8C00", fontWeight: "bold" }}>
+  EasyEvent
+</Typography>
+
         </Box>
 
         {/* Navigation Links */}
@@ -267,7 +268,7 @@ const VenueSidebar = ({ children }) => {
           <ListItem
             button
             component={Link}
-            to="/galleries"
+            to="/Gallery"
             sx={getNavItemStyle("/galleries")}
           >
             <ListItemIcon>

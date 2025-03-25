@@ -150,12 +150,7 @@ function EventDetails() {
         <div className="flex-1 p-8">
           <div className="text-center text-red-600">
             <p>{error || "Booking not found"}</p>
-            <button
-              onClick={() => navigate("/venue-owner/bookings")}
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Back to Bookings
-            </button>
+           
           </div>
         </div>
       </div>
@@ -170,15 +165,10 @@ function EventDetails() {
         {/* Sticky Header */}
         <header className="sticky top-0 z-20 bg-white shadow border-b border-gray-200 px-8 py-5">
           <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-extrabold text-gray-800">
+            <h1 className="text-xl font-extrabold text-gray-800">
               {isRequest ? "Booking Request Details" : "Booking Details"}
             </h1>
-            <button
-              onClick={() => navigate("/venue-owner/bookings")}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800"
-            >
-              Back to Bookings
-            </button>
+         
           </div>
         </header>
 

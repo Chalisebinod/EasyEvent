@@ -4,6 +4,16 @@ import VenueSidebar from "./VenueSidebar";
 import axios from "axios";
 import { FaTimes, FaCommentAlt } from "react-icons/fa";
 
+// Helper function to construct the correct image URL
+function getProfileImageUrl(profileImage) {
+  if (!profileImage) {
+    return "https://via.placeholder.com/40"; // fallback if no image
+  }
+  // Replace backslashes with forward slashes to ensure a valid URL
+  const normalizedPath = profileImage.replace(/\\/g, "/");
+  return `http://localhost:8000/${normalizedPath}`;
+}
+
 function Request() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
@@ -50,7 +60,9 @@ function Request() {
       }
     };
 
-    fetchRequests();
+    if (venueId && accessToken) {
+      fetchRequests();
+    }
   }, [venueId, accessToken]);
 
   const handleSearchChange = (e) => {
@@ -137,6 +149,10 @@ function Request() {
                 <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">
                   Status
                 </th>
+                {/* New Completed Column */}
+                <th className="px-6 py-3 text-center text-xs font-bold text-white uppercase tracking-wider">
+                  Completed
+                </th>
                 <th className="px-6 py-3 text-center text-xs font-bold text-white uppercase tracking-wider">
                   Action
                 </th>
@@ -153,10 +169,7 @@ function Request() {
                     >
                       <img
                         className="h-10 w-10 rounded-full object-cover"
-                        src={
-                          req.user?.profile_image ||
-                          "https://via.placeholder.com/40"
-                        }
+                        src={getProfileImageUrl(req.user?.profile_image)}
                         alt={req.user?.name || "Unknown User"}
                       />
                       <span className="text-gray-800 font-medium">
@@ -164,14 +177,17 @@ function Request() {
                       </span>
                     </div>
                   </td>
+
                   {/* Event Type Cell */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     {req.event_details.event_type}
                   </td>
+
                   {/* Event Date Cell */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     {new Date(req.event_details.date).toLocaleDateString()}
                   </td>
+
                   {/* Status Cell */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
@@ -186,6 +202,19 @@ function Request() {
                       {req.status}
                     </span>
                   </td>
+
+                  {/* New Completed Toggle Column */}
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        // This toggle currently does not trigger any logic
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
+                  </td>
+
                   {/* Action Cell */}
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <button
@@ -222,76 +251,7 @@ function Request() {
           </button>
         </div>
 
-        {/* Messaging Feature */}
-        <div className="fixed bottom-6 right-6 z-50">
-          {showChat ? (
-            <div className="bg-white w-80 h-96 shadow-xl rounded-lg p-4 flex flex-col">
-              {/* Chat Header */}
-              <div className="flex justify-between items-center border-b pb-2 mb-4">
-                <h2 className="text-xl font-bold text-gray-800">Messenger</h2>
-                <button
-                  onClick={() => setShowChat(false)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <FaTimes size={20} />
-                </button>
-              </div>
-              {/* Chat Messages Area */}
-              <div className="flex-1 overflow-y-auto space-y-4">
-                {chatMessages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex flex-col text-xs ${
-                      msg.sender === "user"
-                        ? "items-end"
-                        : "items-start"
-                    }`}
-                  >
-                    <div
-                      className={`px-4 py-2 rounded-lg max-w-xs ${
-                        msg.sender === "user"
-                          ? "bg-blue-500 text-white rounded-br-none"
-                          : "bg-gray-300 text-gray-800 rounded-bl-none"
-                      }`}
-                    >
-                      {msg.text}
-                    </div>
-                    <span className="mt-1 text-gray-500">{msg.time}</span>
-                  </div>
-                ))}
-                {chatMessages.length === 0 && (
-                  <p className="text-center text-gray-500">
-                    No messages yet...
-                  </p>
-                )}
-              </div>
-              {/* Chat Input Area */}
-              <div className="flex items-center border-t pt-2">
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Type a message..."
-                  className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                />
-                <button
-                  onClick={handleSendMessage}
-                  className="bg-blue-500 text-white ml-2 px-4 py-2 rounded-md hover:bg-blue-600"
-                >
-                  Send
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={() => setShowChat(true)}
-              className="bg-blue-600 text-white p-4 rounded-full shadow-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
-            >
-              <FaCommentAlt size={24} />
-            </button>
-          )}
-        </div>
-        {/* END OF MESSAGING FEATURE */}
+        
       </div>
     </div>
   );

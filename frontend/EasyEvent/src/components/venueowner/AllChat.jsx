@@ -255,7 +255,7 @@ const AllChat = () => {
       {/* Main Container (Conversations + Chat) */}
       <div className="flex-1 flex flex-col md:flex-row m-4 bg-white shadow-md rounded-lg overflow-hidden">
         {/* Conversation List Panel */}
-        <div className="md:w-72 border-r bg-white flex flex-col">
+        <div className="md:w-100 border-r bg-white flex flex-col">
           {/* Panel Header */}
           <div className="px-4 py-3 bg-blue-600 text-white text-lg font-semibold">
             Conversations
