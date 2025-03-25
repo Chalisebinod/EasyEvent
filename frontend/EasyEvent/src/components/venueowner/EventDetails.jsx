@@ -45,6 +45,15 @@ function EventDetails() {
   const accessToken = localStorage.getItem("access_token");
   const navigate = useNavigate();
 
+  function getProfileImageUrl(profileImage) {
+    if (!profileImage) {
+      return "https://via.placeholder.com/40"; // fallback if no image
+    }
+    // Replace backslashes with forward slashes to ensure a valid URL
+    const normalizedPath = profileImage.replace(/\\/g, "/");
+    return `http://localhost:8000/${normalizedPath}`;
+  }
+
   useEffect(() => {
     const fetchBookingDetails = async () => {
       try {
@@ -64,6 +73,7 @@ function EventDetails() {
 
         if (response.data.booking) {
           setBooking(response.data.booking);
+          console.log("usser", response.data.booking);
         } else {
           console.error("No booking details found");
           setError("Booking details not found");
@@ -150,7 +160,7 @@ function EventDetails() {
         <div className="flex-1 p-8">
           <div className="text-center text-red-600">
             <p>{error || "Booking not found"}</p>
-           
+
           </div>
         </div>
       </div>
@@ -168,7 +178,7 @@ function EventDetails() {
             <h1 className="text-xl font-extrabold text-gray-800">
               {isRequest ? "Booking Request Details" : "Booking Details"}
             </h1>
-         
+
           </div>
         </header>
 
@@ -212,7 +222,7 @@ function EventDetails() {
             {/* User Info */}
             <div className="flex items-center gap-5 mb-8 border-b pb-4">
               <img
-                src="https://via.placeholder.com/80"
+                src={getProfileImageUrl(booking.user?.profile_image)}
                 alt="User Profile"
                 className="w-20 h-20 rounded-full border-2 border-gray-300 shadow-sm"
               />
@@ -345,7 +355,7 @@ function EventDetails() {
                   </Typography>
                   <Divider className="mb-3" />
                   {booking.selected_foods &&
-                  booking.selected_foods.length > 0 ? (
+                    booking.selected_foods.length > 0 ? (
                     <Box className="flex flex-wrap gap-2">
                       {booking.selected_foods.map((food) => (
                         <Chip
@@ -375,7 +385,7 @@ function EventDetails() {
                   </Typography>
                   <Divider className="mb-3" />
                   {booking.additional_services &&
-                  booking.additional_services.length > 0 ? (
+                    booking.additional_services.length > 0 ? (
                     <ul className="list-disc list-inside text-gray-600">
                       {booking.additional_services.map((service) => (
                         <li key={service._id}>
