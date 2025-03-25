@@ -1,161 +1,182 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import VenueSidebar from "./VenueSidebar";
 import { toast, ToastContainer } from "react-toastify";
 
-
 function EnhancedTransactions() {
   const navigate = useNavigate();
   const [payments, setPayments] = useState([]);
+  const [filteredPayments, setFilteredPayments] = useState([]);
   const accessToken = localStorage.getItem("access_token");
-  const [searchParams] = useSearchParams();
-  
+  const [summaryStats, setSummaryStats] = useState({
+    totalExpected: 0,
+    totalReceived: 0,
+    totalRefunded: 0,
+    remainingAmount: 0,
+    totalTransactions: 0,
+    pendingTransactions: 0,
+    completedTransactions: 0,
+    refundedTransactions: 0,
+  });
 
+  // Filters and Search
+  const [filters, setFilters] = useState({
+    status: '',
+    userName: '',
+    dateRange: {
+      start: null,
+      end: null
+    }
+  });
 
-  // Fetch payments made by users for venues owned by the logged-in owner
+  // Fetch payments and calculate summary
   useEffect(() => {
     const fetchPayments = async () => {
-       try {
-              const response = await axios.get(
-                `http://localhost:8000/api/auth/payment/getpayments`,
-                {
-                  headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                  },
-                }
-              );
-              console.log("Payments",response.data.payments);
-              setPayments(response.data.payments);
-            } catch (error) {
-        console.error("Error fetching owner payments:", error);
+      try {
+        const response = await axios.get(
+          "http://localhost:8000/api/auth/payment/getpayments",
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
+        
+        const paymentsData = response.data.payments;
+        setPayments(paymentsData);
+
+        // Calculate summary statistics
+        const stats = paymentsData.reduce(
+          (acc, payment) => {
+            acc.totalTransactions++;
+            // Sum the expected total for each payment
+            acc.totalExpected += payment.expected_amount || payment.amount;
+            
+            if (payment.payment_status === "Completed") {
+              acc.totalReceived += payment.amount;
+              acc.completedTransactions++;
+            } else if (payment.payment_status === "Refunded") {
+              // Subtract refunded amount from total expected
+              acc.totalRefunded += payment.refund_amount || payment.amount;
+              acc.totalExpected -= (payment.refund_amount || payment.amount);
+              acc.refundedTransactions++;
+            } else if (payment.payment_status === "Pending") {
+              acc.pendingTransactions++;
+            }
+            return acc;
+          },
+          {
+            totalExpected: 0,
+            totalReceived: 0,
+            totalRefunded: 0,
+            totalTransactions: 0,
+            pendingTransactions: 0,
+            completedTransactions: 0,
+            refundedTransactions: 0,
+          }
+        );
+        
+        // Calculate remaining amount
+        stats.remainingAmount = stats.totalExpected - stats.totalReceived;
+        setSummaryStats(stats);
+      } catch (error) {
+        console.error("Error fetching payments:", error);
+        toast.error("Failed to fetch payment data");
       }
     };
 
     fetchPayments();
-  }, []);
+  }, [accessToken]);
 
-  // Refund handler
-  const handleRefund = async (bookingId) => {
-    // if (!window.confirm("Are you sure you want to refund this payment?")) return;
+  // Filter Payments
+  useEffect(() => {
+    let result = payments;
 
-    // try {
-    //   const response = await axios.post(
-    //     `http://localhost:8000/api/auth/payment/refund/${paymentId}`,
-    //     {},
-    //     {
-    //       headers: {
-    //         Authorization: `Bearer ${accessToken}`,
-    //       },
-    //     }
-    //   );
+    // Filter by status
+    if (filters.status) {
+      result = result.filter(payment => payment.payment_status === filters.status);
+    }
 
-    //   if (response.data.success) {
-    //     alert("Refund processed successfully!");
-    //     setPayments((prevPayments) =>
-    //       prevPayments.map((payment) =>
-    //         payment._id === paymentId ? { ...payment, payment_status: "Refunded" } : payment
-    //       )
-    //     );
-    //   } else {
-    //     alert("Failed to process refund.");
-    //   }
-    // } catch (error) {
-    //   console.error("Error processing refund:", error);
-    //   alert("An error occurred while processing the refund.");
-    // }
-    try {
-            const response = await axios.post(
-              "http://localhost:8000/api/auth/payment/initiate",
-              {
-                amount: 900,
-                purchase_order_id: bookingId,
-                purchase_order_name: "EasyEvent",
-                return_url: `http://localhost:5173/transaction/${bookingId}`,
-                website_url: `http://localhost:5173/transaction/${bookingId}`,
-                bookingId: bookingId,
-                userId: "67b6d065da09b880fa55361a",
-              },
-              {
-                headers: { Authorization: `Bearer ${accessToken}` },
-              }
-            );
-    
-            if (response.data && response.data.payment_url) {
-              // setPaymentUrl(response.data.payment_url);
-              window.location.href = response.data.payment_url;
-            } else {
-              toast.error("Payment initiation failed: No payment URL received.");
-            }
-          } catch (error) {
-            console.error(
-              "Payment initiation failed:",
-              error.response?.data || error.message
-            );
-          }
-  };
-
-
-  // Calculate summary data
-  const summary = useMemo(() => {
-    let totalReceived = 0;
-    payments.forEach((payment) => {
-      totalReceived += payment.amount;
-    });
-    return { totalReceived, totalTransactions: payments.length };
-  }, [payments]);
-
-  // Filtering Logic
-  const [searchTerm, setSearchTerm] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-
-  const filteredPayments = useMemo(() => {
-    return payments.filter((payment) => {
-      const userName = payment.user?.name.toLowerCase() || "";
-      const matchesName = userName.includes(searchTerm.toLowerCase());
-      const paymentDate = new Date(payment.booking?.event_details?.date || payment.created_at);
-      return (
-        matchesName &&
-        (!startDate || paymentDate >= new Date(startDate)) &&
-        (!endDate || paymentDate <= new Date(endDate))
+    // Filter by user name
+    if (filters.userName) {
+      result = result.filter(payment => 
+        payment.user?.name.toLowerCase().includes(filters.userName.toLowerCase())
       );
-    });
-  }, [payments, searchTerm, startDate, endDate]);
+    }
 
-   useEffect(() => {
-      const verifyPayment = async () => {
-        const pidx = searchParams.get("pidx");
-        if (!pidx) {
-          console.error("Missing pidx in URL parameters");
-          return;
-        }
-        try {
-          const response = await axios.post(
-            "http://localhost:8000/api/auth/payment/refund",
-            { pidx },
-            {
-              headers: { Authorization: `Bearer ${accessToken}` },
-            }
-          );
-          if (response.data.status === "Completed") {
-            toast.success("Payment successful!");
-            navigate(`/transaction`, { replace: true });
-          } else {
-            toast.error("Payment verification failed.");
-          }
-        } catch (error) {
-          console.error(
-            "Payment verification error:",
-            error.response?.data || error.message
-          );
-        }
-      };
-  
-      if (searchParams.has("pidx")) {
-        verifyPayment();
+    // Filter by date range
+    if (filters.dateRange.start && filters.dateRange.end) {
+      result = result.filter(payment => {
+        const paymentDate = new Date(payment.created_at);
+        return (
+          paymentDate >= new Date(filters.dateRange.start) && 
+          paymentDate <= new Date(filters.dateRange.end)
+        );
+      });
+    }
+
+    setFilteredPayments(result);
+  }, [payments, filters]);
+
+
+// Refund handler with confirmation
+const handleRefund = async (pidx, amount) => {
+  if (!window.confirm(`Are you sure you want to refund Rs. ${amount}?`)) {
+    return;
+  }
+  try {
+    const response = await axios.post(
+      "http://localhost:8000/api/auth/payment/refund",
+      {
+        pidx,             // Transaction ID from the Payment record
+        refund_amount: amount, // The refund amount
+      },
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+
+    // Assuming your backend returns a response with details
+    if (response.data?.success) {
+      toast.success(`Refunded Rs. ${response.data.refunded_amount}`);
+      // Optionally refresh the payments list here.
+    } else {
+      toast.error("Refund initiation failed");
+    }
+  } catch (error) {
+    toast.error("Refund failed: " + (error.response?.data?.message || error.message));
+  }
+};
+
+
+  // User Aggregated Stats
+  const userAggregatedStats = useMemo(() => {
+    const userStats = {};
+    payments.forEach(payment => {
+      if (!payment.user) return;
+      
+      const userId = payment.user._id;
+      if (!userStats[userId]) {
+        userStats[userId] = {
+          name: payment.user.name,
+          email: payment.user.email,
+          totalTransactions: 0,
+          totalAmount: 0,
+          refundedAmount: 0,
+          completedTransactions: 0,
+          refundedTransactions: 0
+        };
       }
-    }, [searchParams, accessToken, navigate]);
+
+      const stats = userStats[userId];
+      stats.totalTransactions++;
+      stats.totalAmount += payment.amount;
+
+      if (payment.payment_status === 'Completed') {
+        stats.completedTransactions++;
+      } else if (payment.payment_status === 'Refunded') {
+        stats.refundedAmount += payment.amount;
+        stats.refundedTransactions++;
+      }
+    });
+
+    return Object.values(userStats);
+  }, [payments]);
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -163,76 +184,169 @@ function EnhancedTransactions() {
       <ToastContainer />
 
       <div className="flex-1 p-6 md:p-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">User Payment Details</h1>
+        <h1 className="text-3xl font-bold text-gray-800 mb-6">Financial Overview</h1>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          <div className="bg-white rounded shadow p-4 flex flex-col items-center">
-            <span className="text-sm text-gray-500">Total Transactions</span>
-            <span className="text-3xl font-bold text-gray-800">{summary.totalTransactions}</span>
+        {/* Summary Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-indigo-600 text-white rounded-lg shadow-lg p-6">
+            <h3 className="text-lg font-semibold mb-2">Total Expected</h3>
+            <p className="text-3xl font-bold">Rs. {summaryStats.totalExpected.toFixed(2)}</p>
+            <p className="text-sm mt-1">Across all transactions</p>
           </div>
-          <div className="bg-gradient-to-r from-green-400 to-blue-500 rounded shadow p-4 flex flex-col items-center">
-            <span className="text-sm text-white">Total Received</span>
-            <span className="text-3xl font-bold text-white">Rs. {summary.totalReceived.toFixed(2)}</span>
+          <div className="bg-green-600 text-white rounded-lg shadow-lg p-6">
+            <h3 className="text-lg font-semibold mb-2">Total Received</h3>
+            <p className="text-3xl font-bold">Rs. {summaryStats.totalReceived.toFixed(2)}</p>
+            <p className="text-sm mt-1">{summaryStats.completedTransactions} completed</p>
+          </div>
+          <div className="bg-red-600 text-white rounded-lg shadow-lg p-6">
+            <h3 className="text-lg font-semibold mb-2">Total Refunded</h3>
+            <p className="text-3xl font-bold">Rs. {summaryStats.totalRefunded.toFixed(2)}</p>
+            <p className="text-sm mt-1">{summaryStats.refundedTransactions} refunded</p>
+          </div>
+          <div className="bg-blue-600 text-white rounded-lg shadow-lg p-6">
+            <h3 className="text-lg font-semibold mb-2">Remaining Amount</h3>
+            <p className="text-3xl font-bold">Rs. {summaryStats.remainingAmount.toFixed(2)}</p>
+            <p className="text-sm mt-1">{summaryStats.pendingTransactions} pending</p>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white shadow rounded p-4 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
-          <input
-            type="text"
-            placeholder="Search by user name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-400"
-          />
-          
+        <div className="mb-6 bg-white rounded-lg shadow p-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <select 
+              value={filters.status} 
+              onChange={(e) => setFilters(prev => ({...prev, status: e.target.value}))}
+              className="px-3 py-2 border rounded"
+            >
+              <option value="">All Statuses</option>
+              <option value="Completed">Completed</option>
+              <option value="Pending">Pending</option>
+              <option value="Refunded">Refunded</option>
+            </select>
+            <input 
+              type="text" 
+              placeholder="Search by User Name" 
+              value={filters.userName}
+              onChange={(e) => setFilters(prev => ({...prev, userName: e.target.value}))}
+              className="px-3 py-2 border rounded"
+            />
+            <div className="flex space-x-2">
+              <input 
+                type="date" 
+                value={filters.dateRange.start || ''}
+                onChange={(e) => setFilters(prev => ({
+                  ...prev, 
+                  dateRange: {...prev.dateRange, start: e.target.value}
+                }))}
+                className="px-3 py-2 border rounded flex-1"
+              />
+              <input 
+                type="date" 
+                value={filters.dateRange.end || ''}
+                onChange={(e) => setFilters(prev => ({
+                  ...prev, 
+                  dateRange: {...prev.dateRange, end: e.target.value}
+                }))}
+                className="px-3 py-2 border rounded flex-1"
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Payments Table */}
-        <div className="bg-white shadow rounded p-4">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="border-b bg-gray-200">
-                <th className="p-3 text-left">Date</th>
-                <th className="p-3 text-left">User Name</th>
-                <th className="p-3 text-left">Email</th>
-                <th className="p-3 text-left">Venue</th>
-                <th className="p-3 text-left">Amount (Rs.)</th>
-                <th className="p-3 text-left">Status</th>
-                <th className="p-3 text-left">Actions</th>
+        {/* Transactions Table */}
+        <div className="bg-white rounded-lg shadow overflow-x-auto mb-8">
+          <div className="p-4 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-800">Transaction History</h2>
+          </div>
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Venue</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-white divide-y divide-gray-200">
               {filteredPayments.map((payment) => (
-                <tr
-                  key={payment._id}
-                  className="border-b hover:bg-gray-100 cursor-pointer"
-                  onClick={() => navigate(`/transactions/${payment._id}`)}
-                >
-                  <td className="p-3">
-                    {new Date(payment.booking?.event_details?.date || payment.created_at).toLocaleDateString()}
+                <tr key={payment._id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {new Date(payment.created_at).toLocaleDateString()}
                   </td>
-                  <td className="p-3">{payment.user?.name}</td>
-                  <td className="p-3">{payment.user?.email}</td>
-                  <td className="p-3">{payment.booking?.venue}</td>
-                  <td className="p-3">Rs. {payment.amount.toFixed(2)}</td>
-                  <td className="p-3">{payment.payment_status}</td>
-                  <td className="p-3">
-                    {payment.payment_status !== "Refunded" ? (
+                  <td className="px-6 py-4">
+                    <div className="text-sm font-medium text-gray-900">{payment.user?.name}</div>
+                    <div className="text-sm text-gray-500">{payment.user?.email}</div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500">{payment.booking?.venue}</td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`inline-flex px-2 py-1 rounded-full text-sm ${
+                        payment.payment_status === "Refunded" ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"
+                      }`}
+                    >
+                      Rs. {payment.amount.toFixed(2)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`inline-flex px-2 py-1 rounded-full text-xs ${
+                        payment.payment_status === "Completed"
+                          ? "bg-green-100 text-green-800"
+                          : payment.payment_status === "Refunded"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
+                      {payment.payment_status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    {payment.payment_status === "Completed" && (
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent row click
-                          handleRefund(payment.booking._id);
-                        }}
-                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                      onClick={() => handleRefund(payment.transaction_id, payment.amount)}
+
+                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium"
                       >
                         Refund
                       </button>
-                    ) : (
-                      <span className="text-gray-500">Refunded</span>
                     )}
                   </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* User Aggregated Stats */}
+        <div className="bg-white rounded-lg shadow overflow-x-auto">
+          <div className="p-4 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-800">User Financial Summary</h2>
+          </div>
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Transactions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Amount</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Refunded Amount</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {userAggregatedStats.map((userStat) => (
+                <tr key={userStat.email} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{userStat.name}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500">{userStat.email}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {userStat.totalTransactions} 
+                    <span className="text-xs text-gray-400 ml-2">
+                      (Completed: {userStat.completedTransactions}, Refunded: {userStat.refundedTransactions})
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-green-600">Rs. {userStat.totalAmount.toFixed(2)}</td>
+                  <td className="px-6 py-4 text-sm text-red-600">Rs. {userStat.refundedAmount.toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
