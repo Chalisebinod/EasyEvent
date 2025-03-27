@@ -30,6 +30,7 @@ import {
   VerifiedUser as KycIcon,
 } from "@mui/icons-material";
 import BookOnlineIcon from "@mui/icons-material/BookOnline";
+import RateReviewIcon from "@mui/icons-material/RateReview"; 
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 
@@ -105,9 +106,7 @@ const VenueSidebar = ({ children }) => {
   });
 
   return (
-    <Box
-      sx={{ display: "flex", minHeight: "100vh", backgroundColor: "#f4f6f8" }}
-    >
+    <Box sx={{ display: "flex", minHeight: "100vh", backgroundColor: "#f4f6f8" }}>
       {/* Sidebar Drawer */}
       <Drawer
         sx={{
@@ -135,10 +134,9 @@ const VenueSidebar = ({ children }) => {
             borderRadius: 1,
           }}
         >
-         <Typography variant="h5" sx={{ color: "#FF8C00", fontWeight: "bold" }}>
-  EasyEvent
-</Typography>
-
+          <Typography variant="h5" sx={{ color: "#FF8C00", fontWeight: "bold" }}>
+            EasyEvent
+          </Typography>
         </Box>
 
         {/* Navigation Links */}
@@ -275,6 +273,18 @@ const VenueSidebar = ({ children }) => {
               <GalleryIcon />
             </ListItemIcon>
             <ListItemText primary="Galleries" />
+          </ListItem>
+
+          <ListItem
+            button
+            component={Link}
+            to="/reviews"
+            sx={getNavItemStyle("/reviews")}
+          >
+            <ListItemIcon>
+              <RateReviewIcon />
+            </ListItemIcon>
+            <ListItemText primary="Reviews" />
           </ListItem>
 
           <ListItem

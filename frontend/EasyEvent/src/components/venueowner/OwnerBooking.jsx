@@ -251,9 +251,9 @@ const OwnerBooking = () => {
             <Typography variant="h4" component="h1" fontWeight="bold">
               Approved Bookings
             </Typography>
-            <Button variant="contained" color="primary" onClick={handleOpenCreate}>
+            {/* <Button variant="contained" color="primary" onClick={handleOpenCreate}>
               Create Booking
-            </Button>
+            </Button> */}
           </Box>
 
           {loading && <LinearProgress />}

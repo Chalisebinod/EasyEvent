@@ -31,48 +31,51 @@ const VenueOwnerProfile = () => {
   // Helper function to convert a stored image path to a full URL
   const getProfileImageUrl = (imagePath) => {
     if (!imagePath) return "https://via.placeholder.com/150";
+    // Ensure imagePath is a string; if not, return a placeholder.
+    if (typeof imagePath !== "string") return "https://via.placeholder.com/150";
     // If already a URL, return as is
     if (imagePath.startsWith("http")) return imagePath;
     // Replace backslashes with forward slashes and prepend the base URL
     return `${BASE_URL}${imagePath.replace(/\\/g, "/")}`;
   };
 
-  // 1) Fetch Profile
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (!accessToken) {
-        toast.error("Please login first");
-        navigate("/login");
-        return;
-      }
+  // Function to fetch profile data
+  const fetchProfile = async () => {
+    if (!accessToken) {
+      toast.error("Please login first");
+      navigate("/login");
+      return;
+    }
 
-      try {
-        const response = await axios.get(
-          "http://localhost:8000/api/venueOwner/profile",
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-        // Store the profile and initialize updatedProfile for editing
-        setProfile(response.data);
-        setUpdatedProfile({
-          ...response.data,
-          profile_image: null,   // so we can attach a new file if needed
-          venue_images: [],      // same reasoning for multiple files
-        });
-      } catch (error) {
-        console.error("Error fetching profile:", error);
-        if (error.response && error.response.status === 401) {
-          toast.error("Session expired, please login again.");
-          navigate("/login");
-        } else {
-          toast.error("Failed to fetch profile data. Please try again.");
+    try {
+      const response = await axios.get(
+        "http://localhost:8000/api/venueOwner/profile",
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
         }
+      );
+      // Store the profile and initialize updatedProfile for editing
+      setProfile(response.data);
+      setUpdatedProfile({
+        ...response.data,
+        profile_image: null, // so we can attach a new file if needed
+        venue_images: [], // same reasoning for multiple files
+      });
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      if (error.response && error.response.status === 401) {
+        toast.error("Session expired, please login again.");
+        navigate("/login");
+      } else {
+        toast.error("Failed to fetch profile data. Please try again.");
       }
-    };
+    }
+  };
 
+  // 1) Fetch Profile on component mount
+  useEffect(() => {
     fetchProfile();
   }, [navigate, accessToken]);
 
@@ -81,10 +84,12 @@ const VenueOwnerProfile = () => {
     setIsEditing(true);
   };
 
-  // 3) Logout
+  // 3) Logout with confirmation
   const handleLogout = () => {
-    localStorage.removeItem("access_token");
-    navigate("/login");
+    if (window.confirm("Are you sure you want to logout?")) {
+      localStorage.removeItem("access_token");
+      navigate("/login");
+    }
   };
 
   // 4) Handle Changes in Edit Mode
@@ -125,7 +130,7 @@ const VenueOwnerProfile = () => {
     });
 
     try {
-      // Example: PUT or POST to update
+      // PUT request to update the profile
       await axios.put("http://localhost:8000/api/profile", formData, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -135,11 +140,8 @@ const VenueOwnerProfile = () => {
       toast.success("Profile updated successfully!");
       setIsEditing(false);
 
-      // Update the UI with the new data
-      setProfile((prevState) => ({
-        ...prevState,
-        ...updatedProfile,
-      }));
+      // Re-fetch the updated profile from the server so that the profile picture shows correctly
+      fetchProfile();
     } catch (error) {
       console.error("Error updating profile:", error);
       toast.error("Failed to update profile.");

@@ -16,8 +16,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  FormGroup,
-  FormControlLabel,
   Tabs,
   Tab,
 } from "@mui/material";
@@ -26,9 +24,8 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import VenueSidebar from "../VenueSidebar";
 
-
 const FoodManagement = () => {
-  const [activeTab, setActiveTab] = useState(0); // We can keep the tab for "Food Items" only
+  const [activeTab, setActiveTab] = useState(0);
   const accessToken = localStorage.getItem("access_token");
   const venueId = localStorage.getItem("venueID");
 
@@ -66,9 +63,7 @@ const FoodManagement = () => {
       );
       setFoods(response.data.foods || []);
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Error fetching foods"
-      );
+      toast.error(error.response?.data?.message || "Error fetching foods");
     } finally {
       setLoadingFoods(false);
     }
@@ -83,9 +78,7 @@ const FoodManagement = () => {
       );
       setFoodCategories(response.data.categories || []);
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Error fetching categories"
-      );
+      toast.error(error.response?.data?.message || "Error fetching categories");
     }
   };
 
@@ -103,7 +96,9 @@ const FoodManagement = () => {
         name: food.name,
         price: food.price,
         description: food.description || "",
-        custom_options: food.custom_options ? food.custom_options.join(", ") : "",
+        custom_options: food.custom_options
+          ? food.custom_options.join(", ")
+          : "",
       });
     } else {
       setEditingFood(null);
@@ -132,9 +127,7 @@ const FoodManagement = () => {
     try {
       const payload = {
         ...foodForm,
-        custom_options: foodForm.custom_options
-          .split(",")
-          .map((s) => s.trim()),
+        custom_options: foodForm.custom_options.split(",").map((s) => s.trim()),
         venue: venueId,
       };
       if (editingFood) {
@@ -144,9 +137,7 @@ const FoodManagement = () => {
           { headers: { Authorization: `Bearer ${accessToken}` } }
         );
         setFoods(
-          foods.map((f) =>
-            f._id === editingFood._id ? response.data.food : f
-          )
+          foods.map((f) => (f._id === editingFood._id ? response.data.food : f))
         );
         toast.success("Food updated successfully!");
       } else {
@@ -179,12 +170,13 @@ const FoodManagement = () => {
   // Delete a category from Food Categories
   const handleDeleteCategory = async (categoryId) => {
     try {
-      await axios.delete(`http://localhost:8000/api/foodCategory/${categoryId}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      setFoodCategories(
-        foodCategories.filter((cat) => cat._id !== categoryId)
+      await axios.delete(
+        `http://localhost:8000/api/foodCategory/${categoryId}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
       );
+      setFoodCategories(foodCategories.filter((cat) => cat._id !== categoryId));
       toast.success("Category deleted successfully!");
     } catch (error) {
       toast.error(error.response?.data?.message || "Error deleting category");
@@ -225,45 +217,92 @@ const FoodManagement = () => {
       <VenueSidebar />
 
       {/* Main Content Area */}
-      <Box flexGrow={1} p={2}>
+      <Box flexGrow={1} p={3}>
         <ToastContainer position="top-center" autoClose={3000} />
-        <Typography variant="h4" align="center" gutterBottom>
+        <Typography
+          variant="h4"
+          align="center"
+          gutterBottom
+          sx={{ fontWeight: "bold", marginBottom: 3 }}
+        >
           Food Management
         </Typography>
 
-        {/* If desired, you can keep Tabs here even with a single option */}
-        <Tabs value={activeTab} onChange={handleTabChange} centered>
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          centered
+          textColor="primary"
+          indicatorColor="primary"
+          sx={{ marginBottom: 3 }}
+        >
           <Tab label="Food Items" />
         </Tabs>
 
         {/* Food Items Tab */}
         {activeTab === 0 && (
           <Box mt={4}>
-            <Box display="flex" justifyContent="space-between" mb={2}>
-              <Button variant="contained" color="primary" onClick={() => openFoodModal()}>
-                <Add sx={{ mr: 1 }} /> Create Food
+            <Box display="flex" justifyContent="flex-end" mb={3}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => openFoodModal()}
+                startIcon={<Add />}
+              >
+                Create Food
               </Button>
             </Box>
             {loadingFoods ? (
-              <Typography>Loading foods...</Typography>
+              <Typography align="center">Loading foods...</Typography>
             ) : (
-              <Grid container spacing={2}>
+              <Grid container spacing={3}>
                 {foods.map((food) => (
                   <Grid item xs={12} sm={6} md={4} key={food._id}>
-                    <Paper sx={{ p: 2 }}>
-                      <Typography variant="h6">{food.name}</Typography>
-                      <Typography variant="body2" color="text.secondary">
+                    <Paper
+                      sx={{
+                        p: 2,
+                        borderRadius: 2,
+                        boxShadow: 3,
+                        transition: "transform 0.3s",
+                        "&:hover": { transform: "scale(1.02)" },
+                      }}
+                    >
+                      <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                        {food.name}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ marginBottom: 1 }}
+                      >
                         {food.mealType.toUpperCase()} - {food.category}
                       </Typography>
-                      <Typography variant="body2">${food.price}</Typography>
+                      <Typography
+                        variant="body1"
+                        sx={{ fontWeight: "bold", color: "#2e7d32" }}
+                      >
+                        ${food.price}
+                      </Typography>
                       {food.description && (
-                        <Typography variant="caption">{food.description}</Typography>
+                        <Typography
+                          variant="caption"
+                          display="block"
+                          sx={{ mt: 1, color: "#757575" }}
+                        >
+                          {food.description}
+                        </Typography>
                       )}
-                      <Box mt={1} display="flex" justifyContent="flex-end">
-                        <IconButton onClick={() => openFoodModal(food)} color="primary">
+                      <Box mt={2} display="flex" justifyContent="flex-end">
+                        <IconButton
+                          onClick={() => openFoodModal(food)}
+                          color="primary"
+                        >
                           <Edit />
                         </IconButton>
-                        <IconButton onClick={() => handleDeleteFood(food._id)} color="error">
+                        <IconButton
+                          onClick={() => handleDeleteFood(food._id)}
+                          color="error"
+                        >
                           <Delete />
                         </IconButton>
                       </Box>
@@ -289,7 +328,7 @@ const FoodManagement = () => {
                   <Close />
                 </IconButton>
               </DialogTitle>
-              <DialogContent>
+              <DialogContent dividers>
                 <FormControl fullWidth sx={{ mt: 2 }}>
                   <InputLabel id="meal-type-label">Meal Type</InputLabel>
                   <Select
@@ -346,7 +385,7 @@ const FoodManagement = () => {
                         alignItems="center"
                         justifyContent="space-between"
                         sx={{
-                          border: "1px solid #ccc",
+                          border: "1px solid #e0e0e0",
                           borderRadius: 1,
                           p: 1,
                           mb: 1,
@@ -407,7 +446,11 @@ const FoodManagement = () => {
                 <Button onClick={() => setFoodModalOpen(false)} color="inherit">
                   Cancel
                 </Button>
-                <Button onClick={handleSaveFood} variant="contained" color="primary">
+                <Button
+                  onClick={handleSaveFood}
+                  variant="contained"
+                  color="primary"
+                >
                   Save
                 </Button>
               </DialogActions>
@@ -429,7 +472,7 @@ const FoodManagement = () => {
                   <Close />
                 </IconButton>
               </DialogTitle>
-              <DialogContent>
+              <DialogContent dividers>
                 <TextField
                   label="Category Name"
                   fullWidth
@@ -440,13 +483,18 @@ const FoodManagement = () => {
                   sx={{ mt: 2 }}
                 />
                 <FormControl fullWidth sx={{ mt: 2 }}>
-                  <InputLabel id="new-category-mealtype-label">Meal Type</InputLabel>
+                  <InputLabel id="new-category-mealtype-label">
+                    Meal Type
+                  </InputLabel>
                   <Select
                     labelId="new-category-mealtype-label"
                     name="mealType"
                     value={newCategory.mealType}
                     onChange={(e) =>
-                      setNewCategory({ ...newCategory, mealType: e.target.value })
+                      setNewCategory({
+                        ...newCategory,
+                        mealType: e.target.value,
+                      })
                     }
                     label="Meal Type"
                   >
@@ -457,10 +505,17 @@ const FoodManagement = () => {
                 </FormControl>
               </DialogContent>
               <DialogActions>
-                <Button onClick={() => setCategoryModalOpen(false)} color="inherit">
+                <Button
+                  onClick={() => setCategoryModalOpen(false)}
+                  color="inherit"
+                >
                   Cancel
                 </Button>
-                <Button onClick={handleSaveCategory} variant="contained" color="primary">
+                <Button
+                  onClick={handleSaveCategory}
+                  variant="contained"
+                  color="primary"
+                >
                   Save
                 </Button>
               </DialogActions>

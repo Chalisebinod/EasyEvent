@@ -176,32 +176,6 @@ const Sidebar = () => {
             )}
           </li>
 
-          {/* Rating & Reviews */}
-          <li>
-            {renderNavLink(
-              "/reviews",
-              <FaStar className="text-lg" />,
-              "Rating & Reviews"
-            )}
-          </li>
-
-          {/* Payment */}
-          <li>
-            {renderNavLink(
-              "/payments",
-              <FaMoneyCheck className="text-lg" />,
-              "Payment"
-            )}
-          </li>
-
-          {/* Agreement */}
-          <li>
-            {renderNavLink(
-              "/agreement",
-              <FaFileContract className="text-lg" />,
-              "Agreement"
-            )}
-          </li>
 
           {/* Logout */}
           <li>

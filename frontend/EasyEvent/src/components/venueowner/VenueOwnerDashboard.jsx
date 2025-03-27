@@ -20,8 +20,11 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Le
 
 const VenueOwnerDashboard = () => {
   // State for KYC verification and stats
-  const [verified, setVerified] = useState(null); // null: not yet determined
+  const [verified, setVerified] = useState(null); // null: not yet determined, true: approved, false: not approved
   const [stats, setStats] = useState(null);
+  // New state to track completion of the KYC check (for loader control)
+  const [isKycChecked, setIsKycChecked] = useState(false);
+  
   const navigate = useNavigate();
   const token = localStorage.getItem("access_token");
   const venueId = localStorage.getItem("venueId");
@@ -39,11 +42,15 @@ const VenueOwnerDashboard = () => {
         } else {
           setVerified(false);
         }
+        // Mark KYC check as completed
+        setIsKycChecked(true);
       })
       .catch((error) => {
         console.error("Error checking KYC status:", error);
         toast.error("Error verifying KYC status.");
         setVerified(false);
+        // Even on error, mark KYC check as completed so that we can show the update prompt
+        setIsKycChecked(true);
       });
   }, [token]);
 
@@ -66,8 +73,10 @@ const VenueOwnerDashboard = () => {
     }
   }, [verified, token, venueId]);
 
-  // Show loader until KYC and stats are determined
-  if (verified === null || !stats) {
+  // New Conditional Rendering
+
+  // 1. While KYC check is in progress, show a loader
+  if (!isKycChecked) {
     return (
       <div className="h-screen flex items-center justify-center">
         Loading...
@@ -75,8 +84,8 @@ const VenueOwnerDashboard = () => {
     );
   }
 
-  // If KYC is not approved, show a KYC update prompt
-  if (!verified) {
+  // 2. If KYC is not approved, show a KYC update prompt
+  if (verified === false) {
     return (
       <div className="h-screen flex bg-gray-100">
         <VenueSidebar />
@@ -96,6 +105,15 @@ const VenueOwnerDashboard = () => {
             </button>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // 3. If KYC is approved but stats are still loading, show a loader
+  if (verified && !stats) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        Loading dashboard statistics...
       </div>
     );
   }

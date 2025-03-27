@@ -160,7 +160,6 @@ function EventDetails() {
         <div className="flex-1 p-8">
           <div className="text-center text-red-600">
             <p>{error || "Booking not found"}</p>
-
           </div>
         </div>
       </div>
@@ -178,7 +177,6 @@ function EventDetails() {
             <h1 className="text-xl font-extrabold text-gray-800">
               {isRequest ? "Booking Request Details" : "Booking Details"}
             </h1>
-
           </div>
         </header>
 
@@ -355,7 +353,7 @@ function EventDetails() {
                   </Typography>
                   <Divider className="mb-3" />
                   {booking.selected_foods &&
-                    booking.selected_foods.length > 0 ? (
+                  booking.selected_foods.length > 0 ? (
                     <Box className="flex flex-wrap gap-2">
                       {booking.selected_foods.map((food) => (
                         <Chip
@@ -385,7 +383,7 @@ function EventDetails() {
                   </Typography>
                   <Divider className="mb-3" />
                   {booking.additional_services &&
-                    booking.additional_services.length > 0 ? (
+                  booking.additional_services.length > 0 ? (
                     <ul className="list-disc list-inside text-gray-600">
                       {booking.additional_services.map((service) => (
                         <li key={service._id}>
