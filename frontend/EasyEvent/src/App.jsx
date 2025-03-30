@@ -25,7 +25,7 @@ import PaymentDetails from "./components/user/PaymentDetails";
 import DeleteAccount from "./components/user/DeleteAccount";
 import UserPage from "./components/admin/UserPage";
 import VenueOwnerPage from "./components/admin/VenueOwnerPage";
-import AdminPage from "./components/admin/AdminPage";
+//import AdminPage from "./components/admin/AdminPage";
 import VenueOwnerUserProfile from "./components/admin/VenueOwnerUserProfile";
 import VenueOwnerProfile from "./components/venueowner/VenueOwnerProfile";
 import EmailVerification from "./components/user/EmailVerification";
@@ -60,7 +60,7 @@ import AboutUs from "./components/user/Aboutus";
 import MyBookings from "./components/user/MyBookings";
 import EventImageFolders from "./components/venueowner/EventImageFolders";
 import SubmitReview from "./components/user/SubmitReview";
-import Reviews from "./components/venueowner/Reviews";
+// import Reviews from "./components/venueowner/Reviews";
 
 function App() {
   // useEffect(() => {
@@ -119,7 +119,7 @@ function App() {
         <Route path="/chat" element={<AllChat />} />
         <Route path="/chat/user" element={<ChatPage />} />
         <Route path="/user-chat" element={<UserChat />} />
-        <Route path="/reviews" element={<Reviews />} />
+        {/* <Route path="/reviews" element={<Reviews />} /> */}
 
         <Route path="/foodManagement" element={<FoodManagement />} />
 
@@ -150,7 +150,7 @@ function App() {
         <Route path="/all-user" element={<UserPage />} />
         <Route path="/all-venue" element={<VenuePage />} />
         <Route path="/all-venueUser" element={<VenueOwnerPage />} />
-        <Route path="/all-admin" element={<AdminPage />} />
+        {/* <Route path="/all-admin" element={<AdminPage />} /> */}
         <Route path="/kyc-request" element={<KycRequest />} />
         <Route path="/kyc-profile/:kycId" element={<KycProfile />} />
         <Route path="about-us" element={<AboutUs />} />

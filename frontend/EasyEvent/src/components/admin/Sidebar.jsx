@@ -4,12 +4,11 @@ import {
   FaTachometerAlt,
   FaUsers,
   FaBookOpen,
-  FaStar,
-  FaMoneyCheck,
-  FaFileContract,
+  FaBuilding,
+  FaSignOutAlt,
   FaChevronDown,
   FaChevronUp,
-  FaSignOutAlt,
+  FaUserShield,
 } from "react-icons/fa";
 
 const Sidebar = () => {
@@ -18,27 +17,21 @@ const Sidebar = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => setShowLogoutDialog(true);
-
   const confirmLogout = () => {
     localStorage.removeItem("access_token");
     setShowLogoutDialog(false);
     navigate("/login");
   };
-
   const cancelLogout = () => setShowLogoutDialog(false);
-
   const toggleKycDropdown = () => setShowKycDropdown((prev) => !prev);
 
-  // Base styling for navigation items
-  const baseLinkClasses =
-    "flex items-center px-6 py-3 transition-colors duration-300 rounded-md focus:outline-none";
-  // Inactive link style with subtle hover effect (same color family)
-  const inactiveLinkClasses =
-    "text-gray-300 hover:bg-gray-800 hover:text-white";
-  // Active link style
+  // Navigation item styling similar to the screenshot
+  const baseLinkClasses = 
+    "flex items-center py-4 px-6 w-full transition-colors duration-200 hover:bg-gray-800";
+  const inactiveLinkClasses = "text-gray-300";
   const activeLinkClasses = "bg-gray-800 text-white";
 
-  // Helper function for rendering navigation links with proper styles
+  // Helper function for navigation links
   const renderNavLink = (to, icon, label) => (
     <NavLink
       to={to}
@@ -52,15 +45,17 @@ const Sidebar = () => {
   );
 
   return (
-    <aside className="w-64 bg-gray-900 text-gray-300 h-screen fixed shadow-xl">
-      {/* Sidebar Title */}
-      <div className="py-6 px-6 text-center text-3xl font-bold border-b border-gray-800">
-        EasyEvent
+    <aside className="w-64 bg-[#121A29] text-gray-300 h-screen fixed left-0 top-0 z-10">
+      {/* Logo Area */}
+      <div className="py-6 px-6 border-b border-gray-800">
+        <h1 className="text-3xl font-bold text-white">
+          EasyEvent
+        </h1>
       </div>
 
       {/* Navigation Menu */}
-      <nav className="mt-6">
-        <ul>
+      <nav className="flex flex-col h-[calc(100%-134px)]">
+        <ul className="w-full">
           {/* Dashboard */}
           <li>
             {renderNavLink(
@@ -71,10 +66,10 @@ const Sidebar = () => {
           </li>
 
           {/* KYC Request with Dropdown */}
-          <li className="relative">
+          <li>
             <button
               onClick={toggleKycDropdown}
-              className={`${baseLinkClasses} w-full justify-between ${
+              className={`${baseLinkClasses} justify-between ${
                 showKycDropdown ? activeLinkClasses : inactiveLinkClasses
               }`}
             >
@@ -86,14 +81,17 @@ const Sidebar = () => {
                 {showKycDropdown ? <FaChevronUp /> : <FaChevronDown />}
               </span>
             </button>
+            
             {showKycDropdown && (
               <ul className="bg-gray-900">
                 <li>
                   <NavLink
                     to="/kyc-request"
                     className={({ isActive }) =>
-                      `block pl-12 pr-6 py-2 transition-colors duration-300 rounded-md ${
-                        isActive ? activeLinkClasses : inactiveLinkClasses
+                      `block py-3 pl-16 pr-6 transition-colors duration-200 ${
+                        isActive 
+                          ? "bg-gray-800 text-white" 
+                          : "text-gray-400 hover:bg-gray-800 hover:text-white"
                       }`
                     }
                   >
@@ -104,8 +102,10 @@ const Sidebar = () => {
                   <NavLink
                     to="/kyc-request?status=rejected"
                     className={({ isActive }) =>
-                      `block pl-12 pr-6 py-2 transition-colors duration-300 rounded-md ${
-                        isActive ? activeLinkClasses : inactiveLinkClasses
+                      `block py-3 pl-16 pr-6 transition-colors duration-200 ${
+                        isActive 
+                          ? "bg-gray-800 text-white" 
+                          : "text-gray-400 hover:bg-gray-800 hover:text-white"
                       }`
                     }
                   >
@@ -116,8 +116,10 @@ const Sidebar = () => {
                   <NavLink
                     to="/kyc-request?status=pending"
                     className={({ isActive }) =>
-                      `block pl-12 pr-6 py-2 transition-colors duration-300 rounded-md ${
-                        isActive ? activeLinkClasses : inactiveLinkClasses
+                      `block py-3 pl-16 pr-6 transition-colors duration-200 ${
+                        isActive 
+                          ? "bg-gray-800 text-white" 
+                          : "text-gray-400 hover:bg-gray-800 hover:text-white"
                       }`
                     }
                   >
@@ -128,8 +130,10 @@ const Sidebar = () => {
                   <NavLink
                     to="/kyc-request?status=approved"
                     className={({ isActive }) =>
-                      `block pl-12 pr-6 py-2 transition-colors duration-300 rounded-md ${
-                        isActive ? activeLinkClasses : inactiveLinkClasses
+                      `block py-3 pl-16 pr-6 transition-colors duration-200 ${
+                        isActive 
+                          ? "bg-gray-800 text-white" 
+                          : "text-gray-400 hover:bg-gray-800 hover:text-white"
                       }`
                     }
                   >
@@ -153,8 +157,8 @@ const Sidebar = () => {
           <li>
             {renderNavLink(
               "/all-venueUser",
-              <FaUsers className="text-lg" />,
-              "Venue Owner"
+              <FaBuilding className="text-lg" />,
+              "Venue Owners"
             )}
           </li>
 
@@ -162,52 +166,53 @@ const Sidebar = () => {
           <li>
             {renderNavLink(
               "/all-venue",
-              <FaTachometerAlt className="text-lg" />,
+              <FaBuilding className="text-lg" />,
               "Venues"
             )}
           </li>
 
           {/* Admin */}
-          <li>
+          {/* <li>
             {renderNavLink(
               "/all-admin",
-              <FaUsers className="text-lg" />,
+              <FaUserShield className="text-lg" />,
               "Admin"
             )}
-          </li>
-
-
-          {/* Logout */}
-          <li>
-            <button
-              onClick={handleLogout}
-              className={`${baseLinkClasses} text-left ${inactiveLinkClasses} hover:bg-red-600 hover:text-white`}
-            >
-              <FaSignOutAlt className="text-lg text-red-400" />
-              <span className="ml-4 font-medium">Logout</span>
-            </button>
-          </li>
+          </li> */}
         </ul>
+
+        {/* Push Logout to bottom */}
+        <div className="mt-auto">
+          <button
+            onClick={handleLogout}
+            className="flex items-center py-4 px-6 w-full text-gray-300 hover:bg-gray-800 transition-colors duration-200"
+          >
+            <FaSignOutAlt className="text-lg" />
+            <span className="ml-4 font-medium">Logout</span>
+          </button>
+        </div>
       </nav>
 
       {/* Logout Confirmation Dialog */}
       {showLogoutDialog && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-gray-800 p-6 rounded-lg shadow-xl w-96">
-            <h2 className="text-2xl font-semibold mb-4 text-white">
+            <h2 className="text-xl font-semibold mb-4 text-white">
               Confirm Logout
             </h2>
-            <p className="text-gray-300">Are you sure you want to log out?</p>
-            <div className="mt-6 flex justify-end">
+            <p className="text-gray-300">
+              Are you sure you want to log out?
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
               <button
                 onClick={cancelLogout}
-                className="px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors duration-300 mr-3"
+                className="px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors duration-200"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmLogout}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-500 transition-colors duration-300"
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-500 transition-colors duration-200"
               >
                 Logout
               </button>

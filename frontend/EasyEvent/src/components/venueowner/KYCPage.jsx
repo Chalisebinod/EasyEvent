@@ -10,7 +10,6 @@ const KYCPage = () => {
   const fileInputRefs = useRef({});
   const [loading, setLoading] = useState(false);
   const [existingKyc, setExistingKyc] = useState(null); // stores fetched KYC data
-  const [kycSubmitted, setKycSubmitted] = useState(false); // New state for submitted KYC
 
   // To store preview URLs for individual document uploads
   const [docPreviewUrls, setDocPreviewUrls] = useState({});
@@ -42,7 +41,7 @@ const KYCPage = () => {
   ];
 
   // Determine if the form is editable.
-  // It is editable when there is no existing KYC or if the existing KYC verificationStatus is "Rejected".
+  // It is editable when there is no existing KYC or if the existing KYC verificationStatus is "rejected".
   const isEditable = !existingKyc || existingKyc.status === "rejected";
 
   // Cleanup object URLs on unmount or when they change
@@ -77,34 +76,53 @@ const KYCPage = () => {
         if (response.data && response.data.data) {
           const kycData = response.data.data;
           setExistingKyc(kycData);
-          // Populate form values with fetched data
-          setFormValues({
-            venueName: kycData.venueName || "",
-            address: kycData.venueAddress?.address || "",
-            city: kycData.venueAddress?.city || "",
-            state: kycData.venueAddress?.state || "",
-            zip_code: kycData.venueAddress?.zip_code || "",
-          });
-          // Set file preview URLs based on the existing data, using getImageUrl
-          setDocPreviewUrls({
-            profile: kycData.profileImage
-              ? getImageUrl(kycData.profileImage)
-              : "",
-            citizenshipFront: kycData.citizenshipFront
-              ? getImageUrl(kycData.citizenshipFront)
-              : "",
-            citizenshipBack: kycData.citizenshipBack
-              ? getImageUrl(kycData.citizenshipBack)
-              : "",
-            pan: kycData.pan ? getImageUrl(kycData.pan) : "",
-            map: kycData.map ? getImageUrl(kycData.map) : "",
-            signature: kycData.signature ? getImageUrl(kycData.signature) : "",
-          });
-          // Set the venue images preview URLs (if any), converting each path with getImageUrl
-          if (kycData.venueImages && Array.isArray(kycData.venueImages)) {
-            setVenueImagesUrls(
-              kycData.venueImages.map((path) => getImageUrl(path))
-            );
+
+          // If the KYC is rejected, clear all fields so that the venue owner can submit again.
+          if (kycData.status === "rejected") {
+            setFormValues({
+              venueName: "",
+              address: "",
+              city: "",
+              state: "",
+              zip_code: "",
+            });
+            setDocPreviewUrls({
+              profile: "",
+              citizenshipFront: "",
+              citizenshipBack: "",
+              pan: "",
+              map: "",
+              signature: "",
+            });
+            setVenueImagesUrls([]);
+          } else {
+            // Otherwise, populate the form with the fetched data.
+            setFormValues({
+              venueName: kycData.venueName || "",
+              address: kycData.venueAddress?.address || "",
+              city: kycData.venueAddress?.city || "",
+              state: kycData.venueAddress?.state || "",
+              zip_code: kycData.venueAddress?.zip_code || "",
+            });
+            setDocPreviewUrls({
+              profile: kycData.profileImage
+                ? getImageUrl(kycData.profileImage)
+                : "",
+              citizenshipFront: kycData.citizenshipFront
+                ? getImageUrl(kycData.citizenshipFront)
+                : "",
+              citizenshipBack: kycData.citizenshipBack
+                ? getImageUrl(kycData.citizenshipBack)
+                : "",
+              pan: kycData.pan ? getImageUrl(kycData.pan) : "",
+              map: kycData.map ? getImageUrl(kycData.map) : "",
+              signature: kycData.signature ? getImageUrl(kycData.signature) : "",
+            });
+            if (kycData.venueImages && Array.isArray(kycData.venueImages)) {
+              setVenueImagesUrls(
+                kycData.venueImages.map((path) => getImageUrl(path))
+              );
+            }
           }
         }
       } catch (error) {
@@ -237,9 +255,11 @@ const KYCPage = () => {
       );
 
       if (response.status === 200) {
-        toast.success("KYC submitted successfully!");
-        // Instead of navigating immediately, show a professional submission message
-        setKycSubmitted(true);
+        toast.success("KYC submitted successfully. It may take some time for verification.");
+        // Redirect to dashboard after a short delay.
+        setTimeout(() => {
+          navigate("/venue-owner-dashboard");
+        }, 3000);
       }
     } catch (error) {
       alert(
@@ -249,28 +269,6 @@ const KYCPage = () => {
       setLoading(false);
     }
   };
-
-  // If KYC is submitted, display a professional confirmation screen
-  if (kycSubmitted) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-        <div className="max-w-md mx-auto bg-white shadow-md rounded-lg p-6 text-center">
-          <h2 className="text-2xl font-bold text-orange-600 mb-4">KYC Submitted</h2>
-          <p className="text-gray-700 mb-6">
-            Your KYC has been submitted successfully and is now under review. Verification may take some time.
-            Please check your email for updates or contact support if you have any questions.
-          </p>
-          <button
-            onClick={() => navigate("/venue-owner-dashboard")}
-            className="bg-orange-600 text-white px-6 py-2 rounded-md font-semibold hover:bg-orange-700 transition"
-          >
-            Go to Dashboard
-          </button>
-        </div>
-        <ToastContainer />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex">

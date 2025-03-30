@@ -223,12 +223,12 @@ const login = async (req, res) => {
   }
 };
 
-// Get User Details Controller
+
 const getUserDetails = async (req, res) => {
   try {
-    const userId = req.user.id; // Extract user ID from the token (added by checkAuthentication middleware)
+    const userId = req.user.id; 
 
-    // Fetch the user details based on role
+    
     let user;
     if (req.user.role === "venueOwner") {
       user = await VenueOwner.findById(userId).select("-password"); // Exclude password
@@ -268,7 +268,7 @@ const autoLogin = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role, // Assuming user has a role field
+        role: user.role, 
       },
     });
   } catch (error) {

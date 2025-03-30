@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 
 const VenueOwnerSignup = () => {
@@ -12,6 +13,19 @@ const VenueOwnerSignup = () => {
     contact_number: "",
   });
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Validate password criteria: at least 8 characters, an uppercase letter, a lowercase letter, a number, and a special character.
+  const validatePassword = (pwd) => {
+    const strengthChecks = {
+      length: pwd.length >= 8,
+      uppercase: /[A-Z]/.test(pwd),
+      lowercase: /[a-z]/.test(pwd),
+      number: /[0-9]/.test(pwd),
+      specialChar: /[!@#$%^&*(),.?":{}|<>]/.test(pwd)
+    };
+    return Object.values(strengthChecks).every(Boolean);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,6 +38,20 @@ const VenueOwnerSignup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Validate required fields
+    if (!formData.name || !formData.email || !formData.password || !formData.contact_number) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    // Validate password strength
+    if (!validatePassword(formData.password)) {
+      toast.error("Password does not meet requirements!");
+      return;
+    }
+
+    setIsSubmitting(true);
+
     const payload = {
       name: formData.name,
       email: formData.email,
@@ -32,16 +60,13 @@ const VenueOwnerSignup = () => {
     };
 
     try {
-      const response = await fetch(
-        "http://localhost:8000/api/signupVenueOwner",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        }
-      );
+      const response = await fetch("http://localhost:8000/api/signupVenueOwner", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
       if (response.ok) {
         toast.success("Signup successful!");
@@ -53,26 +78,29 @@ const VenueOwnerSignup = () => {
     } catch (error) {
       console.error("Error during signup:", error);
       toast.error("An error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div className="flex min-h-screen bg-gray-100">
       <ToastContainer />
-      <div className="w-1/2 bg-gradient-to-r from-orange-500 to-orange-600 text-white flex flex-col justify-center items-center p-10 shadow-lg">
-        <h1 className="text-5xl font-bold mb-4">Welcome, Venue Owners!</h1>
-        <p className="text-lg text-center">
-          Join us and make event planning seamless!
+      {/* Left Section */}
+      <div className="w-1/2 bg-gradient-to-br from-orange-500 to-orange-600 text-white flex flex-col justify-center items-center p-10 shadow-lg">
+        <h1 className="text-5xl font-bold mb-4 drop-shadow-lg">
+          Welcome, Venue Owners!
+        </h1>
+        <p className="text-lg text-center max-w-md">
+          Join us to elevate your venue's visibility and streamline event management!
         </p>
       </div>
-      <div className="w-1/2 flex justify-center items-center p-8">
-        <form
-          className="w-full max-w-md bg-white p-8 shadow-xl rounded-lg border border-gray-200"
-          onSubmit={handleSubmit}
-        >
-          <h2 className="text-3xl font-bold text-orange-600 mb-6 text-center">
-            Signup
-          </h2>
+      {/* Right Section */}
+      <div className="w-1/2 bg-white flex flex-col justify-center items-center p-10">
+        <h2 className="text-3xl font-bold text-orange-600 mb-6">
+          Signup
+        </h2>
+        <form className="w-3/4" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
               <label className="block text-gray-700 font-medium mb-1">
@@ -84,7 +112,7 @@ const VenueOwnerSignup = () => {
                 placeholder="John Doe"
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 border-gray-300"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 transition duration-300"
                 required
               />
             </div>
@@ -98,7 +126,7 @@ const VenueOwnerSignup = () => {
                 placeholder="email@example.com"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 border-gray-300"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 transition duration-300"
                 required
               />
             </div>
@@ -112,12 +140,12 @@ const VenueOwnerSignup = () => {
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg pr-10 focus:ring-2 focus:ring-orange-500 border-gray-300"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg pr-12 focus:ring-2 focus:ring-orange-500 transition duration-300"
                 required
               />
               <button
                 type="button"
-                className="absolute right-3 top-12 transform -translate-y-1/2"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2"
                 onClick={() => setPasswordVisible(!passwordVisible)}
               >
                 {passwordVisible ? (
@@ -126,6 +154,11 @@ const VenueOwnerSignup = () => {
                   <EyeSlashIcon className="w-6 h-6 text-gray-500" />
                 )}
               </button>
+              {formData.password && !validatePassword(formData.password) && (
+                <p className="text-red-600 text-sm mt-2">
+                  Password must be 8+ characters, include uppercase, lowercase, number, and special character.
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-gray-700 font-medium mb-1">
@@ -137,28 +170,29 @@ const VenueOwnerSignup = () => {
                 placeholder="+1234567890"
                 value={formData.contact_number}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 border-gray-300"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 transition duration-300"
                 required
               />
             </div>
           </div>
           <button
             type="submit"
-            className="w-full mt-5 bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg font-medium transition-all"
+            disabled={isSubmitting}
+            className={`w-full mt-6 py-3 rounded-lg text-white font-medium transition-all transform hover:scale-105 ${
+              isSubmitting
+                ? "bg-orange-300 cursor-not-allowed"
+                : "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+            }`}
           >
-            Signup
+            {isSubmitting ? "Signing up..." : "Signup"}
           </button>
-          <p className="mt-4 text-center text-gray-600 text-sm">
-            Already have an account?
-            <Link
-              to="/login"
-              className="text-orange-600 font-medium hover:underline"
-            >
-              {" "}
-              Login
-            </Link>
-          </p>
         </form>
+        <p className="mt-4 text-center text-gray-600 text-sm">
+          Already have an account?{" "}
+          <Link to="/login" className="text-orange-600 font-medium hover:underline">
+            Login
+          </Link>
+        </p>
       </div>
     </div>
   );

@@ -1,7 +1,31 @@
 import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import LandingImage from "../images/Landing.png"; // Replace with actual image
+import { 
+  ArrowRightIcon, 
+  CheckCircleIcon, 
+  StarIcon, 
+  ShieldCheckIcon, 
+  SparklesIcon,
+  CalendarCheck,
+  MapPin,
+  CreditCard
+} from "lucide-react";
+import LandingImage from "../images/Landing.png"; // Replace with your actual image
 import BottomNavbar from "./BottomNavbar";
+
+// Feature Card Component
+const FeatureCard = ({ icon: Icon, title, description }) => (
+  <div className="group bg-white p-6 rounded-xl border border-gray-100 shadow-md hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-2">
+    <div className="flex items-center mb-4">
+      <Icon
+        className="w-10 h-10 text-orange-600 mr-4 group-hover:rotate-6 transition-transform"
+        strokeWidth={1.5}
+      />
+      <h3 className="text-xl font-semibold text-gray-800">{title}</h3>
+    </div>
+    <p className="text-gray-600 leading-relaxed">{description}</p>
+  </div>
+);
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -14,48 +38,63 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="relative min-h-screen bg-gray-50">
-      {/* Header Section */}
-      <header className="flex justify-between items-center px-8 py-4 bg-white shadow-lg sticky top-0 z-50">
-        <h1
-          onClick={() => navigate("/")}
-          className="text-3xl font-bold text-orange-600 hover:text-orange-700 transition duration-300 cursor-pointer"
-        >
-          EasyEvents
-        </h1>
-        <nav className="flex items-center space-x-6">
-          <button
-            onClick={() => navigate("/login")}
-            className="px-8 py-2 bg-orange-600 text-white rounded-full shadow hover:bg-orange-700 transition"
-          >
-            Login
-          </button>
-        </nav>
+    <div className="bg-gray-50 min-h-screen antialiased">
+      {/* Header with zero horizontal margin */}
+      <header className="fixed w-full top-0 z-50 bg-white shadow-sm">
+        <div className="flex items-center justify-between h-16 px-0">
+          {/* Left side - EasyEvents */}
+          <div className="flex-shrink-0">
+            <h1
+              onClick={() => navigate("/")}
+              className="text-2xl font-bold text-orange-600 cursor-pointer hover:text-orange-700 transition-colors ml-10"
+            >
+              EasyEvents
+            </h1>
+          </div>
+
+          {/* Right side - Login */}
+          <div className="flex items-center">
+            <button
+              onClick={() => navigate("/login")}
+              className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors mr-10"
+            >
+              <span>Login</span>
+              <ArrowRightIcon className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       </header>
 
       {/* Hero Section */}
       <section
-        className="relative bg-cover bg-center h-screen flex items-center justify-center text-center"
-        style={{ backgroundImage: `url(${LandingImage})` }}
+        className="relative pt-24 pb-16 md:pt-36 md:pb-24 bg-cover bg-center h-screen"
+        style={{
+          backgroundImage: `url(${LandingImage})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
       >
-        <div className="absolute inset-0 bg-black opacity-50"></div>
-        <div className="relative z-10 max-w-4xl text-white">
-          <h1 className="text-5xl font-bold mb-4">
-            Simplify Event Venue Booking
+        <div className="absolute inset-0 bg-orange-900 opacity-50"></div>
+
+        <div className="relative z-10 max-w-4xl mx-auto px-4 flex flex-col justify-center h-full text-center">
+          <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight">
+            Simplify Your Event Venue Discovery
           </h1>
-          <p className="text-xl mb-8">
-            Discover the best venues for your events and celebrations.
+          <p className="text-xl md:text-2xl text-white/90 mb-10 max-w-3xl mx-auto">
+            Discover, compare, and book the perfect venues for weddings,
+            corporate events, and celebrations.
           </p>
-          <div className="flex justify-center space-x-6">
+
+          <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
             <button
               onClick={scrollToVenueOwnerSection}
-              className="px-8 py-3 bg-green-500 text-white rounded-full shadow hover:bg-green-600 transition"
+              className="px-8 py-3 bg-white text-orange-600 rounded-full font-semibold hover:bg-orange-50 transition-colors shadow-md"
             >
               List Your Venue
             </button>
             <button
               onClick={() => navigate("/user-dashboard-before")}
-              className="px-8 py-3 bg-white text-orange-600 border-2 border-orange-600 rounded-full shadow hover:bg-orange-600 hover:text-white transition"
+              className="px-8 py-3 border-2 border-white text-white rounded-full font-semibold hover:bg-white/20 transition-colors"
             >
               Explore Venues
             </button>
@@ -63,95 +102,99 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* User Features Section */}
-      <section className="py-20 bg-white text-center">
-        <h2 className="text-4xl font-semibold text-orange-600 mb-8">
-          For Event Planners
-        </h2>
-        <p className="text-lg text-gray-700 mb-12">
-          Book the perfect venue for weddings, parties, or corporate events.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-10">
-          <div className="bg-gray-100 p-8 rounded-lg shadow hover:shadow-lg">
-            <h3 className="text-xl font-bold text-orange-600 mb-4">
-              Wide Range of Venues
-            </h3>
-            <p className="text-gray-600">
-              From banquet halls to outdoor gardens.
+      {/* Event Planner Features */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+              Designed for Event Planners
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Streamline your event planning with our comprehensive venue booking
+              platform
             </p>
           </div>
-          <div className="bg-gray-100 p-8 rounded-lg shadow hover:shadow-lg">
-            <h3 className="text-xl font-bold text-orange-600 mb-4">
-              Easy Bookings
-            </h3>
-            <p className="text-gray-600">Book venues with just a few clicks.</p>
-          </div>
-          <div className="bg-gray-100 p-8 rounded-lg shadow hover:shadow-lg">
-            <h3 className="text-xl font-bold text-orange-600 mb-4">
-              Secure Payments
-            </h3>
-            <p className="text-gray-600">Safe and hassle-free transactions.</p>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <FeatureCard
+              icon={CalendarCheck}
+              title="Extensive Venues"
+              description="Access a diverse range of verified venues, from intimate spaces to grand halls."
+            />
+            <FeatureCard
+              icon={MapPin}
+              title="Easy Location"
+              description="Find perfect venues based on location, capacity, and amenities."
+            />
+            <FeatureCard
+              icon={CreditCard}
+              title="Secure Transactions"
+              description="Safe, encrypted payment systems ensuring complete transaction security."
+            />
           </div>
         </div>
       </section>
 
-      {/* Venue Owner Features Section */}
-      <section
-        ref={venueOwnerSectionRef}
-        className="py-20 bg-gray-50 text-center"
-      >
-        <h2 className="text-4xl font-semibold text-orange-600 mb-8">
-          For Venue Owners
-        </h2>
-        <p className="text-lg text-gray-700 mb-12">
-          List your venue and grow your business with EasyEvents.
-        </p>
-        <div className="flex justify-center space-x-6">
-          <button
-            onClick={() => navigate("/venue-owner-login")}
-            className="px-6 py-3 bg-orange-600 text-white rounded-full shadow hover:bg-orange-700 transition"
-          >
-            Login
-          </button>
-          <button
-            onClick={() => navigate("/venue-owner-signup")}
-            className="px-6 py-3 bg-white text-orange-600 border-2 border-orange-600 rounded-full shadow hover:bg-orange-600 hover:text-white transition"
-          >
-            Signup
-          </button>
+      {/* Venue Owner Section */}
+      <section ref={venueOwnerSectionRef} className="py-16 bg-gray-50">
+        <div className="max-w-4xl mx-auto text-center px-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6">
+            For Venue Owners
+          </h2>
+          <p className="text-xl text-gray-600 mb-10">
+            Grow your business by reaching more clients through our platform
+          </p>
+
+          <div className="flex justify-center space-x-4">
+            <button
+              onClick={() => navigate("/login")}
+              className="px-8 py-3 bg-orange-600 text-white rounded-full hover:bg-orange-700 transition-colors shadow-md"
+            >
+              Login
+            </button>
+            <button
+              onClick={() => navigate("/venue-owner-signup")}
+              className="px-8 py-3 border-2 border-orange-600 text-orange-600 rounded-full hover:bg-orange-600 hover:text-white transition-colors"
+            >
+              Sign Up
+            </button>
+          </div>
         </div>
       </section>
 
-      {/* Why Choose EasyEvents Section */}
-      <section className="py-20 bg-gray-100 text-center">
-        <h2 className="text-4xl font-semibold text-orange-600 mb-8">
-          Why Choose EasyEvents?
-        </h2>
-        <p className="text-lg text-gray-700 mb-12">
-          A trusted platform connecting event planners with verified venues.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-10">
-          <div className="bg-white p-8 rounded-lg shadow hover:shadow-lg">
-            <h4 className="text-xl font-semibold text-orange-600 mb-4">
-              Verified Venues
-            </h4>
-            <p>Trustworthy and reliable venue options.</p>
+      {/* Why Choose EasyEvents */}
+      <section className="py-16 bg-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+              Why Choose EasyEvents
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              A trusted platform connecting event planners with premium venues
+            </p>
           </div>
-          <div className="bg-white p-8 rounded-lg shadow hover:shadow-lg">
-            <h4 className="text-xl font-semibold text-orange-600 mb-4">
-              Seamless Experience
-            </h4>
-            <p>Smooth booking and payment processes.</p>
-          </div>
-          <div className="bg-white p-8 rounded-lg shadow hover:shadow-lg">
-            <h4 className="text-xl font-semibold text-orange-600 mb-4">
-              Customer Support
-            </h4>
-            <p>24/7 support for all your queries.</p>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <FeatureCard
+              icon={SparklesIcon}
+              title="Verified Venues"
+              description="Every venue is meticulously verified to ensure quality and reliability."
+            />
+            <FeatureCard
+              icon={CheckCircleIcon}
+              title="Seamless Experience"
+              description="From discovery to booking, enjoy a smooth and intuitive process."
+            />
+            <FeatureCard
+              icon={ShieldCheckIcon}
+              title="24/7 Support"
+              description="Our dedicated support team is always ready to assist you."
+            />
           </div>
         </div>
       </section>
-      <BottomNavbar/>
+
+      <BottomNavbar />
     </div>
   );
 };

@@ -275,7 +275,7 @@ const VenueSidebar = ({ children }) => {
             <ListItemText primary="Galleries" />
           </ListItem>
 
-          <ListItem
+          {/* <ListItem
             button
             component={Link}
             to="/reviews"
@@ -285,7 +285,7 @@ const VenueSidebar = ({ children }) => {
               <RateReviewIcon />
             </ListItemIcon>
             <ListItemText primary="Reviews" />
-          </ListItem>
+          </ListItem> */}
 
           <ListItem
             button

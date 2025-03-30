@@ -116,13 +116,14 @@ const KycProfile = () => {
             <div className="bg-white shadow-lg rounded-lg p-8 mb-8 flex flex-col md:flex-row justify-between">
               <div className="flex items-center flex-1">
                 <div className="w-40 h-40 flex-shrink-0 mr-8">
-                  {profile.profile && profile.profile.trim() !== "" ? (
+                  {profile.profileImage &&
+                  profile.profileImage.trim() !== "" ? (
                     <img
-                      src={getImageUrl(profile.profile)}
+                      src={getImageUrl(profile.profileImage)}
                       alt="Profile"
                       className="w-full h-full object-cover rounded-full border cursor-pointer"
                       onClick={() =>
-                        openImageModal(getImageUrl(profile.profile))
+                        openImageModal(getImageUrl(profile.profileImage))
                       }
                     />
                   ) : (
@@ -179,9 +180,7 @@ const KycProfile = () => {
               <h3 className="text-2xl font-semibold mb-6">Documents</h3>
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <p className="font-medium text-sm mb-2">
-                    Citizenship Front:
-                  </p>
+                  <p className="font-medium text-sm mb-2">Citizenship Front:</p>
                   {profile.citizenshipFront !== "No file uploaded" ? (
                     <img
                       src={getImageUrl(profile.citizenshipFront)}
@@ -196,9 +195,7 @@ const KycProfile = () => {
                   )}
                 </div>
                 <div>
-                  <p className="font-medium text-sm mb-2">
-                    Citizenship Back:
-                  </p>
+                  <p className="font-medium text-sm mb-2">Citizenship Back:</p>
                   {profile.citizenshipBack !== "No file uploaded" ? (
                     <img
                       src={getImageUrl(profile.citizenshipBack)}
