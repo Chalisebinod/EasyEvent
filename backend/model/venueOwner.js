@@ -11,7 +11,7 @@ const venueOwnerSchema = new mongoose.Schema(
     verified: { type: Boolean, default: false },
     status: {
       type: String,
-      enum: ["verified", "pending", "rejected"], // Enum to define the status values
+      enum: ["verified", "pending", "rejected"], 
       default: "pending", // Default status is 'pending'
     },
     venue: {
@@ -21,7 +21,7 @@ const venueOwnerSchema = new mongoose.Schema(
     },
     
     reported_count: { type: Number, default: 0 }, // Tracks reports against the owner
-    is_blocked: { type: Boolean, default: false }, // Active, Suspended
+    is_blocked: { type: Boolean, default: false }, 
     last_login: { type: Date, default: null },
 
     // Add fields for document uploads
@@ -30,7 +30,7 @@ const venueOwnerSchema = new mongoose.Schema(
     pan_card_vat: { type: String, default: null }, // URL or path for the PAN/VAT document
   },
   {
-    timestamps: true, // Automatically add `createdAt` and `updatedAt`
+    timestamps: true, 
   }
 );
 

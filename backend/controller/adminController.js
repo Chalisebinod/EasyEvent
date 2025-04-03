@@ -1,7 +1,11 @@
 const User = require("../model/user");
 const VenueOwner = require("../model/venueOwner");
 const Venue = require("../model/venue");
-
+const Booking = require("../model/bookingSchema");
+const Kyc = require("../model/KYC");
+const Hall = require("../model/hallSchema");
+const Payment = require("../model/payment");
+const Request = require("../model/request");
 async function getAllUsers(req, res) {
   try {
     const {
@@ -68,6 +72,97 @@ async function getAllUsers(req, res) {
     });
   }
 }
+
+const getDashboardInsights = async (req, res) => {
+  try {
+    // Get the date from query parameters, default to today
+    const queryDate = req.query.date ? new Date(req.query.date) : new Date();
+    const startOfDay = new Date(queryDate.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(queryDate.setHours(23, 59, 59, 999));
+
+    // Run all queries in parallel for efficiency
+    const [
+      totalVenues,
+      totalVenueOwners,
+      totalUsers,
+      totalBookings,
+      pendingKyc,
+      totalHalls,
+      totalRequests,
+      dailyPaymentsAgg,
+      overallRevenueAgg,
+      bookingTypeCounts,
+    ] = await Promise.all([
+      Venue.countDocuments({}),
+      VenueOwner.countDocuments({}), // Count total venue owners
+      User.countDocuments({}),
+      Booking.countDocuments({}),
+      Kyc.countDocuments({ verificationStatus: "pending" }),
+      Hall.countDocuments({}),
+      Request.countDocuments({}), // Count total requests from Request.js
+      Payment.aggregate([
+        {
+          $match: {
+            payment_status: "Completed",
+            paid_at: { $gte: startOfDay, $lte: endOfDay },
+          },
+        },
+        {
+          $group: { _id: null, total: { $sum: "$amount" } },
+        },
+      ]),
+      Payment.aggregate([
+        { $match: { payment_status: "Completed" } },
+        { $group: { _id: null, total: { $sum: "$amount" } } },
+      ]),
+      Request.aggregate([
+        {
+          $group: {
+            _id: "$event_details.event_type", // Group by event type
+            count: { $sum: 1 }, // Count occurrences of each event type
+          },
+        },
+      ]),
+    ]);
+
+    // Calculate total payment received for the day
+    const totalPaymentForDay =
+      dailyPaymentsAgg.length > 0 ? dailyPaymentsAgg[0].total : 0;
+    // Total revenue overall from completed payments
+    const totalRevenueOverall =
+      overallRevenueAgg.length > 0 ? overallRevenueAgg[0].total : 0;
+    // Compute average booking value from revenue and total bookings (if bookings exist)
+    const averageBookingValue =
+      totalBookings > 0 ? (totalRevenueOverall / totalBookings).toFixed(2) : 0;
+
+    // Convert booking type aggregation result into a key-value object
+    const bookingTypes = bookingTypeCounts.reduce((acc, type) => {
+      acc[type._id] = type.count;
+      return acc;
+    }, {});
+
+    const insights = {
+      totalVenues,
+      totalVenueOwners, // Total venue owners
+      totalUsers,
+      totalBookings,
+      pendingKyc,
+      totalHalls,
+      totalRequests, // Total requests
+      totalPaymentForDay,
+      totalRevenueOverall,
+      averageBookingValue,
+      bookingTypes, // Booking type breakdown (e.g., { "Marriage": 5, "Corporate": 3 })
+    };
+
+    res
+      .status(200)
+      .json({ message: "Dashboard insights fetched successfully", insights });
+  } catch (error) {
+    console.error("Error fetching dashboard insights:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
 
 async function getAllAdmins(req, res) {
   try {
@@ -226,7 +321,6 @@ async function blockVenue(req, res) {
   }
 }
 
-
 async function blockVenueOwner(req, res) {
   const { userId } = req.params;
 
@@ -347,8 +441,6 @@ async function venueForAdmmin(req, res) {
   }
 }
 
-
-
 module.exports = {
   getAllUsers,
   getAllVenueOwners,
@@ -358,5 +450,5 @@ module.exports = {
   getVenueOwner,
   venueForAdmmin,
   blockVenue,
-
+  getDashboardInsights,
 };

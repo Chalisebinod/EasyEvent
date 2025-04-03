@@ -432,7 +432,7 @@ const FoodManagement = () => {
                   value={foodForm.description}
                   onChange={handleFoodFormChange}
                 />
-                <TextField
+                {/* <TextField
                   name="custom_options"
                   label="Custom Options (comma separated)"
                   fullWidth
@@ -440,7 +440,7 @@ const FoodManagement = () => {
                   sx={{ mt: 2 }}
                   value={foodForm.custom_options}
                   onChange={handleFoodFormChange}
-                />
+                /> */}
               </DialogContent>
               <DialogActions>
                 <Button onClick={() => setFoodModalOpen(false)} color="inherit">

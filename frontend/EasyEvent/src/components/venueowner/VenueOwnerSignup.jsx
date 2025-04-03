@@ -22,7 +22,7 @@ const VenueOwnerSignup = () => {
       uppercase: /[A-Z]/.test(pwd),
       lowercase: /[a-z]/.test(pwd),
       number: /[0-9]/.test(pwd),
-      specialChar: /[!@#$%^&*(),.?":{}|<>]/.test(pwd)
+      specialChar: /[!@#$%^&*(),.?":{}|<>]/.test(pwd),
     };
     return Object.values(strengthChecks).every(Boolean);
   };
@@ -39,7 +39,12 @@ const VenueOwnerSignup = () => {
     e.preventDefault();
 
     // Validate required fields
-    if (!formData.name || !formData.email || !formData.password || !formData.contact_number) {
+    if (
+      !formData.name ||
+      !formData.email ||
+      !formData.password ||
+      !formData.contact_number
+    ) {
       toast.error("Please fill in all fields");
       return;
     }
@@ -60,13 +65,16 @@ const VenueOwnerSignup = () => {
     };
 
     try {
-      const response = await fetch("http://localhost:8000/api/signupVenueOwner", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      const response = await fetch(
+        "http://localhost:8000/api/signupVenueOwner",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
 
       if (response.ok) {
         toast.success("Signup successful!");
@@ -92,14 +100,13 @@ const VenueOwnerSignup = () => {
           Welcome, Venue Owners!
         </h1>
         <p className="text-lg text-center max-w-md">
-          Join us to elevate your venue's visibility and streamline event management!
+          Join us to elevate your venue's visibility and streamline event
+          management!
         </p>
       </div>
       {/* Right Section */}
       <div className="w-1/2 bg-white flex flex-col justify-center items-center p-10">
-        <h2 className="text-3xl font-bold text-orange-600 mb-6">
-          Signup
-        </h2>
+        <h2 className="text-3xl font-bold text-orange-600 mb-6">Signup</h2>
         <form className="w-3/4" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
@@ -145,18 +152,20 @@ const VenueOwnerSignup = () => {
               />
               <button
                 type="button"
-                className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                className="absolute right-3 top-[70%] transform -translate-y-1/2 flex items-center justify-center w-8 h-8"
                 onClick={() => setPasswordVisible(!passwordVisible)}
               >
                 {passwordVisible ? (
-                  <EyeIcon className="w-6 h-6 text-gray-500" />
+                  <EyeIcon className="w-5 h-5 text-gray-500" />
                 ) : (
-                  <EyeSlashIcon className="w-6 h-6 text-gray-500" />
+                  <EyeSlashIcon className="w-5 h-5 text-gray-500" />
                 )}
               </button>
+
               {formData.password && !validatePassword(formData.password) && (
                 <p className="text-red-600 text-sm mt-2">
-                  Password must be 8+ characters, include uppercase, lowercase, number, and special character.
+                  Password must be 8+ characters, include uppercase, lowercase,
+                  number, and special character.
                 </p>
               )}
             </div>
@@ -189,7 +198,10 @@ const VenueOwnerSignup = () => {
         </form>
         <p className="mt-4 text-center text-gray-600 text-sm">
           Already have an account?{" "}
-          <Link to="/login" className="text-orange-600 font-medium hover:underline">
+          <Link
+            to="/login"
+            className="text-orange-600 font-medium hover:underline"
+          >
             Login
           </Link>
         </p>

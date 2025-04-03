@@ -1,7 +1,7 @@
 const Venue = require("../model/venue");
 const VenueOwner = require("../model/venueOwner");
-const { getVenueOwner } = require("./adminController");
-
+const Review = require("../model/Review");
+const User = require("../model/user")
 const getAllVenuesForUser = async (req, res) => {
   try {
     const venueOwnerId = req.user.id; // Extract venue owner ID from auth middleware
@@ -13,16 +13,40 @@ const getAllVenuesForUser = async (req, res) => {
     }
 
     // Fetch all venues owned by the venue owner
-    const venues = await Venue.find({ owner: venueOwnerId });
-
-    // Check if the owner has any venues
+    const venues = await Venue.find({ owner: venueOwnerId }).lean();
     if (venues.length === 0) {
       return res.status(404).json({ message: "No venues found for this user" });
     }
 
+    // Extract venue IDs
+    const venueIds = venues.map((venue) => venue._id);
+
+    // Aggregate reviews to compute average rating for each venue using the averageRating field.
+    const ratings = await Review.aggregate([
+      { $match: { venueId: { $in: venueIds } } },
+      {
+        $group: {
+          _id: "$venueId",
+          avgRating: { $avg: "$averageRating" }
+        }
+      }
+    ]);
+
+    // Create a map of venueId to its average rating
+    const ratingMap = {};
+    ratings.forEach((item) => {
+      ratingMap[item._id.toString()] = item.avgRating;
+    });
+
+    // Append the averageRating to each venue (defaulting to 0 if no reviews exist)
+    const venuesWithRatings = venues.map((venue) => ({
+      ...venue,
+      averageRating: ratingMap[venue._id.toString()] || 0
+    }));
+
     res.status(200).json({
       message: "Venues fetched successfully",
-      venues: venues,
+      venues: venuesWithRatings,
     });
   } catch (error) {
     console.error("Error fetching venues:", error);
@@ -224,67 +248,92 @@ const getVenueProfile = async (req, res) => {
 
 const getAllVenuesForShowcase = async (req, res) => {
   try {
-    // Fetch all venues with all required details
-    const venues = await Venue.find({})
-      .populate("reviews.user", "name") // Populate user details in reviews
-      .populate("event_pricing.hall", "name capacity") // Populate hall details
-      .exec();
+    const venues = await Venue.aggregate([
+      {
+        $lookup: {
+          from: "reviews", // collection name for reviews
+          localField: "_id",
+          foreignField: "venueId",
+          as: "reviews",
+        },
+      },
+      {
+        $lookup: {
+          from: "users", // collection name for users
+          let: { reviewUserIds: "$reviews.userId" },
+          pipeline: [
+            { $match: { $expr: { $in: ["$_id", "$$reviewUserIds"] } } },
+            { $project: { name: 1, profile_image: 1 } },
+          ],
+          as: "reviewUsers",
+        },
+      },
+      {
+        $addFields: {
+          latestReview: { $arrayElemAt: [{ $sortArray: { input: "$reviews", sortBy: { createdAt: -1 } } }, 0] }
+        }
+      }
+    ]);
 
     if (!venues || venues.length === 0) {
       return res.status(404).json({ message: "No venues found" });
     }
 
-    // Prepare the venue data with all relevant fields
-    const venuesWithDetails = venues.map((venue) => ({
-      id: venue._id,
-      name: venue.name,
-      description: venue.description,
-      location: venue.location,
-      profile_image: venue.profile_image,
-      images: venue.images,
-      event_pricing: venue.event_pricing.map((pricing) => ({
-        event_type: pricing.event_type,
-        pricePerPlate: pricing.pricePerPlate,
-        description: pricing.description,
-        services_included: pricing.services_included,
-        hall: pricing.hall
-          ? {
-              id: pricing.hall._id,
-              name: pricing.hall.name,
-              capacity: pricing.hall.capacity,
-            }
-          : null,
-      })),
-      additional_services: venue.additional_services,
-      contact_details: venue.contact_details,
-      payment_policy: venue.payment_policy,
-      verification_status: venue.verification_status,
-      reported_count: venue.reported_count,
-      status: venue.status,
-      date_created: venue.date_created,
-      last_updated: venue.last_updated,
-      rating:
-        venue.reviews.length > 0
-          ? (
-              venue.reviews.reduce((acc, review) => acc + review.rating, 0) /
-              venue.reviews.length
-            ).toFixed(1)
-          : "No ratings yet",
-      reviews: venue.reviews.map((review) => ({
-        user: review.user.name,
-        comment: review.comment,
-        rating: review.rating,
-        date: review.date,
-      })),
-    }));
+    const venuesWithDetails = venues.map((venue) => {
+      const latestReview = venue.latestReview || null;
 
-    // Return the list of venues with all details
+      const reviews = venue.reviews.map((review) => {
+        const user = venue.reviewUsers.find((u) => u._id.toString() === review.userId.toString());
+        return {
+          user: user ? user.name : "Unknown",
+          profile_image: user ? user.profile_image : null,
+          review: review.review,
+          rating: review.rating,
+          reviewDate: review.createdAt,
+        };
+      });
+
+      return {
+        id: venue._id,
+        name: venue.name,
+        description: venue.description,
+        location: venue.location,
+        profile_image: venue.profile_image,
+        images: venue.images,
+        event_pricing: venue.event_pricing.map((pricing) => ({
+          event_type: pricing.event_type,
+          pricePerPlate: pricing.pricePerPlate,
+          description: pricing.description,
+          services_included: pricing.services_included,
+          hall: pricing.hall
+            ? {
+                id: pricing.hall._id,
+                name: pricing.hall.name,
+                capacity: pricing.hall.capacity,
+              }
+            : null,
+        })),
+        additional_services: venue.additional_services,
+        contact_details: venue.contact_details,
+        payment_policy: venue.payment_policy,
+        verification_status: venue.verification_status,
+        reported_count: venue.reported_count,
+        status: venue.status,
+        date_created: venue.date_created,
+        last_updated: venue.last_updated,
+        rating: latestReview ? latestReview.averageRating : "No ratings yet", // Use stored averageRating
+        reviews,
+      };
+    });
+
     res.status(200).json({ venues: venuesWithDetails });
   } catch (error) {
     console.error("Error fetching venues:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+
 
 const getVenueById = async (req, res) => {
   try {
@@ -302,8 +351,8 @@ const getVenueById = async (req, res) => {
 
     res.status(200).json({
       message: "Venue profile fetched successfully",
-      venueId: venue._id, 
-      owner: venue.owner, 
+      venueId: venue._id,
+      owner: venue.owner,
       verification_status: venue.verification_status, // Include verification status
       venue, // Return the full venue details
     });
@@ -312,8 +361,6 @@ const getVenueById = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
-
 
 module.exports = {
   createVenue,

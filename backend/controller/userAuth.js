@@ -16,8 +16,7 @@ const generateToken = (user) => {
   );
 };
 
-// Sign-Up Controller
-// User Sign-Up Controller
+
 const signup = async (req, res) => {
   const {
     name,
@@ -25,7 +24,7 @@ const signup = async (req, res) => {
     password,
     contact_number = null,
     location = null,
-    role = "user", // Default role is user
+    role = "user", 
   } = req.body;
 
   // Validate required fields

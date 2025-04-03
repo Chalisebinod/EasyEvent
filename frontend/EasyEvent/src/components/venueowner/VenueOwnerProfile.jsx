@@ -23,25 +23,122 @@ const VenueOwnerProfile = () => {
     date_created: "",
   });
 
-  // Sample reviews data for demonstration
+  // Sample reviews data for demonstration with 2 extra reviews added
   const dummyReviews = [
-    { id: 1, name: "Ps", rating: 4, comment: "Babbal xa, long lasting, yo price ma, more worthy, fragrance pani dammi nam panyo...", date: "4 weeks ago" },
-    { id: 2, name: "Nita L", rating: 4, comment: "Awesome", date: "4 weeks ago" },
-    { id: 3, name: "Rahul M", rating: 5, comment: "Excellent venue for our corporate event. The staff was extremely professional and accommodating. Will definitely book again.", date: "2 weeks ago" },
-    { id: 4, name: "Sarah J", rating: 5, comment: "Perfect location for our wedding reception. Everyone loved the ambiance and setup. Highly recommended!", date: "3 weeks ago" },
-    { id: 5, name: "Michael T", rating: 4, comment: "Great place with amazing service. The only downside was limited parking, but everything else was perfect.", date: "1 month ago" },
-    { id: 6, name: "Anita K", rating: 5, comment: "The venue exceeded our expectations. Beautiful decor, spacious, and the staff was incredibly helpful throughout the event.", date: "5 weeks ago" },
-    { id: 7, name: "David W", rating: 3, comment: "Good venue but the sound system needs improvement. Everything else was satisfactory.", date: "1 month ago" },
-    { id: 8, name: "Lisa R", rating: 5, comment: "We hosted our daughter's sweet sixteen here and it was simply perfect. Thank you for making her day special!", date: "6 weeks ago" },
-    { id: 9, name: "Rohan P", rating: 4, comment: "Very professional team and beautiful venue. The only issue was with catering timing, but the management handled it well.", date: "2 months ago" },
-    { id: 10, name: "Emma S", rating: 5, comment: "Absolutely stunning venue with top-notch amenities. Our guests couldn't stop talking about how beautiful everything was.", date: "7 weeks ago" },
-    { id: 11, name: "John D", rating: 4, comment: "Great experience overall. The venue manager was very responsive and helped us plan everything perfectly.", date: "2 months ago" },
-    { id: 12, name: "Priya M", rating: 5, comment: "Best venue in the city! Spacious, well-maintained, and the staff goes above and beyond to ensure everything runs smoothly.", date: "5 weeks ago" },
+    {
+      id: 1,
+      name: "Ps",
+      rating: 4,
+      comment:
+        "Babbal xa, long lasting, yo price ma, more worthy, fragrance pani dammi nam panyo...",
+      date: "4 weeks ago",
+    },
+    {
+      id: 2,
+      name: "Nita L",
+      rating: 4,
+      comment: "Awesome",
+      date: "3 weeks ago",
+    },
+    {
+      id: 3,
+      name: "Rahul M",
+      rating: 5,
+      comment:
+        "Excellent venue for our corporate event. The staff was extremely professional and accommodating. Will definitely book again.",
+      date: "2 weeks ago",
+    },
+    {
+      id: 4,
+      name: "Sarah J",
+      rating: 5,
+      comment:
+        "Perfect location for our wedding reception. Everyone loved the ambiance and setup. Highly recommended!",
+      date: "3 weeks ago",
+    },
+    {
+      id: 5,
+      name: "Michael T",
+      rating: 4,
+      comment:
+        "Great place with amazing service. The only downside was limited parking, but everything else was perfect.",
+      date: "1 month ago",
+    },
+    {
+      id: 6,
+      name: "Anita K",
+      rating: 5,
+      comment:
+        "The venue exceeded our expectations. Beautiful decor, spacious, and the staff was incredibly helpful throughout the event.",
+      date: "5 weeks ago",
+    },
+    {
+      id: 7,
+      name: "David W",
+      rating: 3,
+      comment:
+        "Good venue but the sound system needs improvement. Everything else was satisfactory.",
+      date: "1 month ago",
+    },
+    {
+      id: 8,
+      name: "Lisa R",
+      rating: 5,
+      comment:
+        "We hosted our daughter's sweet sixteen here and it was simply perfect. Thank you for making her day special!",
+      date: "6 weeks ago",
+    },
+    {
+      id: 9,
+      name: "Rohan P",
+      rating: 4,
+      comment:
+        "Very professional team and beautiful venue. The only issue was with catering timing, but the management handled it well.",
+      date: "2 months ago",
+    },
+    {
+      id: 10,
+      name: "Emma S",
+      rating: 5,
+      comment:
+        "Absolutely stunning venue with top-notch amenities. Our guests couldn't stop talking about how beautiful everything was.",
+      date: "7 weeks ago",
+    },
+    {
+      id: 11,
+      name: "John D",
+      rating: 4,
+      comment:
+        "Great experience overall. The venue manager was very responsive and helped us plan everything perfectly.",
+      date: "2 months ago",
+    },
+    {
+      id: 12,
+      name: "Priya M",
+      rating: 5,
+      comment:
+        "Best venue in the city! Spacious, well-maintained, and the staff goes above and beyond to ensure everything runs smoothly.",
+      date: "5 weeks ago",
+    },
+    // Two additional reviews
+    {
+      id: 13,
+      name: "Mark Z",
+      rating: 4,
+      comment: "Impressive service and venue. Would recommend to friends.",
+      date: "1 month ago",
+    },
+    {
+      id: 14,
+      name: "Sophie L",
+      rating: 5,
+      comment: "A beautiful space that made our event unforgettable.",
+      date: "2 weeks ago",
+    },
   ];
 
   const accessToken = localStorage.getItem("access_token");
   const navigate = useNavigate();
-
   const BASE_URL = "http://localhost:8000/";
 
   // Helper function to convert a stored image path to a full URL
@@ -52,6 +149,73 @@ const VenueOwnerProfile = () => {
     return `${BASE_URL}${imagePath.replace(/\\/g, "/")}`;
   };
 
+  // Function to format date in a readable format
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "N/A";
+      return date.toLocaleString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch (error) {
+      console.error("Date formatting error:", error);
+      return "N/A";
+    }
+  };
+
+  // Calculate time since account creation
+  const getAccountAge = (createdAt) => {
+    if (!createdAt) return "N/A";
+    try {
+      const created = new Date(createdAt);
+      if (isNaN(created.getTime())) return "N/A";
+      const now = new Date();
+      const diffInMs = now - created;
+      const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+      if (diffInDays === 0) return "Today";
+      if (diffInDays === 1) return "Yesterday";
+      if (diffInDays < 30) return `${diffInDays} days ago`;
+      if (diffInDays < 365) {
+        const months = Math.floor(diffInDays / 30);
+        return `${months} ${months === 1 ? "month" : "months"} ago`;
+      }
+      const years = Math.floor(diffInDays / 365);
+      return `${years} ${years === 1 ? "year" : "years"} ago`;
+    } catch (error) {
+      console.error("Account age calculation error:", error);
+      return "N/A";
+    }
+  };
+
+  // Function to get time since last login
+  const getLastLoginTime = (lastLogin) => {
+    if (!lastLogin) return "Never";
+    try {
+      const login = new Date(lastLogin);
+      if (isNaN(login.getTime())) return "Never";
+      const now = new Date();
+      const diffInMs = now - login;
+      const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+      if (diffInMinutes < 1) return "Just now";
+      if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`;
+      const diffInHours = Math.floor(diffInMinutes / 60);
+      if (diffInHours < 24)
+        return `${diffInHours} ${diffInHours === 1 ? "hour" : "hours"} ago`;
+      const diffInDays = Math.floor(diffInHours / 24);
+      if (diffInDays < 30)
+        return `${diffInDays} ${diffInDays === 1 ? "day" : "days"} ago`;
+      return formatDate(lastLogin);
+    } catch (error) {
+      console.error("Last login calculation error:", error);
+      return "N/A";
+    }
+  };
+
   // Function to fetch profile data
   const fetchProfile = async () => {
     if (!accessToken) {
@@ -59,7 +223,6 @@ const VenueOwnerProfile = () => {
       navigate("/login");
       return;
     }
-
     try {
       const response = await axios.get(
         "http://localhost:8000/api/venueOwner/profile",
@@ -129,7 +292,6 @@ const VenueOwnerProfile = () => {
   // Save Changes
   const handleSaveChanges = async (e) => {
     e.preventDefault();
-
     const formData = new FormData();
     Object.entries(updatedProfile).forEach(([key, value]) => {
       if (key === "venue_images") {
@@ -138,7 +300,6 @@ const VenueOwnerProfile = () => {
         formData.append(key, value);
       }
     });
-
     try {
       await axios.put("http://localhost:8000/api/profile", formData, {
         headers: {
@@ -174,9 +335,20 @@ const VenueOwnerProfile = () => {
     );
   };
 
+  // Get account status indicator color (professional palette)
+  const getStatusColor = (status) => {
+    if (!status) return "bg-gray-400";
+    const statusLower = status.toLowerCase();
+    if (statusLower === "verified" || statusLower === "active")
+      return "bg-green-500";
+    if (statusLower === "pending") return "bg-yellow-500";
+    if (statusLower === "rejected") return "bg-red-500";
+    return "bg-gray-400";
+  };
+
   if (!profile) {
     return (
-      <div className="min-h-screen flex bg-gray-100">
+      <div className="min-h-screen flex bg-white">
         <VenueSidebar />
         <div className="w-full flex items-center justify-center">
           <p className="text-gray-600">Loading profile...</p>
@@ -186,13 +358,14 @@ const VenueOwnerProfile = () => {
   }
 
   return (
-    <div className="min-h-screen flex bg-gray-100">
+    // Main container: fixed background white, no page scroll (only review card scrolls)
+    <div className="min-h-screen flex bg-white overflow-hidden">
       <VenueSidebar />
       {/* Content Area */}
       <div className="flex-1 p-4 md:p-8">
         {!isEditing ? (
           /* ---------- VIEW MODE ---------- */
-          <div className="bg-white rounded-md shadow p-6">
+          <div className="bg-white rounded-md shadow p-6 w-full">
             <div className="flex flex-col md:flex-row md:justify-between md:items-center">
               {/* Profile Info */}
               <div className="flex items-center space-x-4">
@@ -228,46 +401,55 @@ const VenueOwnerProfile = () => {
               </div>
             </div>
 
-            {/* Info Boxes */}
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Status Info */}
-              <div className="bg-gray-50 rounded shadow p-4">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                  Status Info
+            {/* Professional Account Status Card with slightly smaller font */}
+            <div className="mt-6">
+              <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                  Account Status
                 </h3>
-                <p className="text-sm text-gray-600">
-                  <strong>Status:</strong>{" "}
-                  {profile.status ? profile.status : "Active"}
-                </p>
-                <p className="text-sm text-gray-600">
-                  <strong>Last Login:</strong>{" "}
-                  {profile.last_login ? profile.last_login : "N/A"}
-                </p>
-                <p className="text-sm text-gray-600">
-                  <strong>Date Created:</strong>{" "}
-                  {profile.date_created ? profile.date_created : "N/A"}
-                </p>
-              </div>
-
-              {/* Bookings */}
-              <div className="bg-gray-50 rounded shadow p-4">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                  Bookings
-                </h3>
-                <p className="text-sm text-gray-600">No bookings found.</p>
+                <div className="flex items-center mb-4">
+                  <div
+                    className={`w-4 h-4 rounded-full ${getStatusColor(
+                      profile.status
+                    )} mr-3`}
+                  ></div>
+                  <span className="text-gray-700 text-sm font-medium">
+                    {profile.status || "Active"}
+                  </span>
+                </div>
+                <div className="mb-3">
+                  <p className="text-xs text-gray-600">
+                    <span className="font-medium">Account Created:</span>{" "}
+                    {formatDate(profile.createdAt || profile.date_created)}{" "}
+                    <span className="text-blue-500 text-[10px]">
+                      (
+                      {getAccountAge(
+                        profile.createdAt || profile.date_created
+                      )}
+                      )
+                    </span>
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-600">
+                    <span className="font-medium">Last Login:</span>{" "}
+                    {formatDate(profile.updatedAt)}{" "}
+                    <span className="text-blue-500 text-[10px]">
+                      ({getLastLoginTime(profile.updatedAt)})
+                    </span>
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* ---------- CUSTOMER REVIEWS SECTION ---------- */}
+            {/* ---------- CUSTOMER REVIEWS SECTION (scrollable) ---------- */}
             <div className="mt-6 bg-gray-50 rounded shadow p-4">
               <h3 className="text-2xl font-bold text-gray-800 mb-4">
                 Customer Reviews
               </h3>
-
               {/* Overall Rating */}
               <div className="flex items-center mb-4">
                 <span className="text-3xl font-semibold mr-2">4.8</span>
-                {/* Star Icons - Example of 4.8/5 */}
                 <div className="flex">
                   <svg
                     className="w-5 h-5 text-yellow-400 fill-current"
@@ -300,37 +482,41 @@ const VenueOwnerProfile = () => {
                     <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.561-.955L10 .5l2.95 5.455 6.561.955-4.756 4.635 1.123 6.545z" />
                   </svg>
                 </div>
-                <span className="text-gray-600 ml-2">({dummyReviews.length} Ratings)</span>
+                <span className="text-gray-600 ml-2">
+                  ({dummyReviews.length} Ratings)
+                </span>
               </div>
-
-              {/* Enhanced Scrollable Review List */}
-              <div className="border rounded-lg overflow-hidden shadow-inner bg-white">
+              {/* Scrollable Review List */}
+              <div className="border rounded-lg shadow-inner bg-white">
                 <div className="max-h-96 overflow-y-auto pr-2 custom-scrollbar">
                   {dummyReviews.map((review) => (
-                    <div 
-                      key={review.id} 
+                    <div
+                      key={review.id}
                       className="border-b last:border-b-0 p-4 hover:bg-gray-50 transition-colors duration-150"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-semibold text-gray-800">{review.name}</span>
+                        <span className="font-semibold text-gray-800">
+                          {review.name}
+                        </span>
                         <StarRating rating={review.rating} />
                       </div>
-                      <p className="text-gray-600 text-sm mt-2">{review.comment}</p>
-                      <p className="text-xs text-gray-400 mt-1">{review.date}</p>
+                      <p className="text-gray-600 text-sm mt-2">
+                        {review.comment}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {review.date}
+                      </p>
                     </div>
                   ))}
                 </div>
               </div>
-
-              {/* Review navigation/pagination */}
               <div className="mt-4 flex justify-between items-center">
                 <div className="text-sm text-gray-500">
                   Showing all {dummyReviews.length} reviews
                 </div>
-            
               </div>
             </div>
-            {/* Add custom scrollbar styles */}
+            {/* ---------- END CUSTOMER REVIEWS SECTION ---------- */}
             <style jsx>{`
               .custom-scrollbar::-webkit-scrollbar {
                 width: 8px;
@@ -349,11 +535,10 @@ const VenueOwnerProfile = () => {
             `}</style>
           </div>
         ) : (
-        
-          <div className="bg-white rounded-md shadow p-6">
+          /* ---------- EDIT MODE ---------- */
+          <div className="bg-white rounded-md shadow p-6 w-full">
             <h2 className="text-2xl font-bold mb-4">Edit Profile</h2>
             <form onSubmit={handleSaveChanges} className="space-y-4">
-              {/* Basic Info */}
               <div>
                 <label className="block text-gray-700">Name</label>
                 <input
@@ -384,8 +569,6 @@ const VenueOwnerProfile = () => {
                   className="w-full border p-2 rounded"
                 />
               </div>
-
-              {/* Additional Info */}
               <div>
                 <label className="block text-gray-700">Short Bio</label>
                 <textarea
@@ -395,8 +578,6 @@ const VenueOwnerProfile = () => {
                   className="w-full border p-2 rounded"
                 />
               </div>
-
-              {/* Profile Image */}
               <div>
                 <label className="block text-gray-700">Profile Image</label>
                 <input
@@ -406,8 +587,6 @@ const VenueOwnerProfile = () => {
                   className="w-full p-2 rounded"
                 />
               </div>
-
-              {/* Action Buttons */}
               <div className="flex space-x-4 mt-6">
                 <button
                   type="submit"

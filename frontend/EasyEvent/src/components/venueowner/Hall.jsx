@@ -176,6 +176,8 @@ const HallCard = ({ hall, onEdit, onDelete, onToggleAvailability }) => {
             available={hall.isAvailable ? 1 : 0}
             overlap="rectangular"
           />
+
+          
           <Box
             sx={{
               position: "absolute",
@@ -342,6 +344,7 @@ const Hall = () => {
     images: [],
     isAvailable: false,
   });
+
 
   const [customFeature, setCustomFeature] = useState("");
 
@@ -805,7 +808,7 @@ const Hall = () => {
                     />
                   </Grid>
                 </Grid>
-                <TextField
+                {/* <TextField
                   label="Included Food IDs (comma separated)"
                   fullWidth
                   variant="outlined"
@@ -814,7 +817,7 @@ const Hall = () => {
                     setEditHall({ ...editHall, includedFood: e.target.value.split(",").map((s) => s.trim()) })
                   }
                   sx={{ mt: 2, mb: 2 }}
-                />
+                /> */}
                 <FormControlLabel
                   control={
                     <Checkbox

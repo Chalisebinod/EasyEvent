@@ -5,6 +5,7 @@ const {
   deleteBooking,
 } = require("../controller/userBookingController");
 const { checkAuthentication } = require("../middleware/middleware");
+const {getMyBookingsAndRequests } = require("../controller/bookingController");
 
 const router = express.Router();
 
@@ -12,5 +13,7 @@ const router = express.Router();
 router.post("/book", bookEvent);
 router.get("/booking/:bookingId", checkAuthentication, getBookingDetails);
 router.delete("/booking/:bookingId", deleteBooking);
+router.get("/myBooking",checkAuthentication, getMyBookingsAndRequests);
+
 
 module.exports = router;

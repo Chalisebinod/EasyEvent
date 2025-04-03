@@ -1,13 +1,13 @@
-// PartyPalace.jsx
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
 import { FaUserCircle, FaComments } from "react-icons/fa";
 import Navbar from "./Navbar";
 import BottomNavbar from "./BottomNavbar";
 import ChatWidget from "./chat/ChatWidget";
 import { MdVerified } from "react-icons/md";
 
-
+// StarRating component (unchanged)
 const StarRating = ({ rating }) => {
   const fullStars = Math.floor(rating);
   const halfStar = rating % 1 !== 0;
@@ -43,7 +43,7 @@ const StarRating = ({ rating }) => {
           </defs>
           <path
             fill="url(#halfStar)"
-            d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.19c.969 0 1.371 1.24.588 1.81l-3.392 2.46a1 1 0 00-.364 1.118l1.287 3.966c.3.922-.755 1.688-1.54 1.118l-3.392-2.46a1 1 0 00-1.176 0l-3.392 2.46c-.785.57-1.84-.196-1.54-1.118l1.286-3.966a1 1 0 00-.364-1.118L2.035 9.394c-.783-.57-.38-1.81.588-1.81h4.19a1 1 0 00.95-.69l1.286-3.967z"
+            d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.19c.969 0 1.371 1.24.588 1.81l-3.392 2.46a1 1 0 00-.364 1.118l1.287 3.966c.3.922-.755 1.688-1.54 1.118l-3.392-2.46a1 1 0 00-1.176 0l-3.392 2.46c-.785.57-1.84-.196-1.54-1.118l1.286-3.967a1 1 0 00-.364-1.118L2.035 9.394c-.783-.57-.38-1.81.588-1.81h4.19a1 1 0 00.95-.69l1.286-3.967z"
           />
         </svg>
       )}
@@ -57,39 +57,54 @@ const StarRating = ({ rating }) => {
           fill="currentColor"
           viewBox="0 0 20 20"
         >
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.19c.969 0 1.371 1.24.588 1.81l-3.392 2.46a1 1 0 00-.364 1.118l1.287 3.966c.3.922-.755 1.688-1.54 1.118l-3.392-2.46a1 1 0 00-1.176 0l-3.392 2.46c-.785.57-1.84-.196-1.54-1.118l1.286-3.966a1 1 0 00-.364-1.118L2.035 9.394c-.783-.57-.38-1.81.588-1.81h4.19a1 1 0 00.95-.69l1.286-3.967z" />
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.19c.969 0 1.371 1.24.588 1.81l-3.392 2.46a1 1 0 00-.364 1.118l1.287 3.966c.3.922-.755 1.688-1.54 1.118l-3.392-2.46a1 1 0 00-1.176 0l-3.392 2.46c-.785.57-1.84-.196-1.54-1.118l1.286-3.967a1 1 0 00-.364-1.118L2.035 9.394c-.783-.57-.38-1.81.588-1.81h4.19a1 1 0 00.95-.69l1.286-3.967z" />
         </svg>
       ))}
     </div>
   );
 };
 
-// A simple list of reviews
-const ReviewsList = () => {
-  // Example data (replace with your data or fetch from API)
-  const reviews = [
-    {
-      name: "Ps",
-      rating: 4.5,
-      date: "4 weeks ago",
-      comment:
-        "babbal xa, long lasting, yo price ma, more worthy, fragrance pani dammi nam paryo...",
-    },
-    {
-      name: "Nita L",
-      rating: 5,
-      date: "4 weeks ago",
-      comment: "Awesome",
-    },
-  ];
+// Helper function to build full URL for an image path
+const getImageUrl = (imgPath) =>
+  `http://localhost:8000/${imgPath.replace(/\\/g, "/")}`;
+
+// ReviewsList component fetches reviews from the API and displays them in a scrollable container
+const ReviewsList = ({ venueId }) => {
+  const [reviews, setReviews] = useState([]);
+  const [error, setError] = useState("");
+
+
+// Inside ReviewsList component
+useEffect(() => {
+  const fetchReviews = async () => {
+    try {
+      const token = localStorage.getItem("access_token"); // Retrieve token
+      const response = await axios.post(
+        "http://localhost:8000/api/reviews/getReview",
+        { venueId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setReviews(response.data);
+    } catch (err) {
+      console.error("Error fetching reviews:", err.response?.data || err.message);
+      setError("Failed to load reviews");
+    }
+  };
+
+  if (venueId) {
+    fetchReviews();
+  }
+}, [venueId]);
+
+  
 
   // Calculate average rating
   const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
-  const averageRating = (totalRating / reviews.length).toFixed(1);
+  const averageRating = reviews.length ? (totalRating / reviews.length).toFixed(1) : 0;
 
   return (
     <div className="max-w-xl mx-auto p-4 bg-white rounded-md shadow-md mt-8">
-      {/* Overall Rating and Count */}
+      {/* Overall Rating */}
       <div className="mb-4">
         <div className="flex items-center">
           <span className="text-2xl font-bold">{averageRating}</span>
@@ -98,25 +113,44 @@ const ReviewsList = () => {
         </div>
       </div>
 
-      {/* Reviews List */}
-      <div className="space-y-6">
+      {/* Reviews List in a scrollable container */}
+      <div className="max-h-80 overflow-y-auto space-y-6 pr-2">
+        {error && <p className="text-red-500">{error}</p>}
+        {reviews.length === 0 && !error && (
+          <p className="text-gray-600">No reviews available.</p>
+        )}
         {reviews.map((review, idx) => (
           <div key={idx} className="border-b pb-4">
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-gray-800">{review.name}</span>
-              <span className="text-sm text-gray-500">{review.date}</span>
+              <div className="flex items-center gap-2">
+                {/* Profile image as clickable link */}
+                <a
+                  href={getImageUrl(review.profileImage)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src={getImageUrl(review.profileImage)}
+                    alt={review.username}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                </a>
+                <span className="font-semibold text-gray-800">{review.username}</span>
+              </div>
+              <span className="text-sm text-gray-500">
+                {new Date(review.reviewDate).toLocaleDateString()}
+              </span>
             </div>
             <div className="mt-2">
               <StarRating rating={review.rating} />
             </div>
-            <p className="mt-2 text-gray-700">{review.comment}</p>
+            <p className="mt-2 text-gray-700">{review.review}</p>
           </div>
         ))}
       </div>
     </div>
   );
 };
-
 
 const ProfileIcon = ({ ownerId }) => {
   const navigate = useNavigate();
@@ -151,10 +185,6 @@ const PartyPalace = () => {
   const [userOfferedFee, setUserOfferedFee] = useState(0);
   const [totalFare, setTotalFare] = useState(0);
   const [isMinimized, setIsMinimized] = useState(false);
-
-  // Helper function to build full URL for an image path
-  const getImageUrl = (imgPath) =>
-    `http://localhost:8000/${imgPath.replace(/\\/g, "/")}`;
 
   useEffect(() => {
     const fetchVenue = async () => {
@@ -249,7 +279,7 @@ const PartyPalace = () => {
           </button>
 
           {/* Completed Events Tab */}
-          <button
+          {/* <button
             onClick={() => setActiveTab("completed-events")}
             className={`px-6 py-2 rounded-full font-medium transition duration-300 ${
               activeTab === "completed-events"
@@ -258,7 +288,7 @@ const PartyPalace = () => {
             }`}
           >
             Completed Events
-          </button>
+          </button> */}
 
           {/* Reviews Tab */}
           <button
@@ -413,8 +443,8 @@ const PartyPalace = () => {
           </div>
         )}
 
-        {/* Only show ReviewsList when activeTab is "reviews" */}
-        {activeTab === "reviews" && <ReviewsList />}
+        {/* Render ReviewsList when activeTab is "reviews" */}
+        {activeTab === "reviews" && <ReviewsList venueId={id} />}
       </section>
 
       {/* Messaging Feature */}

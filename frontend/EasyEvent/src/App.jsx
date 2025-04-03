@@ -108,7 +108,7 @@ function App() {
         <Route path="/Gallery" element={<EventImageFolders />} />
 
       {/* rating and review */}
-      <Route path="/review" element={<SubmitReview />} />
+      <Route path="/review/:bookingId" element={<SubmitReview />} />
 
         <Route path="/venueOwnerKyc" element={<KYCPage />} />
         <Route path="/notification" element={<Notification />} />

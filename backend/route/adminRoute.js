@@ -9,6 +9,7 @@ const {
   getVenueOwner,
   venueForAdmmin,
   blockVenue,
+  getDashboardInsights,
 
 } = require("../controller/adminController");
 const {
@@ -20,6 +21,8 @@ const router = express.Router();
 router.get("/admins", checkAuthentication, checkIsAdmin, getAllAdmins);
 
 router.get("/users", checkAuthentication, checkIsAdmin, getAllUsers);
+router.get("/stats", checkAuthentication, checkIsAdmin, getDashboardInsights);
+
 
 router.get("/venueOwnerProfile/:userId", checkAuthentication, checkIsAdmin, getVenueOwner);
 router.get(

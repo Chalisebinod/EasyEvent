@@ -4,7 +4,7 @@ const VenueOwner = require("../model/venueOwner");
 const Venue = require("../model/venue");
 const BookingRequest = require("../model/request");
 const nodemailer = require("nodemailer");
-
+const Request = require("../model/request")
 // Create a new booking
 exports.createBooking = async (req, res) => {
   const userId = req.user.id;
@@ -27,10 +27,15 @@ exports.createBooking = async (req, res) => {
     }
 
     // Optionally, prevent duplicate booking per venue
-    const existingBooking = await Booking.findOne({ user: userId, venue, isDeleted: false });
+    const existingBooking = await Booking.findOne({
+      user: userId,
+      venue,
+      isDeleted: false,
+    });
     if (existingBooking) {
       return res.status(400).json({
-        message: "You have already booked this venue. Only one booking per venue is allowed.",
+        message:
+          "You have already booked this venue. Only one booking per venue is allowed.",
       });
     }
 
@@ -48,7 +53,9 @@ exports.createBooking = async (req, res) => {
     res.status(201).json({ booking: savedBooking });
   } catch (error) {
     console.error("Create Booking Error:", error);
-    res.status(500).json({ message: "Failed to create booking", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to create booking", error: error.message });
   }
 };
 
@@ -59,11 +66,17 @@ exports.updateBooking = async (req, res) => {
     const updateData = req.body;
     // Prevent modifying soft delete flag via update.
     delete updateData.isDeleted;
-    const updatedBooking = await Booking.findByIdAndUpdate(bookingId, updateData, { new: true });
+    const updatedBooking = await Booking.findByIdAndUpdate(
+      bookingId,
+      updateData,
+      { new: true }
+    );
     res.status(200).json({ booking: updatedBooking });
   } catch (error) {
     console.error("Update Booking Error:", error);
-    res.status(500).json({ message: "Failed to update booking", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to update booking", error: error.message });
   }
 };
 
@@ -72,11 +85,22 @@ exports.deleteBooking = async (req, res) => {
   const bookingId = req.params.id;
   try {
     // Optionally, you can check if payment_status is "Paid" before allowing deletion.
-    const deletedBooking = await Booking.findByIdAndUpdate(bookingId, { isDeleted: true }, { new: true });
-    res.status(200).json({ booking: deletedBooking, message: "Booking soft-deleted successfully" });
+    const deletedBooking = await Booking.findByIdAndUpdate(
+      bookingId,
+      { isDeleted: true },
+      { new: true }
+    );
+    res
+      .status(200)
+      .json({
+        booking: deletedBooking,
+        message: "Booking soft-deleted successfully",
+      });
   } catch (error) {
     console.error("Delete Booking Error:", error);
-    res.status(500).json({ message: "Failed to delete booking", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to delete booking", error: error.message });
   }
 };
 
@@ -99,7 +123,9 @@ exports.getBookings = async (req, res) => {
     res.status(200).json({ bookings });
   } catch (error) {
     console.error("Get Bookings Error:", error);
-    res.status(500).json({ message: "Failed to fetch bookings", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to fetch bookings", error: error.message });
   }
 };
 
@@ -109,52 +135,54 @@ exports.updateBookingStatus = async (req, res) => {
     const ownerId = req.user.id;
     const { bookingId, requestId, isCompleted } = req.body;
 
-    if (typeof isCompleted !== 'boolean') {
+    if (typeof isCompleted !== "boolean") {
       return res.status(400).json({
         success: false,
-        message: "isCompleted must be a boolean value"
+        message: "isCompleted must be a boolean value",
       });
     }
 
     if (!bookingId || !requestId) {
       return res.status(400).json({
         success: false,
-        message: "Both bookingId and requestId are required"
+        message: "Both bookingId and requestId are required",
       });
     }
 
     // First find both the booking and request to verify they exist
     const [booking, request] = await Promise.all([
       Booking.findById(bookingId).populate("user venue"),
-      BookingRequest.findById(requestId)
+      BookingRequest.findById(requestId),
     ]);
 
     if (!booking || !request) {
       return res.status(404).json({
         success: false,
-        message: !booking ? "Booking not found" : "Request not found"
+        message: !booking ? "Booking not found" : "Request not found",
       });
     }
 
     // Verify they belong to the same venue and user
-    if (booking.venue._id.toString() !== request.venue.toString() || 
-        booking.user._id.toString() !== request.user.toString()) {
+    if (
+      booking.venue._id.toString() !== request.venue.toString() ||
+      booking.user._id.toString() !== request.user.toString()
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Booking and request details do not match"
+        message: "Booking and request details do not match",
       });
     }
 
     // Check if the venue belongs to the owner
     const venue = await Venue.findOne({
       _id: booking.venue._id,
-      owner: ownerId
+      owner: ownerId,
     });
 
     if (!venue) {
       return res.status(403).json({
         success: false,
-        message: "Not authorized to update this booking's status"
+        message: "Not authorized to update this booking's status",
       });
     }
 
@@ -162,20 +190,20 @@ exports.updateBookingStatus = async (req, res) => {
     const [updatedBooking, updatedRequest] = await Promise.all([
       Booking.findByIdAndUpdate(
         bookingId,
-        { 
+        {
           booking_statius: isCompleted,
-          status: isCompleted ? "Completed" : "Running"
+          status: isCompleted ? "Completed" : "Running",
         },
         { new: true }
       ),
       BookingRequest.findByIdAndUpdate(
         requestId,
-        { 
+        {
           booking_statius: isCompleted,
-          status: isCompleted ? "Completed" : "Running"
+          status: isCompleted ? "Completed" : "Running",
         },
         { new: true }
-      )
+      ),
     ]);
 
     // If event is marked as completed, send email to user with review link
@@ -221,19 +249,93 @@ exports.updateBookingStatus = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: `Booking marked as ${isCompleted ? 'completed' : 'incomplete'}`,
+      message: `Booking marked as ${isCompleted ? "completed" : "incomplete"}`,
       data: {
         booking: updatedBooking,
-        request: updatedRequest
-      }
+        request: updatedRequest,
+      },
     });
-
   } catch (error) {
     console.error("Update Booking Status Error:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to update booking status",
-      error: error.message
+      error: error.message,
     });
   }
 };
+
+// get my bookings
+exports.getMyBookingsAndRequests = async (req, res) => {
+  try {
+    // Get user ID from the access token middleware
+    const userId = req.user.id;
+    console.log("User ID:", userId);
+
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized: No user ID found" });
+    }
+
+    // Fetch all confirmed bookings
+    const bookings = await Booking.find({ user: userId, isDeleted: false })
+      .populate("venue", "name location")
+      .populate("hall", "name capacity")
+      .populate("selected_foods", "name price")
+      .populate("additional_services", "name description price")
+      .sort({ "event_details.date": -1 });
+
+    // Fetch all pending requests (with status 'Pending')
+    const requests = await Request.find({
+      user: userId,
+      isDeleted: false,
+      status: "Pending" // Only show requests that are still pending
+    })
+      .populate("venue", "name location")
+      .populate("hall", "name capacity")
+      .populate("requested_foods", "name price")
+      .populate("additional_services", "name description price")
+      .sort({ "event_details.date": -1 });
+
+    console.log("Requests found:", requests);
+    console.log("Fetching requests:", requests); // Debugging log
+    console.log("Fetching bookings:", bookings); // Debugging log
+
+    // Process requests: Remove those that have a booking
+    const filteredRequests = requests.filter((reqItem) => {
+      const isBooked = bookings.some(
+        (booking) =>
+          booking.venue._id.toString() === reqItem.venue._id.toString() &&
+          booking.hall._id.toString() === reqItem.hall._id.toString() &&
+          new Date(booking.event_details.date).getTime() === new Date(reqItem.event_details.date).getTime()
+      );
+
+      if (isBooked) {
+        reqItem.statusMessage = "A booking already exists for this request";
+      }
+
+      return !isBooked; // Only keep requests that don't have bookings
+    });
+
+    // Add a message if no bookings exist
+    if (bookings.length === 0) {
+      return res.status(200).json({
+        message: "Venue is not booked yet",
+        requests: filteredRequests,
+        bookings: [],
+      });
+    }
+
+    res.status(200).json({
+      message: "Bookings and requests retrieved successfully",
+      requests: filteredRequests,
+      bookings,
+    });
+  } catch (error) {
+    console.error("Error fetching user bookings and requests:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+
+
+

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react"; 
 import { toast, ToastContainer } from "react-toastify";
 import Navbar from "../Navbar";
 import BottomNavbar from "../BottomNavbar";
@@ -59,6 +59,9 @@ const Booking = () => {
   // Chat feature
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState("");
+
+  // New state for booking submission status
+  const [bookingSubmitted, setBookingSubmitted] = useState(false);
 
   const handleSendMessage = () => {
     if (chatInput.trim() === "") return;
@@ -218,7 +221,6 @@ const Booking = () => {
       },
     };
 
-    
     fetch("http://localhost:8000/api/booking/create", {
       method: "POST",
       headers: {
@@ -238,6 +240,7 @@ const Booking = () => {
       .then((data) => {
         console.log("Booking created:", data);
         toast.success("Booking request submitted successfully!");
+        setBookingSubmitted(true);
       })
       .catch((err) => {
         console.error("Error creating booking:", err);
@@ -706,9 +709,16 @@ const Booking = () => {
             <div className="text-center">
               <button
                 type="submit"
-                className="px-10 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-full shadow-lg hover:shadow-2xl transition"
+                className={`px-10 py-4 font-bold rounded-full shadow-lg transition ${
+                  bookingSubmitted
+                    ? "bg-green-700 text-white"
+                    : "bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:shadow-2xl"
+                }`}
+                disabled={bookingSubmitted}
               >
-                Submit Booking Request
+                {bookingSubmitted
+                  ? "Booking submitted"
+                  : "Submit Booking Request"}
               </button>
             </div>
           </form>

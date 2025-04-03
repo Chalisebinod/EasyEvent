@@ -48,7 +48,7 @@ const LandingPage = () => {
               onClick={() => navigate("/")}
               className="text-2xl font-bold text-orange-600 cursor-pointer hover:text-orange-700 transition-colors ml-10"
             >
-              EasyEvents
+              EasyEvent
             </h1>
           </div>
 

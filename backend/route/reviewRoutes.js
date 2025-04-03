@@ -3,11 +3,13 @@ const {
   checkAuthentication,
   checkCanSubmitReview,
 } = require("../middleware/middleware");
-const { submitReview } = require("../controller/reviewController");
+const { submitReview, getVenueReviews } = require("../controller/reviewController");
 
 const router = express.Router();
 
 // Route to submit a review
 router.post("/submit", checkAuthentication, checkCanSubmitReview, submitReview);
+router.post("/getReview", checkAuthentication, checkCanSubmitReview,getVenueReviews);
+
 
 module.exports = router;

@@ -45,9 +45,7 @@ app.use("/api/halls", hallRoutes);
 app.use("/api/booking", venueBookingRoutes);
 app.use("/api", foodRoutes);
 app.use("/api/chat", chatRoute);
-app.use("/api", reviewRoutes);
-
-
+app.use("/api/reviews", reviewRoutes);
 
 // Connect to MongoDB
 mongoose
@@ -58,7 +56,7 @@ mongoose
 // Create HTTP server and integrate Socket.io
 const server = http.createServer(app);
 const io = socketIo(server, {
-  cors: { origin: "*" } // Adjust CORS settings as needed
+  cors: { origin: "*" }, // Adjust CORS settings as needed
 });
 
 // **Set the Socket.io instance on the Express app**

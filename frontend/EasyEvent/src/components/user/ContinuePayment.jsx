@@ -120,7 +120,7 @@ export default function ContinuePayment() {
         );
         if (response.data.status === "Completed") {
           toast.success("Payment successful!");
-          navigate(`/success/${bookingId}`, { replace: true });
+          navigate(`/user-dashboard/`, { replace: true });
         } else {
           toast.error("Payment verification failed.");
         }
