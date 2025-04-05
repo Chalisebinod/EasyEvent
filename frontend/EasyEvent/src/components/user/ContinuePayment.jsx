@@ -6,9 +6,9 @@ import MiniLogin from "./MiniLogin";
 
 
 const paymentOptions = [
-  { name: "Khalti", logo: "/khalti.png" },
-  { name: "eSewa", logo: "/esewa-logo.png" },
-  { name: "IMEpay", logo: "/imepay-logo.png" },
+  { name: "Khalti", logo: "/Khalti.jpg" },
+  { name: "eSewa", logo: "/esewa.png" },
+  { name: "IMEpay", logo: "/ime.png" },
 ];
 
 export default function ContinuePayment() {
@@ -154,7 +154,8 @@ export default function ContinuePayment() {
                 className={`flex items-center justify-between w-full p-4 border rounded-lg shadow-sm hover:bg-gray-200 transition ${selectedPayment === option.name ? "bg-gray-300" : "bg-white"}`}
                 onClick={() => handlePaymentSelect(option.name)}
               >
-                <img src={option.logo} alt={option.name} className="h-6" />
+                <img src={option.logo} alt={option.name} className="h-12 w-12 object-contain" />
+
                 <span className="ml-2">{option.name}</span>
               </button>
             ))}

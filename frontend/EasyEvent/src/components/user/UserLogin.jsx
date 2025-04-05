@@ -123,13 +123,13 @@ const UserLogin = () => {
           <div className="flex justify-center gap-6 mt-4">
             <Link
               to="/user-signup"
-              className="border border-orange-500 text-black py-2 px-6 rounded-lg transition duration-200 hover:bg-black hover:text-white"
+              className="border border-orange-600 text-black py-2 px-6 rounded-lg transition duration-200 hover:bg-orange-600 hover:text-white"
             >
               Signup as User
             </Link>
             <Link
               to="/venue-owner-signup"
-              className="border border-orange-500 text-black py-2 px-6 rounded-lg transition duration-200 hover:bg-black hover:text-white"
+              className="border border-orange-600 text-black py-2 px-6 rounded-lg transition duration-200 hover:bg-orange-600 hover:text-white"
             >
               Signup as Venue Owner
             </Link>

@@ -12,10 +12,6 @@ import {
   Divider,
   Button,
   TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Stepper,
   Step,
   StepLabel,
@@ -25,13 +21,10 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Switch,
-  FormControlLabel,
 } from '@mui/material';
 import {
   FaUser,
   FaCalendarAlt,
-  FaMapMarkerAlt,
   FaMoneyBillWave,
   FaFileContract,
   FaSignature,
@@ -100,6 +93,7 @@ function ApprovedBookingDetails() {
 
   // SIGNATURE STATE
   const [ownerSignature, setOwnerSignature] = useState(null);
+  const [submittingSignature, setSubmittingSignature] = useState(false);
 
   // TEMPLATES
   const [templates, setTemplates] = useState({
@@ -108,18 +102,6 @@ function ApprovedBookingDetails() {
     cancellation: [],
   });
   const [selectedTemplates, setSelectedTemplates] = useState({
-    terms: '',
-    rules: '',
-    cancellation: '',
-  });
-
-  // CUSTOM TEMPLATE USAGE
-  const [useCustomTemplate, setUseCustomTemplate] = useState({
-    terms: false,
-    rules: false,
-    cancellation: false,
-  });
-  const [customTemplates, setCustomTemplates] = useState({
     terms: '',
     rules: '',
     cancellation: '',
@@ -246,14 +228,11 @@ function ApprovedBookingDetails() {
   // HANDLE AGREEMENT GENERATION
   const handleAgreementGeneration = async () => {
     try {
-      // Gather template data
+      // Gather template data using selected templates only
       const agreementData = {
-        termsTemplateId: useCustomTemplate.terms ? null : selectedTemplates.terms,
-        rulesTemplateId: useCustomTemplate.rules ? null : selectedTemplates.rules,
-        cancellationTemplateId: useCustomTemplate.cancellation ? null : selectedTemplates.cancellation,
-        customTerms: useCustomTemplate.terms ? customTemplates.terms : null,
-        customRules: useCustomTemplate.rules ? customTemplates.rules : null,
-        customCancellation: useCustomTemplate.cancellation ? customTemplates.cancellation : null,
+        termsTemplateId: selectedTemplates.terms,
+        rulesTemplateId: selectedTemplates.rules,
+        cancellationTemplateId: selectedTemplates.cancellation,
       };
 
       const response = await axiosInstance.post(
@@ -276,6 +255,7 @@ function ApprovedBookingDetails() {
   // HANDLE SIGNATURE UPLOAD
   const handleSignatureUpload = async () => {
     try {
+      setSubmittingSignature(true);
       const formData = new FormData();
       formData.append('signature', ownerSignature);
       formData.append('sendFinalEmail', 'true');
@@ -295,6 +275,8 @@ function ApprovedBookingDetails() {
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to complete the process');
       console.error('Final submission error:', err);
+    } finally {
+      setSubmittingSignature(false);
     }
   };
 
@@ -302,7 +284,7 @@ function ApprovedBookingDetails() {
   const handleTemplateSelect = (type, templateId) => {
     setSelectedTemplates((prev) => ({ ...prev, [type]: templateId }));
 
-    // Find the selected template
+    // Find the selected template and update agreement preview
     const template = templates[type].find((t) => t._id === templateId);
     if (template) {
       setAgreement((prev) => ({
@@ -316,86 +298,37 @@ function ApprovedBookingDetails() {
     }
   };
 
-  // CUSTOM TEMPLATE CHANGES
-  const handleCustomTemplateChange = (type, content) => {
-    setCustomTemplates((prev) => ({ ...prev, [type]: content }));
-  };
-
-  // SWITCH BETWEEN CUSTOM & DEFAULT
-  const handleUseCustomTemplateChange = (type) => {
-    setUseCustomTemplate((prev) => ({ ...prev, [type]: !prev[type] }));
-    // If switching from default to custom, fill in from the existing content
-    if (!useCustomTemplate[type]) {
-      setCustomTemplates((prev) => ({
-        ...prev,
-        [type]:
-          agreement[
-            type === 'terms' ? 'terms' : type === 'rules' ? 'venueRules' : 'cancellationPolicy'
-          ] || '',
-      }));
-    } else {
-      // If switching from custom to default, revert to the selected template
-      handleTemplateSelect(type, selectedTemplates[type]);
-    }
-  };
-
-  // RENDER TEMPLATE SECTION
+  // RENDER TEMPLATE SECTION (using only default template selection)
   const renderTemplateSection = (type, label) => {
-    const templateKey =
-      type === 'terms' ? 'terms' : type === 'rules' ? 'venueRules' : 'cancellationPolicy';
-
     return (
       <Grid item xs={12}>
         <Paper elevation={3} sx={{ p: 3, mb: 2 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6">{label}</Typography>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={useCustomTemplate[type]}
-                  onChange={() => handleUseCustomTemplateChange(type)}
-                />
-              }
-              label="Use Custom Template"
-            />
-          </Box>
-
-          {!useCustomTemplate[type] ? (
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel>Select {label} Template</InputLabel>
-              <Select
-                value={selectedTemplates[type]}
-                onChange={(e) => handleTemplateSelect(type, e.target.value)}
-                label={`Select ${label} Template`}
-              >
-                {templates[type]?.map((template) => (
-                  <MenuItem key={template._id} value={template._id}>
-                    {template.title} {template.isDefault && '(Default)'}
-                  </MenuItem>
-                ))}
-              </Select>
-              {selectedTemplates[type] && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Preview:
-                  </Typography>
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html:
-                        templates[type]?.find((t) => t._id === selectedTemplates[type])?.content ||
-                        '',
-                    }}
-                  />
-                </Box>
-              )}
-            </FormControl>
-          ) : (
-            <Box sx={{ mb: 2 }}>
-              <ReactQuill
-                value={customTemplates[type]}
-                onChange={(content) => handleCustomTemplateChange(type, content)}
-                modules={quillModules}
-                style={{ height: '200px', marginBottom: '50px' }}
+          <Typography variant="h6" gutterBottom>{label}</Typography>
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>Select {label} Template</InputLabel>
+            <Select
+              value={selectedTemplates[type]}
+              onChange={(e) => handleTemplateSelect(type, e.target.value)}
+              label={`Select ${label} Template`}
+            >
+              {templates[type]?.map((template) => (
+                <MenuItem key={template._id} value={template._id}>
+                  {template.title} {template.isDefault && '(Default)'}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {selectedTemplates[type] && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Preview:
+              </Typography>
+              <div
+                dangerouslySetInnerHTML={{
+                  __html:
+                    templates[type]?.find((t) => t._id === selectedTemplates[type])?.content ||
+                    '',
+                }}
               />
             </Box>
           )}
@@ -454,7 +387,7 @@ function ApprovedBookingDetails() {
 
           {/* Booking Information */}
           <Grid container spacing={3}>
-            {/* Basic Details */}
+            {/* Customer Details */}
             <Grid item xs={12} md={6}>
               <Paper elevation={3} sx={{ p: 3 }}>
                 <Typography variant="h6" gutterBottom>
@@ -513,7 +446,7 @@ function ApprovedBookingDetails() {
                 <Divider sx={{ mb: 2 }} />
                 {booking?.pricing_summary && (
                   <Grid container spacing={3}>
-                    {/* Per Plate Details */}
+                    {/* Per Plate Pricing */}
                     <Grid item xs={12} md={4}>
                       <Paper variant="outlined" sx={{ p: 2 }}>
                         <Typography variant="subtitle1" gutterBottom fontWeight="bold">
@@ -799,15 +732,9 @@ function ApprovedBookingDetails() {
                       onClick={handleAgreementGeneration}
                       disabled={
                         !(
-                          (useCustomTemplate.terms
-                            ? customTemplates.terms
-                            : selectedTemplates.terms) &&
-                          (useCustomTemplate.rules
-                            ? customTemplates.rules
-                            : selectedTemplates.rules) &&
-                          (useCustomTemplate.cancellation
-                            ? customTemplates.cancellation
-                            : selectedTemplates.cancellation)
+                          selectedTemplates.terms &&
+                          selectedTemplates.rules &&
+                          selectedTemplates.cancellation
                         )
                       }
                     >
@@ -850,9 +777,9 @@ function ApprovedBookingDetails() {
                     <Button
                       variant="contained"
                       onClick={handleSignatureUpload}
-                      disabled={!ownerSignature}
+                      disabled={!ownerSignature || submittingSignature}
                     >
-                      Upload & Send to User
+                      {submittingSignature ? 'Submitting...' : 'Upload & Send to User'}
                     </Button>
                   </Box>
                 </Paper>

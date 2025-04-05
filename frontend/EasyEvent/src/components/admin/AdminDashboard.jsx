@@ -55,12 +55,12 @@ const Dashboard = () => {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-const accessToken = localStorage.getItem("access_token")
+  const accessToken = localStorage.getItem("access_token")
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const response = await fetch("http://localhost:8000/api/stats",{
+        const response = await fetch("http://localhost:8000/api/stats", {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
 
@@ -189,7 +189,7 @@ const accessToken = localStorage.getItem("access_token")
   const BOOKING_COLORS = ["#10b981", "#f59e0b", "#ef4444"];
 
   const StatCard = ({ title, value, icon, color, subtext }) => (
-    <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+    <div className="bg-white p-5 rounded-lg shadow-lg border border-gray-100 hover:shadow-xl transition duration-300">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm text-gray-600 uppercase font-medium">
@@ -208,7 +208,7 @@ const accessToken = localStorage.getItem("access_token")
       <Sidebar />
       <div className="ml-64 w-full p-6">
         {/* Header with search and notifications */}
-        <header className="mb-8 flex justify-between items-center">
+        <header className="mb-8 flex justify-between items-center bg-white p-6 rounded-lg shadow-md border border-gray-200">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
               Admin Dashboard
@@ -256,7 +256,7 @@ const accessToken = localStorage.getItem("access_token")
         ) : (
           <>
             {/* Key Metrics Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
               <StatCard
                 title="Venues"
                 value={stats.totalVenues}
@@ -288,8 +288,8 @@ const accessToken = localStorage.getItem("access_token")
             </div>
 
             {/* Revenue & Growth Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-              <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200 lg:col-span-2">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+              <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-100 lg:col-span-2">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="font-semibold text-gray-800 text-lg">
                     Revenue Trend
@@ -348,7 +348,7 @@ const accessToken = localStorage.getItem("access_token")
                 </ResponsiveContainer>
               </div>
 
-              <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+              <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-100">
                 <h3 className="font-semibold text-gray-800 mb-4 text-lg">
                   Booking Types
                 </h3>
@@ -406,8 +406,9 @@ const accessToken = localStorage.getItem("access_token")
             </div>
 
             {/* Growth, Hall Utilization, and Booking Status */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-              <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+            {/* Changed 'lg:grid-cols-3' to 'lg:grid-cols-2' to fill space */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+              {/* <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-100">
                 <h3 className="font-semibold text-gray-800 mb-4 text-lg">
                   Growth Metrics
                 </h3>
@@ -443,9 +444,9 @@ const accessToken = localStorage.getItem("access_token")
                     />
                   </LineChart>
                 </ResponsiveContainer>
-              </div>
+              </div> */}
 
-              <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+              <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-100">
                 <h3 className="font-semibold text-gray-800 mb-4 text-lg">
                   Hall Utilization
                 </h3>
@@ -490,7 +491,7 @@ const accessToken = localStorage.getItem("access_token")
                 </div>
               </div>
 
-              <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+              <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-100">
                 <h3 className="font-semibold text-gray-800 mb-4 text-lg">
                   Booking Status
                 </h3>
@@ -541,7 +542,7 @@ const accessToken = localStorage.getItem("access_token")
 
             {/* Recent Bookings and Activities */}
             {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+              <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-100">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-semibold text-gray-800 text-lg">
                     Recent Bookings
@@ -590,7 +591,7 @@ const accessToken = localStorage.getItem("access_token")
                 )}
               </div>
 
-              <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+              <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-100">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-semibold text-gray-800 text-lg">
                     Recent Activities
